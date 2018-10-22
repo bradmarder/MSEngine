@@ -8,14 +8,14 @@ namespace MSEngine.Tests
     public class BoardCalculationTest
     {
         [Fact]
-        public void Zero_mine_count_with_reveal_instantly_wins()
+        public void Zero_mine_count_with_one_reveal_completes_board()
         {
             var board = Engine.GenerateRandomBoard(8, 8, 0);
             var turns = ImmutableQueue.Create(new Turn(0, 0, TileOperation.Reveal));
             var state = new GameState(board, turns);
             var completedBoard = Engine.CalculateBoard(state);
 
-            Assert.True(completedBoard.Status == BoardStatus.Completed);
+            Assert.Equal(BoardStatus.Completed, completedBoard.Status);
         }
 
         [Theory]

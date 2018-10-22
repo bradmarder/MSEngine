@@ -13,19 +13,19 @@ namespace MSEngine.Core
         {
             if (list == null) { throw new ArgumentNullException(nameof(list)); }
 
-            var shuffled = list.ToList();
-            int n = shuffled.Count;
+            var items = list.ToList();
+            int n = items.Count;
 
             while (n > 1)
             {
                 n--;
                 int k = rng.Next(n + 1);
-                T value = shuffled[k];
-                shuffled[k] = shuffled[n];
-                shuffled[n] = value;
+                T value = items[k];
+                items[k] = items[n];
+                items[n] = value;
             }
 
-            return shuffled;
+            return items;
         }
 
         /// <summary>
