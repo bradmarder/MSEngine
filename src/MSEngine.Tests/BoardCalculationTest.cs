@@ -43,10 +43,10 @@ namespace MSEngine.Tests
         [InlineData(TileOperation.RemoveFlag)]
         public void Throws_exception_if_any_operation_applied_on_revealed_tile(TileOperation operation)
         {
-            var board = Engine.GenerateRandomBeginnerBoard();
+            var board = Engine.GeneratePureBoard(2, 2, 1);
             var turns = ImmutableQueue.Create(
-                new Turn(0, 0, TileOperation.Reveal),
-                new Turn(0, 0, operation));
+                new Turn(1, 1, TileOperation.Reveal),
+                new Turn(1, 1, operation));
             var state = new GameState(board, turns);
 
             Assert.Throws<InvalidGameStateException>(() => Engine.CalculateBoard(state));

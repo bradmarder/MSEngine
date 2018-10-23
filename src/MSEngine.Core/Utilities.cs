@@ -7,8 +7,9 @@ namespace MSEngine.Core
 {
     internal static class Utilities
     {
-        private static readonly Random rng = new Random();
-        
+        private static readonly Random _random = new Random();
+        private static readonly object _lock = new object();
+
         public static List<T> GetShuffledItems<T>(this IEnumerable<T> list)
         {
             if (list == null) { throw new ArgumentNullException(nameof(list)); }
@@ -16,13 +17,16 @@ namespace MSEngine.Core
             var items = list.ToList();
             int n = items.Count;
 
-            while (n > 1)
+            lock (_lock)
             {
-                n--;
-                int k = rng.Next(n + 1);
-                T value = items[k];
-                items[k] = items[n];
-                items[n] = value;
+                while (n > 1)
+                {
+                    n--;
+                    int k = _random.Next(n + 1);
+                    T value = items[k];
+                    items[k] = items[n];
+                    items[n] = value;
+                }
             }
 
             return items;
