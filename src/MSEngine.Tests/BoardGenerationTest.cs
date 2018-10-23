@@ -14,7 +14,7 @@ namespace MSEngine.Tests
         public void Throws_on_invalid_columns_or_rows_or_shuffler(byte columns, byte rows)
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => Engine.GeneratePureBoard(columns, rows, 0));
-            Assert.Throws<ArgumentNullException>(() => Engine.GenerateRandomBoard(1, 1, 0, null));
+            Assert.Throws<ArgumentNullException>(() => Engine.GenerateBoard(1, 1, 0, null));
         }
 
         [Theory]

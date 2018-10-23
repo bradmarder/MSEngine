@@ -36,10 +36,10 @@ namespace MSEngine.Core
         /// <param name="mineCount">Must be less than tile count (columns * height)</param>
         /// <returns></returns>
         public static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount) =>
-            GenerateRandomBoard(columns, rows, mineCount, Utilities.GetShuffledItems);
+            GenerateBoard(columns, rows, mineCount, Utilities.GetShuffledItems);
 
         /// <summary>
-        /// Generates a random minesweeper board.
+        /// Generates a minesweeper board.
         /// This is a "Potentially Pure" function.
         /// This implies that if the shuffler function provided is pure, then this function is pure as well.
         /// </summary>
@@ -48,7 +48,7 @@ namespace MSEngine.Core
         /// <param name="mineCount">Must be less than tile count (columns * height)</param>
         /// <param name="shuffler"></param>
         /// <returns></returns>
-        public static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount, Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> shuffler)
+        public static Board GenerateBoard(byte columns, byte rows, byte mineCount, Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> shuffler)
         {
             if (columns == byte.MinValue || columns > 30) { throw new ArgumentOutOfRangeException(nameof(columns)); }
             if (rows == byte.MinValue || rows > 16) { throw new ArgumentOutOfRangeException(nameof(rows)); }
@@ -96,7 +96,7 @@ namespace MSEngine.Core
         /// A pure method which does not randomize mine location. Intended for testing purposes.
         /// </summary>
         internal static Board GeneratePureBoard(byte columns, byte rows, byte mineCount) =>
-            GenerateRandomBoard(columns, rows, mineCount, _purePlaceholderShuffler);
+            GenerateBoard(columns, rows, mineCount, _purePlaceholderShuffler);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsAdjacentTo(in Coordinates coordinateOne, in Coordinates coordinateTwo)
