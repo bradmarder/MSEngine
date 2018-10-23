@@ -11,9 +11,10 @@ namespace MSEngine.Tests
         [InlineData(0, 1)]
         [InlineData(31, 16)]
         [InlineData(30, 17)]
-        public void Throws_on_invalid_columns_or_rows(byte columns, byte rows)
+        public void Throws_on_invalid_columns_or_rows_or_shuffler(byte columns, byte rows)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => Engine.GenerateRandomBoard(columns, rows, 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => Engine.GeneratePureBoard(columns, rows, 0));
+            Assert.Throws<ArgumentNullException>(() => Engine.GenerateRandomBoard(1, 1, 0, null));
         }
 
         [Theory]
@@ -24,7 +25,7 @@ namespace MSEngine.Tests
         public void Expected_tile_count_equals_actual_tile_count(byte columns, byte rows)
         {
             var expectedTileCount = columns * rows;
-            var board = Engine.GenerateRandomBoard(columns, rows, 0);
+            var board = Engine.GeneratePureBoard(columns, rows, 0);
             Assert.Equal(expectedTileCount, board.Tiles.Count);
         }
 
@@ -34,7 +35,7 @@ namespace MSEngine.Tests
         [InlineData(99)]
         public void Expected_mine_count_equals_actual_mine_count(byte expectedMineCount)
         {
-            var board = Engine.GenerateRandomBoard(30, 16, expectedMineCount);
+            var board = Engine.GeneratePureBoard(30, 16, expectedMineCount);
             Assert.Equal(expectedMineCount, board.MineCount);
         }
 
@@ -43,7 +44,7 @@ namespace MSEngine.Tests
         [InlineData(65)]
         public void Throws_if_mine_count_is_greater_than_or_equal_to_tile_count(byte mineCount)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => Engine.GenerateRandomBoard(8, 8, mineCount));
+            Assert.Throws<ArgumentOutOfRangeException>(() => Engine.GeneratePureBoard(8, 8, mineCount));
         }
     }
 }

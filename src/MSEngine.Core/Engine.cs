@@ -8,6 +8,8 @@ namespace MSEngine.Core
 {
     public static class Engine
     {
+        private static readonly Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> _purePlaceholderShuffler = x => x;
+
         /// <summary>
         /// Generates an 8x8 board with 10 mines
         /// </summary>
@@ -27,16 +29,30 @@ namespace MSEngine.Core
         public static Board GenerateRandomExpertBoard() => GenerateRandomBoard(30, 16, 99);
 
         /// <summary>
-        /// Generates a random minesweeper board
+        /// Generates a random minesweeper board.
         /// </summary>
         /// <param name="columns">Max value of 30</param>
         /// <param name="rows">Max value of 16</param>
-        /// <param name="mineCount"></param>
+        /// <param name="mineCount">Must be less than tile count (columns * height)</param>
         /// <returns></returns>
-        public static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount)
+        public static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount) =>
+            GenerateRandomBoard(columns, rows, mineCount, Utilities.GetShuffledItems);
+
+        /// <summary>
+        /// Generates a random minesweeper board.
+        /// This is a "Potentially Pure" function.
+        /// This implies that if the shuffler function provided is pure, then this function is pure as well.
+        /// </summary>
+        /// <param name="columns">Max value of 30</param>
+        /// <param name="rows">Max value of 16</param>
+        /// <param name="mineCount">Must be less than tile count (columns * height)</param>
+        /// <param name="shuffler"></param>
+        /// <returns></returns>
+        public static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount, Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> shuffler)
         {
             if (columns == byte.MinValue || columns > 30) { throw new ArgumentOutOfRangeException(nameof(columns)); }
             if (rows == byte.MinValue || rows > 16) { throw new ArgumentOutOfRangeException(nameof(rows)); }
+            if (shuffler == null) { throw new ArgumentNullException(nameof(shuffler)); }
 
             // if we allowed tileCount == mineCount, then we would have an infinite loop attempting to generate a board
             // because logic dictates the first tile revealed must not be a mine
@@ -44,8 +60,7 @@ namespace MSEngine.Core
             if (mineCount >= tileCount) { throw new ArgumentOutOfRangeException(nameof(mineCount)); }
 
             var coordinates = GetCoordinates(columns, rows);
-            var coordinatesToMineMap = coordinates
-                .GetShuffledItems()
+            var coordinatesToMineMap = shuffler(coordinates)
                 .Select((x, i) => (x, i))
                 .ToDictionary(x => x.x, x => x.i < mineCount);
             var coordinatesToAdjacentMineCountMap = coordinates.ToDictionary(
@@ -56,8 +71,13 @@ namespace MSEngine.Core
             return new Board(tiles);
         }
 
-        public static Board CalculateBoard(GameState state)
+        public static Board CalculateBoard(in GameState state)
         {
+            if (state.HasInvalidTurns)
+            {
+                throw new InvalidGameStateException("Turns have coordinates that are outside the board");
+            }
+
             return state.Turns.Aggregate(state, (x, y) =>
             {
                 if (x.Board.Status == BoardStatus.Completed || x.Board.Status == BoardStatus.Failed)
@@ -72,8 +92,14 @@ namespace MSEngine.Core
             .Board;
         }
 
+        /// <summary>
+        /// A pure method which does not randomize mine location. Intended for testing purposes.
+        /// </summary>
+        internal static Board GeneratePureBoard(byte columns, byte rows, byte mineCount) =>
+            GenerateRandomBoard(columns, rows, mineCount, _purePlaceholderShuffler);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsAdjacentTo(Coordinates coordinateOne, Coordinates coordinateTwo)
+        internal static bool IsAdjacentTo(in Coordinates coordinateOne, in Coordinates coordinateTwo)
         {
             var x = coordinateOne.X;
             var y = coordinateOne.Y;
@@ -84,7 +110,7 @@ namespace MSEngine.Core
                 && coordinateOne != coordinateTwo;
         }
 
-        private static IEnumerable<Coordinates> GetCoordinates(byte rows, byte columns)
+        internal static IEnumerable<Coordinates> GetCoordinates(byte rows, byte columns)
         {
             if (columns == byte.MinValue) { throw new ArgumentOutOfRangeException(nameof(columns)); }
             if (rows == byte.MinValue) { throw new ArgumentOutOfRangeException(nameof(rows)); }
@@ -96,7 +122,7 @@ namespace MSEngine.Core
                     .Select(y => new Coordinates((byte)x, (byte)y)));
         }
 
-        private static Board CalculateBoard(in Board board, Turn turn)
+        internal static Board CalculateBoard(in Board board, Turn turn)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
@@ -127,7 +153,7 @@ namespace MSEngine.Core
         /// </summary>
         /// <param name="board"></param>
         /// <returns></returns>
-        private static Board GetFailedBoard(in Board board)
+        internal static Board GetFailedBoard(in Board board)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
@@ -139,7 +165,7 @@ namespace MSEngine.Core
             return new Board(tiles);
         }
 
-        private static Board GetChainReactionBoard(in Board board, Tile targetTile)
+        internal static Board GetChainReactionBoard(in Board board, Tile targetTile)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 

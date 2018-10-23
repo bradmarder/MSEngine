@@ -1,12 +1,12 @@
 # MSEngine
 #### A Minesweeper Engine built using functional programming paradigms with c# and .NET Standard 2.0
 
-### The Core Concept of MSEngine (pseudocode)
+### The core concept of MSEngine (pseudocode)
 ```csharp
 public readonly struct GameState
 {
     public Board Board { get; }
-    public IImmutableQueue<Turn> Turns { get; }
+    public Queue<Turn> Turns { get; }
 }
 while (turns.Any())
 {
@@ -37,6 +37,6 @@ To run tests, open a terminal and navigate to `src\MSEngine.Tests\` and execute 
 - NuGet Package
 - Larger boards (current max is expert which is 30x16)
 - Performance Enhancements
-- More tests
+- Extensive test suite
 - Extra Z dimension
 - Automated Solvers
