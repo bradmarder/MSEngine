@@ -61,8 +61,11 @@ namespace MSEngine.Core
 
             var coordinates = GetCoordinates(columns, rows);
             var coordinatesToMineMap = shuffler(coordinates)
-                .Select((x, i) => (x, i))
-                .ToDictionary(x => x.x, x => x.i < mineCount);
+
+                // we use a select expression to get the index, since ToDictionary() does not give access to it
+                .Select((x, i) => (Coordinates: x, Index: i))
+
+                .ToDictionary(x => x.Coordinates, x => x.Index < mineCount);
             var coordinatesToAdjacentMineCountMap = coordinates.ToDictionary(
                 x => x,
                 x => (byte)coordinatesToMineMap.Count(y => y.Value && IsAdjacentTo(y.Key, x)));
