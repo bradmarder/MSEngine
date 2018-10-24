@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace MSEngine.Core
 {
-    public readonly struct Tile : IEquatable<Tile>
+    public readonly struct Tile
     {
         private static readonly IReadOnlyDictionary<TileOperation, TileState> _operationToStateMap = new Dictionary<TileOperation, TileState>
         {
@@ -47,7 +47,5 @@ namespace MSEngine.Core
             HasMine
             ? State == TileState.Flagged
             : State == TileState.Revealed;
-
-        public bool Equals(Tile other) => Coordinates == other.Coordinates;
     }
 }

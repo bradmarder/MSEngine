@@ -64,58 +64,40 @@ namespace MSEngine.Tests
         public void All_tiles_revealed_if_game_fails()
         {
             var board = Engine.GeneratePureBoard(2, 2, 1);
-            var turn = new Turn(0, 0, TileOperation.Reveal);
-            var fail = Engine.CalculateBoard(board, turn);
-
-            Assert.Equal(BoardStatus.Failed, fail.Status);
-
+            var fail = Engine.GetFailedBoard(board);
             var allTilesRevealed = fail.Tiles.All(x => (x.HasMine && x.State == TileState.Flagged) || x.State == TileState.Revealed);
+
             Assert.True(allTilesRevealed);
         }
 
         [Theory]
-        [InlineData(1, 1)]
-        [InlineData(1, 2)]
-        [InlineData(1, 3)]
-        [InlineData(2, 1)]
-        [InlineData(2, 3)]
-        [InlineData(3, 1)]
-        [InlineData(3, 2)]
-        [InlineData(3, 3)]
-        public void Coordinates_are_adjacent(byte x, byte y)
+        [InlineData(TileOperation.Flag, TileState.Flagged)]
+        [InlineData(TileOperation.RemoveFlag, TileState.Hidden)]
+        public void Flagging_tile_only_flags_single_tile(TileOperation operation, TileState state)
         {
-            var origin = new Coordinates(2, 2);
-            var coordindates = new Coordinates(x, y);
-            var isAdjacent = Engine.IsAdjacentTo(origin, coordindates);
+            var board = Engine.GeneratePureBoard(2, 2, 1);
+            var origin = new Coordinates(0, 0);
+            var turn = new Turn(origin, operation);
+            var fin = Engine.CalculateBoard(board, turn);
+            var tile = fin.Tiles.Single(x => x.Coordinates == origin);
+            var everyOtherTileHasNotChanged = fin.Tiles.All(x => x.Equals(tile) || board.Tiles.Contains(x));
 
-            Assert.True(Engine.IsAdjacentTo(origin, coordindates));
+            Assert.True(tile.State == state);
+            Assert.True(everyOtherTileHasNotChanged);
         }
 
-        [Theory]
-        [InlineData(0, 0)]
-        [InlineData(0, 1)]
-        [InlineData(0, 2)]
-        [InlineData(0, 3)]
-        [InlineData(0, 4)]
-        [InlineData(1, 0)]
-        [InlineData(1, 4)]
-        [InlineData(2, 0)]
-        [InlineData(2, 2)]
-        [InlineData(2, 4)]
-        [InlineData(3, 0)]
-        [InlineData(3, 4)]
-        [InlineData(4, 0)]
-        [InlineData(4, 1)]
-        [InlineData(4, 2)]
-        [InlineData(4, 3)]
-        [InlineData(4, 4)]
-        public void Coordinates_are_not_adjacent(byte x, byte y)
+        [Fact]
+        public void Revealing_tile_with_no_mine_and_has_adjacent_mines_only_reveals_single_tile()
         {
-            var origin = new Coordinates(2, 2);
-            var coordindates = new Coordinates(x, y);
-            var isAdjacent = Engine.IsAdjacentTo(origin, coordindates);
+            var board = Engine.GeneratePureBoard(2, 2, 1);
+            var origin = new Coordinates(1, 0);
+            var turn = new Turn(origin, TileOperation.Reveal);
+            var fin = Engine.CalculateBoard(board, turn);
+            var tile = fin.Tiles.Single(x => x.Coordinates == origin);
+            var everyOtherTileHasNotChanged = fin.Tiles.All(x => x.Equals(tile) || board.Tiles.Contains(x));
 
-            Assert.False(Engine.IsAdjacentTo(origin, coordindates));
+            Assert.True(tile.State == TileState.Revealed);
+            Assert.True(everyOtherTileHasNotChanged);
         }
     }
 }

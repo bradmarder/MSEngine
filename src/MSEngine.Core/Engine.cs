@@ -132,7 +132,7 @@ namespace MSEngine.Core
                 throw new InvalidGameStateException("Operations not allowed on revealed tiles");
             }
 
-            if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (!targetTile.HasMine && targetTile.AdjacentMineCount > 0))
+            if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !targetTile.HasMine && targetTile.AdjacentMineCount > 0))
             {
                 var tiles = board.Tiles.Select(x => x.Coordinates == targetTile.Coordinates ? new Tile(x, turn.Operation) : x);
                 return new Board(tiles);
