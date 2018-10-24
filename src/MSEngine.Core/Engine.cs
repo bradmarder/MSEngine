@@ -81,18 +81,15 @@ namespace MSEngine.Core
                 throw new InvalidGameStateException("Turns have coordinates that are outside the board");
             }
 
-            return state.Turns.Aggregate(state, (x, y) =>
+            return state.Turns.Aggregate(state.Board, (x, y) =>
             {
-                if (x.Board.Status == BoardStatus.Completed || x.Board.Status == BoardStatus.Failed)
+                if (x.Status == BoardStatus.Completed || x.Status == BoardStatus.Failed)
                 {
                     throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
                 }
 
-                var turns = x.Turns.Dequeue(out var turn);
-                var board = CalculateBoard(x.Board, turn);
-                return new GameState(board, turns);
-            })
-            .Board;
+                return CalculateBoard(x, y);
+            });
         }
 
         /// <summary>
