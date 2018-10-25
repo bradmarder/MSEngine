@@ -22,7 +22,7 @@ namespace MSEngine.Tests
             var coordindates = new Coordinates(x, y);
             var isAdjacent = Engine.IsAdjacentTo(origin, coordindates);
 
-            Assert.True(Engine.IsAdjacentTo(origin, coordindates));
+            Assert.True(isAdjacent);
         }
 
         [Theory]
@@ -49,7 +49,7 @@ namespace MSEngine.Tests
             var coordindates = new Coordinates(x, y);
             var isAdjacent = Engine.IsAdjacentTo(origin, coordindates);
 
-            Assert.False(Engine.IsAdjacentTo(origin, coordindates));
+            Assert.False(isAdjacent);
         }
     }
 }

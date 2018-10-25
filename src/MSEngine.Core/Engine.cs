@@ -74,32 +74,24 @@ namespace MSEngine.Core
             return new Board(tiles);
         }
 
-        public static Board CalculateBoard(in GameState state)
+        public static Board CalculateBoard(GameState state)
         {
             if (state.HasInvalidTurns)
             {
                 throw new InvalidGameStateException("Turns have coordinates that are outside the board");
             }
 
-            return state.Turns.Aggregate(state.Board, (x, y) =>
-            {
-                if (x.Status == BoardStatus.Completed || x.Status == BoardStatus.Failed)
-                {
-                    throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
-                }
-
-                return CalculateBoard(x, y);
-            });
+            return state.Turns.Aggregate(state.Board, CalculateBoard);
         }
 
         /// <summary>
         /// A pure method which does not randomize mine location. Intended for testing purposes.
         /// </summary>
-        internal static Board GeneratePureBoard(byte columns, byte rows, byte mineCount) =>
+            internal static Board GeneratePureBoard(byte columns, byte rows, byte mineCount) =>
             GenerateBoard(columns, rows, mineCount, _purePlaceholderShuffler);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool IsAdjacentTo(in Coordinates coordinateOne, in Coordinates coordinateTwo)
+        internal static bool IsAdjacentTo(Coordinates coordinateOne, Coordinates coordinateTwo)
         {
             var x = coordinateOne.X;
             var y = coordinateOne.Y;
@@ -122,9 +114,13 @@ namespace MSEngine.Core
                     .Select(y => new Coordinates((byte)x, (byte)y)));
         }
 
-        internal static Board CalculateBoard(in Board board, Turn turn)
+        internal static Board CalculateBoard(Board board, Turn turn)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
+            if (board.Status == BoardStatus.Completed || board.Status == BoardStatus.Failed)
+            {
+                throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
+            }
 
             var targetTile = board.Tiles.Single(x => x.Coordinates == turn.Coordinates);
             if (targetTile.State == TileState.Revealed)
@@ -153,7 +149,7 @@ namespace MSEngine.Core
         /// </summary>
         /// <param name="board"></param>
         /// <returns></returns>
-        internal static Board GetFailedBoard(in Board board)
+        internal static Board GetFailedBoard(Board board)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
@@ -165,7 +161,7 @@ namespace MSEngine.Core
             return new Board(tiles);
         }
 
-        internal static Board GetChainReactionBoard(in Board board, Tile targetTile)
+        internal static Board GetChainReactionBoard(Board board, Tile targetTile)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 

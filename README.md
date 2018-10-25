@@ -3,16 +3,12 @@
 
 ### The core concept of MSEngine (pseudocode)
 ```csharp
-public readonly struct GameState
+readonly struct GameState
 {
-    public Board Board { get; }
-    public Queue<Turn> Turns { get; }
+    Board Board { get; }
+    Queue<Turn> Turns { get; }
 }
-while (turns.Any())
-{
-    var turn = turns.Dequeue();
-    board = CalculateBoard(board, turn);
-}
+static Board CalculateBoard(GameState state) => state.Turns.Aggregate(state.Board, CalculateBoard);
 ```
 
 ### Notes

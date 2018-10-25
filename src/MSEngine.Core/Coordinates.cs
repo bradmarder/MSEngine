@@ -5,7 +5,7 @@ namespace MSEngine.Core
 {
     public readonly struct Coordinates : IEquatable<Coordinates>
     {
-        public Coordinates(in byte x, in byte y)
+        public Coordinates(byte x, byte y)
         {
             X = x;
             Y = y;

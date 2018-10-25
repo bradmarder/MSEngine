@@ -82,7 +82,7 @@ namespace MSEngine.Tests
             var tile = fin.Tiles.Single(x => x.Coordinates == origin);
             var everyOtherTileHasNotChanged = fin.Tiles.All(x => x.Equals(tile) || board.Tiles.Contains(x));
 
-            Assert.True(tile.State == state);
+            Assert.Equal(state, tile.State);
             Assert.True(everyOtherTileHasNotChanged);
         }
 
@@ -96,7 +96,7 @@ namespace MSEngine.Tests
             var tile = fin.Tiles.Single(x => x.Coordinates == origin);
             var everyOtherTileHasNotChanged = fin.Tiles.All(x => x.Equals(tile) || board.Tiles.Contains(x));
 
-            Assert.True(tile.State == TileState.Revealed);
+            Assert.Equal(TileState.Revealed, tile.State);
             Assert.True(everyOtherTileHasNotChanged);
         }
     }

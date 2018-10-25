@@ -13,7 +13,7 @@ namespace MSEngine.Core
             [TileOperation.Reveal] = TileState.Revealed
         };
 
-        public Tile(in Coordinates coordinates, in bool hasMine, in byte adjacentMineCount)
+        public Tile(Coordinates coordinates, bool hasMine, byte adjacentMineCount)
         {
             if (adjacentMineCount < 0 || adjacentMineCount > 8) { throw new ArgumentOutOfRangeException(nameof(adjacentMineCount)); }
 
@@ -23,7 +23,7 @@ namespace MSEngine.Core
             State = TileState.Hidden;
         }
 
-        public Tile(in Tile tile, in TileOperation operation)
+        public Tile(Tile tile, TileOperation operation)
         {
             if (!Enum.IsDefined(typeof(TileOperation), operation)) { throw new ArgumentOutOfRangeException(nameof(operation)); }
 

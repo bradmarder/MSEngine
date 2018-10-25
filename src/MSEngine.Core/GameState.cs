@@ -9,7 +9,7 @@ namespace MSEngine.Core
     /// </summary>
     public readonly struct GameState
     {
-        public GameState(in Board board, in IImmutableQueue<Turn> turns)
+        public GameState(Board board, IImmutableQueue<Turn> turns)
         {
             Board = board ?? throw new ArgumentNullException(nameof(board));
             Turns = turns ?? throw new ArgumentNullException(nameof(turns));

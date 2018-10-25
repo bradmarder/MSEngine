@@ -6,7 +6,7 @@ namespace MSEngine.Core
 {
     public class Board
     {
-        public Board(in IEnumerable<Tile> tiles)
+        public Board(IEnumerable<Tile> tiles)
         {
             if (tiles == null) { throw new ArgumentNullException(nameof(tiles)); }
 

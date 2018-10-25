@@ -12,6 +12,16 @@ namespace MSEngine.ConsoleApp
     {
         static void Main(string[] args)
         {
+            var watch = new System.Diagnostics.Stopwatch();
+            watch.Start();
+            Enumerable
+                .Range(0, 100)
+                .AsParallel()
+                .Select(_ => GetTestExpertBoardGenerationTime())
+                .ToList();
+            watch.Stop();
+            Console.WriteLine($"Time to generate 100 expert boards = {watch.ElapsedMilliseconds} milliseconds");
+
             var board = Engine.GenerateRandomBeginnerBoard();
             var turns = ImmutableQueue.Create(new Turn(new Coordinates(4, 4), TileOperation.Reveal));
             var state = new GameState(board, turns);
@@ -56,7 +66,7 @@ namespace MSEngine.ConsoleApp
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static char GetTileChar(in Tile tile)
+        public static char GetTileChar(Tile tile)
         {
             switch (tile)
             {
