@@ -1,6 +1,7 @@
 # MSEngine
 #### A Minesweeper Engine built using functional programming paradigms with c# and .NET Standard 2.0
 
+
 ### The core concept of MSEngine (pseudocode)
 ```csharp
 readonly struct GameState
@@ -21,9 +22,18 @@ static Board CalculateBoard(GameState state) => state.Turns.Aggregate(state.Boar
 - The `System.Collections.Immutable` library has abysmal performance relative to it's mutable counterparts
 
 ### API
+#### All methods are thread safe
 ```csharp
+static Board GenerateRandomBeginnerBoard();
+static Board GenerateRandomIntermediateBoard();
+static Board GenerateRandomExpertBoard()
 static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount);
-static Board CalculateBoard(GameState state);
+
+[Pure]
+static Board CalculateBoard(Board board, Queue<Turn> turns);
+
+[Pure]
+static Board CalculateBoard(Board board, Turn turn);
 ```
 
 ### Tests

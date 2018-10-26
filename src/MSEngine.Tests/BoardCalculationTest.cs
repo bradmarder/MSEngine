@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using System.Collections.Immutable;
+using System.Collections.Generic;
 using Xunit;
 using MSEngine.Core;
 
@@ -31,7 +31,7 @@ namespace MSEngine.Tests
             Assert.Equal(BoardStatus.Completed, boardAfterFirstTurn.Status);
 
             var secondTurn = new Turn(0, 1, operation);
-            
+
             Assert.Throws<InvalidGameStateException>(() => Engine.CalculateBoard(boardAfterFirstTurn, secondTurn));
         }
 
@@ -42,22 +42,29 @@ namespace MSEngine.Tests
         public void Throws_exception_if_any_operation_applied_on_revealed_tile(TileOperation operation)
         {
             var board = Engine.GeneratePureBoard(2, 2, 1);
-            var turns = ImmutableQueue.Create(
-                new Turn(1, 1, TileOperation.Reveal),
-                new Turn(1, 1, operation));
-            var state = new GameState(board, turns);
+            var turns = new Queue<Turn>();
+            turns.Enqueue(new Turn(1, 1, TileOperation.Reveal));
+            turns.Enqueue(new Turn(1, 1, operation));
 
-            Assert.Throws<InvalidGameStateException>(() => Engine.CalculateBoard(state));
+            Assert.Throws<InvalidGameStateException>(() => Engine.CalculateBoard(board, turns));
         }
 
         [Fact]
         public void Throws_exception_if_turn_coordinates_are_outside_board()
         {
             var board = Engine.GeneratePureBoard(1, 1, 0);
-            var turns = ImmutableQueue.Create(new Turn(1, 0, TileOperation.Reveal));
-            var state = new GameState(board, turns);
+            var turn = new Turn(1, 0, TileOperation.Reveal);
 
-            Assert.Throws<InvalidGameStateException>(() => Engine.CalculateBoard(state));
+            Assert.Throws<InvalidGameStateException>(() => Engine.CalculateBoard(board, turn));
+        }
+
+        [Fact]
+        public void Throws_exception_if_operation_is_flag_and_no_flags_available()
+        {
+            var board = Engine.GeneratePureBoard(1, 1, 0);
+            var turn = new Turn(0, 0, TileOperation.Flag);
+
+            Assert.Throws<InvalidGameStateException>(() => Engine.CalculateBoard(board, turn));
         }
 
         [Fact]

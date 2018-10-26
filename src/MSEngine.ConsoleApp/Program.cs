@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -12,40 +11,25 @@ namespace MSEngine.ConsoleApp
     {
         static void Main(string[] args)
         {
+            const int boardCount = 100;
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
-            Enumerable
-                .Range(0, 100)
-                .AsParallel()
-                .Select(_ => GetTestExpertBoardGenerationTime())
-                .ToList();
+            ParallelEnumerable
+                .Range(0, boardCount)
+                .ForAll(_ => Engine.GenerateRandomExpertBoard());
             watch.Stop();
-            Console.WriteLine($"Time to generate 100 expert boards = {watch.ElapsedMilliseconds} milliseconds");
+            Console.WriteLine($"Time to generate {boardCount} expert boards = {watch.ElapsedMilliseconds} milliseconds");
 
-            var board = Engine.GenerateRandomBeginnerBoard();
-            var turns = ImmutableQueue.Create(new Turn(new Coordinates(4, 4), TileOperation.Reveal));
-            var state = new GameState(board, turns);
-            var foo = Engine.CalculateBoard(state);
+            var board = Engine.GenerateRandomExpertBoard();
+            var turn = new Turn(new Coordinates(4, 4), TileOperation.Reveal);
+            var foo = Engine.CalculateBoard(board, turn);
 
             Console.WriteLine(GetBoardAsciiArt(foo));
-
-            
-            Console.ReadLine();
-        }
-
-        private static string GetTestExpertBoardGenerationTime()
-        {
-            var watch = new System.Diagnostics.Stopwatch();
-            watch.Start();
-            var expertBoard = Engine.GenerateRandomExpertBoard();
-            watch.Stop();
-
-            return $"{nameof(Engine.GenerateRandomExpertBoard)} time = {watch.ElapsedMilliseconds} milliseconds";
         }
 
         public static string GetBoardAsciiArt(Board board)
         {
-            var sb = new StringBuilder(board.Tiles.Count);
+            var sb = new StringBuilder(board.Tiles.Count());
 
             for (byte y = 0; y < board.Height; y++)
             {

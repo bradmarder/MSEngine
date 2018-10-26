@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -8,8 +7,6 @@ namespace MSEngine.Core
 {
     public static class Engine
     {
-        private static readonly Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> _purePlaceholderShuffler = x => x;
-
         /// <summary>
         /// Generates an 8x8 board with 10 mines
         /// </summary>
@@ -74,21 +71,57 @@ namespace MSEngine.Core
             return new Board(tiles);
         }
 
-        public static Board CalculateBoard(GameState state)
+        public static Board CalculateBoard(Board board, Queue<Turn> turns)
         {
-            if (state.HasInvalidTurns)
+            if (board == null) { throw new ArgumentNullException(nameof(board)); }
+            if (turns == null) { throw new ArgumentNullException(nameof(turns)); }
+
+            return turns.Aggregate(board, CalculateBoard);
+        }
+
+        public static Board CalculateBoard(Board board, Turn turn)
+        {
+            if (board == null) { throw new ArgumentNullException(nameof(board)); }
+            if (board.Status == BoardStatus.Completed || board.Status == BoardStatus.Failed)
             {
-                throw new InvalidGameStateException("Turns have coordinates that are outside the board");
+                throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
+            }
+            if (!board.Tiles.Any(x => x.Coordinates == turn.Coordinates))
+            {
+                throw new InvalidGameStateException("Turn has coordinates that are outside the board");
+            }
+            if (turn.Operation == TileOperation.Flag && board.FlagsAvailable == 0)
+            {
+                throw new InvalidGameStateException("No more flags available");
             }
 
-            return state.Turns.Aggregate(state.Board, CalculateBoard);
+            var targetTile = board.Tiles.Single(x => x.Coordinates == turn.Coordinates);
+            if (targetTile.State == TileState.Revealed)
+            {
+                throw new InvalidGameStateException("Operations not allowed on revealed tiles");
+            }
+
+            if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !targetTile.HasMine && targetTile.AdjacentMineCount > 0))
+            {
+                var tiles = board.Tiles.Select(x => x.Coordinates == targetTile.Coordinates ? new Tile(x, turn.Operation) : x);
+                return new Board(tiles);
+            }
+
+            if (turn.Operation == TileOperation.Reveal)
+            {
+                return targetTile.HasMine
+                    ? GetFailedBoard(board)
+                    : GetChainReactionBoard(board, targetTile);
+            }
+
+            throw new NotImplementedException(turn.Operation.ToString());
         }
 
         /// <summary>
         /// A pure method which does not randomize mine location. Intended for testing purposes.
         /// </summary>
-            internal static Board GeneratePureBoard(byte columns, byte rows, byte mineCount) =>
-            GenerateBoard(columns, rows, mineCount, _purePlaceholderShuffler);
+        internal static Board GeneratePureBoard(byte columns, byte rows, byte mineCount) =>
+            GenerateBoard(columns, rows, mineCount, Enumerable.AsEnumerable);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsAdjacentTo(Coordinates coordinateOne, Coordinates coordinateTwo)
@@ -112,36 +145,6 @@ namespace MSEngine.Core
                 .SelectMany(x => Enumerable
                     .Range(0, columns)
                     .Select(y => new Coordinates((byte)x, (byte)y)));
-        }
-
-        internal static Board CalculateBoard(Board board, Turn turn)
-        {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-            if (board.Status == BoardStatus.Completed || board.Status == BoardStatus.Failed)
-            {
-                throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
-            }
-
-            var targetTile = board.Tiles.Single(x => x.Coordinates == turn.Coordinates);
-            if (targetTile.State == TileState.Revealed)
-            {
-                throw new InvalidGameStateException("Operations not allowed on revealed tiles");
-            }
-
-            if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !targetTile.HasMine && targetTile.AdjacentMineCount > 0))
-            {
-                var tiles = board.Tiles.Select(x => x.Coordinates == targetTile.Coordinates ? new Tile(x, turn.Operation) : x);
-                return new Board(tiles);
-            }
-
-            if (turn.Operation == TileOperation.Reveal)
-            {
-                return targetTile.HasMine
-                    ? GetFailedBoard(board)
-                    : GetChainReactionBoard(board, targetTile);
-            }
-
-            throw new NotImplementedException(turn.Operation.ToString());
         }
 
         /// <summary>

@@ -8,12 +8,10 @@ namespace MSEngine.Core
     {
         public Board(IEnumerable<Tile> tiles)
         {
-            if (tiles == null) { throw new ArgumentNullException(nameof(tiles)); }
-
-            Tiles = new HashSet<Tile>(tiles);
+            Tiles = tiles ?? throw new ArgumentNullException(nameof(tiles));
         }
 
-        public HashSet<Tile> Tiles { get; }
+        public IEnumerable<Tile> Tiles { get; }
 
         public byte Width => (byte)(1 + Tiles.Max(x => x.Coordinates.X));
         public byte Height => (byte)(1 + Tiles.Max(x => x.Coordinates.Y));

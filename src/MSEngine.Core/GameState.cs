@@ -17,17 +17,5 @@ namespace MSEngine.Core
 
         public Board Board { get; }
         public IImmutableQueue<Turn> Turns { get; }
-
-        /// <summary>
-        /// True if any of the turns have coordinates that are outside the board
-        /// </summary>
-        public bool HasInvalidTurns
-        {
-            get
-            {
-                var boardCoordinates = Board.Tiles.Select(x => x.Coordinates);
-                return Turns.Any(x => !boardCoordinates.Contains(x.Coordinates));
-            }
-        }
     }
 }

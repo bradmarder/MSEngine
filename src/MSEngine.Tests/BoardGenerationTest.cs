@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Xunit;
 using MSEngine.Core;
 
@@ -26,7 +27,8 @@ namespace MSEngine.Tests
         {
             var expectedTileCount = columns * rows;
             var board = Engine.GeneratePureBoard(columns, rows, 0);
-            Assert.Equal(expectedTileCount, board.Tiles.Count);
+
+            Assert.Equal(expectedTileCount, board.Tiles.Count());
         }
 
         [Theory]
@@ -36,6 +38,7 @@ namespace MSEngine.Tests
         public void Expected_mine_count_equals_actual_mine_count(byte expectedMineCount)
         {
             var board = Engine.GeneratePureBoard(30, 16, expectedMineCount);
+
             Assert.Equal(expectedMineCount, board.MineCount);
         }
 
