@@ -26,7 +26,7 @@ static Board CalculateBoard(GameState state) => state.Turns.Aggregate(state.Boar
 ```csharp
 static Board GenerateRandomBeginnerBoard();
 static Board GenerateRandomIntermediateBoard();
-static Board GenerateRandomExpertBoard()
+static Board GenerateRandomExpertBoard();
 static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount);
 
 [Pure]
