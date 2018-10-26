@@ -71,17 +71,41 @@ namespace MSEngine.Core
             return new Board(tiles);
         }
 
-        public static Board CalculateBoard(Board board, Queue<Turn> turns)
+        public static Board ComputeBoard(Board board, Queue<Turn> turns)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
             if (turns == null) { throw new ArgumentNullException(nameof(turns)); }
 
-            return turns.Aggregate(board, CalculateBoard);
+            return turns.Aggregate(board, ComputeBoard);
         }
 
-        public static Board CalculateBoard(Board board, Turn turn)
+        public static Board ComputeBoard(Board board, Turn turn)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
+
+            var targetTile = board.Tiles.Single(x => x.Coordinates == turn.Coordinates);
+
+            // these cases will only affect a single tile
+            if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !targetTile.HasMine && targetTile.AdjacentMineCount > 0))
+            {
+                var tiles = board.Tiles.Select(x => x.Coordinates == targetTile.Coordinates ? new Tile(x, turn.Operation) : x);
+                return new Board(tiles);
+            }
+
+            if (turn.Operation == TileOperation.Reveal)
+            {
+                return targetTile.HasMine
+                    ? GetFailedBoard(board)
+                    : GetChainReactionBoard(board, targetTile);
+            }
+
+            throw new NotImplementedException(turn.Operation.ToString());
+        }
+
+        public static void EnsureValidBoardConfiguration(Board board, Turn turn)
+        {
+            if (board == null) { throw new ArgumentNullException(nameof(board)); }
+
             if (board.Status == BoardStatus.Completed || board.Status == BoardStatus.Failed)
             {
                 throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
@@ -100,21 +124,14 @@ namespace MSEngine.Core
             {
                 throw new InvalidGameStateException("Operations not allowed on revealed tiles");
             }
-
-            if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !targetTile.HasMine && targetTile.AdjacentMineCount > 0))
+            if (targetTile.State == TileState.Flagged && turn.Operation == TileOperation.Flag)
             {
-                var tiles = board.Tiles.Select(x => x.Coordinates == targetTile.Coordinates ? new Tile(x, turn.Operation) : x);
-                return new Board(tiles);
+                throw new InvalidGameStateException("May not flag a tile that is already flagged");
             }
-
-            if (turn.Operation == TileOperation.Reveal)
+            if (turn.Operation == TileOperation.RemoveFlag && targetTile.State != TileState.Flagged)
             {
-                return targetTile.HasMine
-                    ? GetFailedBoard(board)
-                    : GetChainReactionBoard(board, targetTile);
+                throw new InvalidGameStateException("Impossible to remove flag from un-flagged tile");
             }
-
-            throw new NotImplementedException(turn.Operation.ToString());
         }
 
         /// <summary>
@@ -176,7 +193,7 @@ namespace MSEngine.Core
                 .Where(x => IsAdjacentTo(x.Coordinates, targetTile.Coordinates))
                 .Where(x => x.AdjacentMineCount == 0);
             var expanding = new Queue<Tile>(unrevealedAdjacentTiles);
-            var expandedCoordinates = new HashSet<Coordinates>();
+            var expandedCoordinates = new HashSet<Coordinates> { targetTile.Coordinates };
 
             while (expanding.Any())
             {

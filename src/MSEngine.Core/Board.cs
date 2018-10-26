@@ -6,7 +6,7 @@ namespace MSEngine.Core
 {
     public class Board
     {
-        public Board(IEnumerable<Tile> tiles)
+        internal Board(IEnumerable<Tile> tiles)
         {
             Tiles = tiles ?? throw new ArgumentNullException(nameof(tiles));
         }
@@ -22,5 +22,8 @@ namespace MSEngine.Core
             Tiles.Any(x => x.HasMineExploded) ? BoardStatus.Failed
             : Tiles.All(x => x.SatisfiesWinningCriteria) ? BoardStatus.Completed
             : BoardStatus.Pending;
+        public bool HasFailedOnFirstReveal =>
+            Tiles.Count(x => x.State == TileState.Revealed) == 1
+            && Status == BoardStatus.Failed;
     }
 }

@@ -2,8 +2,10 @@
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 
 using MSEngine.Core;
+using MSEngine.Solver;
 
 namespace MSEngine.ConsoleApp
 {
@@ -12,19 +14,53 @@ namespace MSEngine.ConsoleApp
         static void Main(string[] args)
         {
             const int boardCount = 100;
-            var watch = new System.Diagnostics.Stopwatch();
-            watch.Start();
+            var genWatch = new System.Diagnostics.Stopwatch();
+            genWatch.Start();
             ParallelEnumerable
                 .Range(0, boardCount)
                 .ForAll(_ => Engine.GenerateRandomExpertBoard());
-            watch.Stop();
-            Console.WriteLine($"Time to generate {boardCount} expert boards = {watch.ElapsedMilliseconds} milliseconds");
+            genWatch.Stop();
+            Console.WriteLine($"Time to generate {boardCount} expert boards = {genWatch.ElapsedMilliseconds} milliseconds");
 
-            var board = Engine.GenerateRandomExpertBoard();
-            var turn = new Turn(new Coordinates(4, 4), TileOperation.Reveal);
-            var foo = Engine.CalculateBoard(board, turn);
+            var wins = 0;
+            var solver = new RandomSolver();
+            Func<Board> getBoard = () => Engine.GenerateRandomExpertBoard();
+            genWatch.Start();
 
-            Console.WriteLine(GetBoardAsciiArt(foo));
+            // 100ms per iteration for random solving expert board
+            // this indicates that more complex solving strategies may take significantly longer?
+            ParallelEnumerable
+                .Range(0, 100)
+                .ForAll(_ =>
+                {
+                    var board = getBoard();
+
+                    while (board.Status == BoardStatus.Pending)
+                    {
+                        var turn = solver.ComputeTurn(board);
+                        Engine.EnsureValidBoardConfiguration(board, turn);
+                        board = Engine.ComputeBoard(board, turn);
+
+                        // Get new board if mine explodes on first reveal
+                        if (board.HasFailedOnFirstReveal)
+                        {
+                            board = getBoard();
+                        }
+                    }
+                    if (board.Status == BoardStatus.Completed)
+                    {
+                        Interlocked.Increment(ref wins);
+                    }
+                });
+
+            genWatch.Stop();
+            Console.WriteLine($"wins = {wins} in {genWatch.ElapsedMilliseconds} milliseconds");
+
+            //var board = Engine.GenerateRandomExpertBoard();
+            //var turn = new Turn(4, 4, TileOperation.Reveal);
+            //var foo = Engine.ComputeBoard(board, turn);
+
+            //Console.WriteLine(GetBoardAsciiArt(foo));
         }
 
         public static string GetBoardAsciiArt(Board board)

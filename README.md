@@ -4,16 +4,16 @@
 
 ### The core concept of MSEngine (pseudocode)
 ```csharp
-readonly struct GameState
+class GameState
 {
     Board Board { get; }
     Queue<Turn> Turns { get; }
 }
-static Board CalculateBoard(GameState state) => state.Turns.Aggregate(state.Board, CalculateBoard);
+static Board ComputeBoard(GameState state) => state.Turns.Aggregate(state.Board, ComputeBoard);
 ```
 
 ### Notes
-- With just the initial board and a queue of turns, we can calculate the expected state of any minesweeper game
+- With just the initial board and a queue of turns, we can compute the expected state of any minesweeper game
 - This approach allows for **replays** and **backwards time travel**
 - Inspired by the Starcraft 2 replay engine
 - Everything immutable
@@ -30,10 +30,13 @@ static Board GenerateRandomExpertBoard();
 static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount);
 
 [Pure]
-static Board CalculateBoard(Board board, Queue<Turn> turns);
+static void EnsureValidBoardConfiguration(Board board, Turn turn)
 
 [Pure]
-static Board CalculateBoard(Board board, Turn turn);
+static Board ComputeBoard(Board board, Queue<Turn> turns);
+
+[Pure]
+static Board ComputeBoard(Board board, Turn turn);
 ```
 
 ### Tests

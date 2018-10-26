@@ -4,7 +4,8 @@ namespace MSEngine.Core
 {
     public readonly struct Turn
     {
-        public Turn(byte columns, byte rows, TileOperation operation) : this(new Coordinates(columns, rows), operation) { }
+        public Turn(byte x, byte y, TileOperation operation) : this(new Coordinates(x, y), operation) { }
+
         public Turn(Coordinates coordinates, TileOperation operation)
         {
             if (!Enum.IsDefined(typeof(TileOperation), operation)) { throw new ArgumentOutOfRangeException(nameof(operation)); }
@@ -13,7 +14,7 @@ namespace MSEngine.Core
             Operation = operation;
             CreatedDate = DateTimeOffset.UtcNow;
         }
-        
+
         public Coordinates Coordinates { get; }
         public TileOperation Operation { get; }
         public DateTimeOffset CreatedDate { get; }

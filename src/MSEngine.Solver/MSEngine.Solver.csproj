@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\MSEngine.Core\MSEngine.Core.csproj" />
+    <ProjectReference Include="..\MSEngine.Core\MSEngine.Core.csproj" />
   </ItemGroup>
 
 </Project>
