@@ -7,7 +7,7 @@
 class GameState
 {
     Board Board { get; }
-    Queue<Turn> Turns { get; }
+    IImmutableQueue<Turn> Turns { get; }
 }
 static Board ComputeBoard(GameState state) => state.Turns.Aggregate(state.Board, ComputeBoard);
 ```
@@ -30,7 +30,7 @@ static Board GenerateRandomExpertBoard();
 static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount);
 
 [Pure]
-static void EnsureValidBoardConfiguration(Board board, Turn turn)
+static void EnsureValidBoardConfiguration(Board board, Turn turn);
 
 [Pure]
 static Board ComputeBoard(Board board, Queue<Turn> turns);

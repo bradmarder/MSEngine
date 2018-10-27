@@ -7,7 +7,7 @@ namespace MSEngine.Core
     /// <summary>
     /// Absolute minimum state required
     /// </summary>
-    public readonly struct GameState
+    public class GameState
     {
         public GameState(Board board, IImmutableQueue<Turn> turns)
         {

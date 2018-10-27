@@ -34,18 +34,8 @@ namespace MSEngine.Core
         /// <returns></returns>
         public static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount) =>
             GenerateBoard(columns, rows, mineCount, Utilities.GetShuffledItems);
-
-        /// <summary>
-        /// Generates a minesweeper board.
-        /// This is a "Potentially Pure" function.
-        /// This implies that if the shuffler function provided is pure, then this function is pure as well.
-        /// </summary>
-        /// <param name="columns">Max value of 30</param>
-        /// <param name="rows">Max value of 16</param>
-        /// <param name="mineCount">Must be less than tile count (columns * height)</param>
-        /// <param name="shuffler"></param>
-        /// <returns></returns>
-        public static Board GenerateBoard(byte columns, byte rows, byte mineCount, Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> shuffler)
+        
+        internal static Board GenerateBoard(byte columns, byte rows, byte mineCount, Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> shuffler)
         {
             if (columns == byte.MinValue || columns > 30) { throw new ArgumentOutOfRangeException(nameof(columns)); }
             if (rows == byte.MinValue || rows > 16) { throw new ArgumentOutOfRangeException(nameof(rows)); }
@@ -102,6 +92,18 @@ namespace MSEngine.Core
             throw new NotImplementedException(turn.Operation.ToString());
         }
 
+        /// <summary>
+        /// Validates a board-turn configuration-operation.
+        /// Calling this method is optional - It's intended usage is only when building-testing a client
+        /// </summary>
+        /// <exception cref="InvalidGameStateException">
+        /// -Turns are not allowed if board status is completed/failed
+        /// -Turn has coordinates that are outside the board
+        /// -No more flags available
+        /// -Operations not allowed on revealed tiles
+        /// -May not flag a tile that is already flagged
+        /// -Impossible to remove flag from un-flagged tile
+        /// </exception>
         public static void EnsureValidBoardConfiguration(Board board, Turn turn)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
