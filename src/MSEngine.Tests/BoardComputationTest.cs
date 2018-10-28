@@ -55,5 +55,21 @@ namespace MSEngine.Tests
             Assert.Equal(TileState.Revealed, tile.State);
             Assert.True(everyOtherTileHasNotChanged);
         }
+
+        [Fact]
+        public void Chording_tile_reveals_surrounding_tiles()
+        {
+            var board = Engine.GeneratePureBoard(2, 2, 1);
+            var firstTurn = new Turn(0, 0, TileOperation.Flag);
+            var secondTurn = new Turn(1, 0, TileOperation.Reveal);
+            var thirdTurn = new Turn(1, 0, TileOperation.Chord);
+            var turns = new Queue<Turn>(new[] { firstTurn, secondTurn, thirdTurn });
+            var finalBoard = Engine.ComputeBoard(board, turns);
+
+            // 0,0 has the only mine, so we flag it
+            // revealing 1,0 shows a 1
+            // chording 1,0 should reveal 0,1 and 1,1 - thus completing the board
+            Assert.Equal(BoardStatus.Completed, finalBoard.Status);
+        }
     }
 }

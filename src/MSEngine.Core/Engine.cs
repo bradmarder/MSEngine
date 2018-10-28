@@ -34,7 +34,7 @@ namespace MSEngine.Core
         /// <returns></returns>
         public static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount) =>
             GenerateBoard(columns, rows, mineCount, Utilities.GetShuffledItems);
-        
+
         internal static Board GenerateBoard(byte columns, byte rows, byte mineCount, Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> shuffler)
         {
             if (columns == byte.MinValue || columns > 30) { throw new ArgumentOutOfRangeException(nameof(columns)); }
@@ -89,6 +89,11 @@ namespace MSEngine.Core
                     : GetChainReactionBoard(board, targetTile);
             }
 
+            if (turn.Operation == TileOperation.Chord)
+            {
+                return GetChordBord(board, targetTile);
+            }
+
             throw new NotImplementedException(turn.Operation.ToString());
         }
 
@@ -122,9 +127,10 @@ namespace MSEngine.Core
             }
 
             var targetTile = board.Tiles.Single(x => x.Coordinates == turn.Coordinates);
-            if (targetTile.State == TileState.Revealed)
+
+            if (targetTile.State == TileState.Revealed && turn.Operation != TileOperation.Chord)
             {
-                throw new InvalidGameStateException("Operations not allowed on revealed tiles");
+                throw new InvalidGameStateException("Only chord operations are allowed on revealed tiles");
             }
             if (targetTile.State == TileState.Flagged && turn.Operation == TileOperation.Flag)
             {
@@ -133,6 +139,22 @@ namespace MSEngine.Core
             if (turn.Operation == TileOperation.RemoveFlag && targetTile.State != TileState.Flagged)
             {
                 throw new InvalidGameStateException("Impossible to remove flag from un-flagged tile");
+            }
+            if (turn.Operation == TileOperation.Chord && targetTile.State != TileState.Revealed)
+            {
+                throw new InvalidGameStateException("May only chord a revealed tile");
+            }
+            if (turn.Operation == TileOperation.Chord && targetTile.AdjacentMineCount == byte.MinValue)
+            {
+                throw new InvalidGameStateException("May only chord a tile that has adjacent mines");
+            }
+
+            var targetTileAdjacentFlagCount = board.Tiles.Count(x =>
+                x.State == TileState.Flagged
+                && IsAdjacentTo(x.Coordinates, targetTile.Coordinates));
+            if (turn.Operation == TileOperation.Chord && targetTile.AdjacentMineCount != targetTileAdjacentFlagCount)
+            {
+                throw new InvalidGameStateException("May only chord a tile when adjacent mine count equals adjacent tile flag count");
             }
         }
 
@@ -192,8 +214,8 @@ namespace MSEngine.Core
                 // if an adjacent tile has a "false flag", it does not expand revealing
                 .Where(x => x.State == TileState.Hidden)
 
-                .Where(x => IsAdjacentTo(x.Coordinates, targetTile.Coordinates))
-                .Where(x => x.AdjacentMineCount == 0);
+                .Where(x => x.AdjacentMineCount == 0)
+                .Where(x => IsAdjacentTo(x.Coordinates, targetTile.Coordinates));
             var expanding = new Queue<Tile>(unrevealedAdjacentTiles);
             var expandedCoordinates = new HashSet<Coordinates> { targetTile.Coordinates };
 
@@ -207,11 +229,10 @@ namespace MSEngine.Core
                     continue;
                 }
 
-                // concat adjacent unflagged tiles to the queue
                 board.Tiles
-                    .Where(x => IsAdjacentTo(x.Coordinates, tile.Coordinates))
-                    .Where(x => !expandedCoordinates.Contains(x.Coordinates))
                     .Where(x => x.State != TileState.Flagged)
+                    .Where(x => !expandedCoordinates.Contains(x.Coordinates))
+                    .Where(x => IsAdjacentTo(x.Coordinates, tile.Coordinates))
                     .ToList()
                     .ForEach(expanding.Enqueue);
             }
@@ -221,6 +242,20 @@ namespace MSEngine.Core
                     ? new Tile(x, TileOperation.Reveal)
                     : x);
 
+            return new Board(tiles);
+        }
+
+        internal static Board GetChordBord(Board board, Tile targetTile)
+        {
+            if (board == null) { throw new ArgumentNullException(nameof(board)); }
+
+            var revealCoordinates = board.Tiles
+                .Where(x => x.State == TileState.Hidden)
+                .Where(x => IsAdjacentTo(x.Coordinates, targetTile.Coordinates))
+                .Select(x => x.Coordinates);
+            var set = new HashSet<Coordinates>(revealCoordinates);
+
+            var tiles = board.Tiles.Select(x => set.Contains(x.Coordinates) ? new Tile(x, TileOperation.Reveal) : x);
             return new Board(tiles);
         }
     }

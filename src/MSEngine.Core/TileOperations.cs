@@ -6,6 +6,7 @@ namespace MSEngine.Core
     {
         Reveal,
         Flag,
-        RemoveFlag
+        RemoveFlag,
+        Chord
     }
 }
