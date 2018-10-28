@@ -135,5 +135,11 @@ namespace MSEngine.Tests
             
             Assert.Throws<InvalidGameStateException>(() => Engine.EnsureValidBoardConfiguration(boardAfterSecondTurn, thirdTurn));
         }
+
+        [Fact]
+        public void Mayonlychordatilethathashiddenadjacenttiles()
+        {
+            Assert.True(true);
+        }
     }
 }

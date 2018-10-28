@@ -22,8 +22,5 @@ namespace MSEngine.Core
             Tiles.Any(x => x.HasMineExploded) ? BoardStatus.Failed
             : Tiles.All(x => x.SatisfiesWinningCriteria) ? BoardStatus.Completed
             : BoardStatus.Pending;
-        public bool HasFailedOnFirstReveal =>
-            Tiles.Count(x => x.State == TileState.Revealed) == 1
-            && Status == BoardStatus.Failed;
     }
 }

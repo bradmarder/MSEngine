@@ -140,21 +140,28 @@ namespace MSEngine.Core
             {
                 throw new InvalidGameStateException("Impossible to remove flag from un-flagged tile");
             }
-            if (turn.Operation == TileOperation.Chord && targetTile.State != TileState.Revealed)
+            if (turn.Operation == TileOperation.Chord)
             {
-                throw new InvalidGameStateException("May only chord a revealed tile");
-            }
-            if (turn.Operation == TileOperation.Chord && targetTile.AdjacentMineCount == byte.MinValue)
-            {
-                throw new InvalidGameStateException("May only chord a tile that has adjacent mines");
-            }
+                if (targetTile.State != TileState.Revealed)
+                {
+                    throw new InvalidGameStateException("May only chord a revealed tile");
+                }
+                if (targetTile.AdjacentMineCount == byte.MinValue)
+                {
+                    throw new InvalidGameStateException("May only chord a tile that has adjacent mines");
+                }
+                var adjacentTiles = board.Tiles.Where(x => IsAdjacentTo(x.Coordinates, targetTile.Coordinates));
+                var targetTileAdjacentFlagCount = adjacentTiles.Count(x => x.State == TileState.Flagged);
+                var targetTileAdjacentHiddenCount = adjacentTiles.Count(x => x.State == TileState.Hidden);
 
-            var targetTileAdjacentFlagCount = board.Tiles.Count(x =>
-                x.State == TileState.Flagged
-                && IsAdjacentTo(x.Coordinates, targetTile.Coordinates));
-            if (turn.Operation == TileOperation.Chord && targetTile.AdjacentMineCount != targetTileAdjacentFlagCount)
-            {
-                throw new InvalidGameStateException("May only chord a tile when adjacent mine count equals adjacent tile flag count");
+                if (targetTile.AdjacentMineCount != targetTileAdjacentFlagCount)
+                {
+                    throw new InvalidGameStateException("May only chord a tile when adjacent mine count equals adjacent tile flag count");
+                }
+                if (targetTileAdjacentHiddenCount == byte.MinValue)
+                {
+                    throw new InvalidGameStateException("May only chord a tile that has hidden adjacent tiles");
+                }
             }
         }
 
@@ -165,7 +172,7 @@ namespace MSEngine.Core
             GenerateBoard(columns, rows, mineCount, Enumerable.AsEnumerable);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool IsAdjacentTo(Coordinates coordinateOne, Coordinates coordinateTwo)
+        public static bool IsAdjacentTo(Coordinates coordinateOne, Coordinates coordinateTwo)
         {
             var x = coordinateOne.X;
             var y = coordinateOne.Y;
@@ -215,9 +222,9 @@ namespace MSEngine.Core
                 .Where(x => x.State == TileState.Hidden)
 
                 .Where(x => x.AdjacentMineCount == 0)
-                .Where(x => IsAdjacentTo(x.Coordinates, targetTile.Coordinates));
+                .Where(x => x.Coordinates == targetTile.Coordinates || IsAdjacentTo(x.Coordinates, targetTile.Coordinates));
             var expanding = new Queue<Tile>(unrevealedAdjacentTiles);
-            var expandedCoordinates = new HashSet<Coordinates> { targetTile.Coordinates };
+            var expandedCoordinates = new HashSet<Coordinates>();
 
             while (expanding.Any())
             {

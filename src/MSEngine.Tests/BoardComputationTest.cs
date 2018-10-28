@@ -61,15 +61,53 @@ namespace MSEngine.Tests
         {
             var board = Engine.GeneratePureBoard(2, 2, 1);
             var firstTurn = new Turn(0, 0, TileOperation.Flag);
-            var secondTurn = new Turn(1, 0, TileOperation.Reveal);
-            var thirdTurn = new Turn(1, 0, TileOperation.Chord);
+            var secondTurn = new Turn(1, 1, TileOperation.Reveal);
+            var thirdTurn = new Turn(1, 1, TileOperation.Chord);
             var turns = new Queue<Turn>(new[] { firstTurn, secondTurn, thirdTurn });
             var finalBoard = Engine.ComputeBoard(board, turns);
 
             // 0,0 has the only mine, so we flag it
-            // revealing 1,0 shows a 1
-            // chording 1,0 should reveal 0,1 and 1,1 - thus completing the board
+            // revealing 1,1 shows a 1
+            // chording 1,1 should reveal 0,1 and 1,0 - thus completing the board
             Assert.Equal(BoardStatus.Completed, finalBoard.Status);
+        }
+
+        [Fact]
+        public void Revealing_tile_without_mine_and_zero_adjacent_mines_triggers_chain_reaction()
+        {
+            var board = Engine.GeneratePureBoard(3, 3, 1);
+            var targetTile = board.Tiles.Single(x => x.Coordinates.X == 2 && x.Coordinates.Y == 2);
+            var firstTurn = new Turn(2, 2, TileOperation.Reveal);
+            var finalBoard = Engine.ComputeBoard(board, firstTurn);
+            var mineTile = finalBoard.Tiles.Single(x => x.Coordinates.X == 0 && x.Coordinates.Y == 0);
+            var everyTileOtherThanMineTile = finalBoard.Tiles.Where(x => x.Coordinates != mineTile.Coordinates);
+
+            Assert.False(targetTile.HasMine);
+            Assert.Equal(0, targetTile.AdjacentMineCount);
+            Assert.True(mineTile.HasMine);
+            Assert.True(everyTileOtherThanMineTile.All(x => x.State == TileState.Revealed));
+        }
+
+        [Fact]
+        public void Chain_reaction_is_blocked_by_false_flag()
+        {
+            var board = Engine.GeneratePureBoard(5, 1, 0);
+            var firstTurn = new Turn(2, 0, TileOperation.Flag);
+            var secondTurn = new Turn(4, 0, TileOperation.Reveal);
+            var turns = new Queue<Turn>(new[] { firstTurn, secondTurn });
+            var finalBoard = Engine.ComputeBoard(board, turns);
+            var firstTwoTilesAreHidden = finalBoard.Tiles
+                .Where(x => x.Coordinates.X < 2)
+                .All(x => x.State == TileState.Hidden);
+            var lastTwoTilesAreRevealed = finalBoard.Tiles
+                .Where(x => x.Coordinates.X > 2)
+                .All(x => x.State == TileState.Revealed);
+            var middleTile = finalBoard.Tiles.Single(x => x.Coordinates.X == 2);
+
+            Assert.Equal(TileState.Flagged, middleTile.State);
+            Assert.Equal(BoardStatus.Pending, finalBoard.Status);
+            Assert.True(firstTwoTilesAreHidden);
+            Assert.True(lastTwoTilesAreRevealed);
         }
     }
 }

@@ -13,19 +13,11 @@ namespace MSEngine.ConsoleApp
     {
         static void Main(string[] args)
         {
-            const int boardCount = 100;
-            var genWatch = new System.Diagnostics.Stopwatch();
-            genWatch.Start();
-            ParallelEnumerable
-                .Range(0, boardCount)
-                .ForAll(_ => Engine.GenerateRandomExpertBoard());
-            genWatch.Stop();
-            Console.WriteLine($"Time to generate {boardCount} expert boards = {genWatch.ElapsedMilliseconds} milliseconds");
-
             var wins = 0;
-            var solver = new RandomSolver();
-            Func<Board> getBoard = () => Engine.GenerateRandomExpertBoard();
-            genWatch.Start();
+            var solver = new EliteSolver();
+            var watch = new System.Diagnostics.Stopwatch();
+            Func<Board> getBoard = () => Engine.GenerateRandomBeginnerBoard();
+            watch.Start();
 
             // 100ms per iteration for random solving expert board
             // this indicates that more complex solving strategies may take significantly longer?
@@ -34,33 +26,47 @@ namespace MSEngine.ConsoleApp
                 .ForAll(_ =>
                 {
                     var board = getBoard();
-
+                    var turnCount = 0;
                     while (board.Status == BoardStatus.Pending)
                     {
+                        //Console.WriteLine(GetBoardAsciiArt(board));
                         var turn = solver.ComputeTurn(board);
+                        //Console.WriteLine(turn.Coordinates.X + "-" + turn.Coordinates.Y + "-" + turn.Operation.ToString());
                         Engine.EnsureValidBoardConfiguration(board, turn);
                         board = Engine.ComputeBoard(board, turn);
 
                         // Get new board if mine explodes on first reveal
-                        if (board.HasFailedOnFirstReveal)
+                        if (turnCount == 0 && board.Status == BoardStatus.Failed)
                         {
                             board = getBoard();
                         }
+                        turnCount++;
                     }
                     if (board.Status == BoardStatus.Completed)
                     {
                         Interlocked.Increment(ref wins);
                     }
                 });
-
-            genWatch.Stop();
-            Console.WriteLine($"wins = {wins} in {genWatch.ElapsedMilliseconds} milliseconds");
+            watch.Stop();
+            Console.WriteLine($"wins = {wins} in {watch.ElapsedMilliseconds} milliseconds");
 
             //var board = Engine.GenerateRandomExpertBoard();
             //var turn = new Turn(4, 4, TileOperation.Reveal);
             //var foo = Engine.ComputeBoard(board, turn);
 
             //Console.WriteLine(GetBoardAsciiArt(foo));
+        }
+
+        private static void MeasureExpertBoardGeneration()
+        {
+            const int boardCount = 100;
+            var genWatch = new System.Diagnostics.Stopwatch();
+            genWatch.Start();
+            ParallelEnumerable
+                .Range(0, boardCount)
+                .ForAll(_ => Engine.GenerateRandomExpertBoard());
+            genWatch.Stop();
+            Console.WriteLine($"Time to generate {boardCount} expert boards = {genWatch.ElapsedMilliseconds} milliseconds");
         }
 
         public static string GetBoardAsciiArt(Board board)

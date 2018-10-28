@@ -1,9 +1,20 @@
 <Project>
-
-  <Import Project="common.props" />
-
   <PropertyGroup>
-
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>1.0.0</Version>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Company></Company>
+    <Authors>Brad Marder</Authors>
+    <PackageProjectUrl>https://github.com/bradmarder/MSEngine</PackageProjectUrl>
+    <PackageIconUrl></PackageIconUrl>
+    <PackageTags>minesweeper engine immutable functional</PackageTags>
+    <Copyright></Copyright>
+    <Description>A Minesweeper Engine built using functional programming paradigms with c# and .NET Standard 2.0</Description>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/bradmarder/MSEngine/master/LICENSE</PackageLicenseUrl>
+    <NeutralLanguage>en</NeutralLanguage>
+    <RepositoryUrl>git://github.com/bradmarder/MSEngine</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <IncludeSource>true</IncludeSource>
+    <IncludeSymbols>false</IncludeSymbols>
   </PropertyGroup>
-
 </Project>
