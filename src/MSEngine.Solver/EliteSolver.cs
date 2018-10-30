@@ -12,21 +12,26 @@ namespace MSEngine.Solver
         {
             if (FirstTurnStrategy.TryUseStrategy(board, out var firstTurn))
             {
+                Console.WriteLine("FirstTurnStrategy");
                 return firstTurn;
             }
             if (ChordingStrategy.TryUseStrategy(board, out var chordingTurn))
             {
+                Console.WriteLine("ChordingStrategy");
                 return chordingTurn;
             }
             if (MineCountStrategy.TryUseStrategy(board, out var mineCountTurn))
             {
+                Console.WriteLine("MineCountStrategy");
                 return mineCountTurn;
             }
             if (PatternStrategy.TryUseStrategy(board, out var patternTurn))
             {
+                Console.WriteLine("PatternStrategy");
                 return patternTurn;
             }
 
+            Console.WriteLine("EducatedGuessStrategy");
             return EducatedGuessStrategy.UseStrategy(board);
         }
     }

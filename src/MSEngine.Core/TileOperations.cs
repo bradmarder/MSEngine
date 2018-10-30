@@ -2,7 +2,7 @@
 
 namespace MSEngine.Core
 {
-    public enum TileOperation : byte
+    public enum TileOperation
     {
         Reveal,
         Flag,

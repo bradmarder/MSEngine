@@ -4,13 +4,13 @@
 
 ### The core concept of MSEngine (pseudocode)
 ```csharp
-class GameState
-{
-    Board Board { get; }
-    IImmutableQueue<Turn> Turns { get; }
-}
-static Board ComputeBoard(GameState state) => state.Turns.Aggregate(state.Board, ComputeBoard);
+static Board ComputeBoard(Board board, Queue<Turn> turns) => turns.Aggregate(board, ComputeBoard);
 ```
+
+### Who is this library for?
+- Anyone who wants to build a Minesweeper game/UI without having to implement all the ugly/confusing internal logic
+- Anyone planning on creating a Minesweeper solver bot
+- Anyone interested in learning how to implement game logic using functional paradigms
 
 ### Notes
 - With just the initial board and a queue of turns, we can compute the expected state of any minesweeper game
@@ -45,7 +45,7 @@ To run tests, open a terminal and navigate to `src\MSEngine.Tests\` and execute 
 ### TODO / Future Goals
 - ~~NuGet Package~~
 - Larger boards (current max is expert which is 30x16)
-- Performance Enhancements
+- Performance Enhancements (while balancing readability)
 - ~~Extensive test suite~~
 - Extra Z dimension
 - ~~Automated Solvers~~ WIP

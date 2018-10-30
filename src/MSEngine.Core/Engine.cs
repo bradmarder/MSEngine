@@ -117,7 +117,7 @@ namespace MSEngine.Core
             {
                 throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
             }
-            if (!board.Tiles.Any(x => x.Coordinates == turn.Coordinates))
+            if (board.Tiles.All(x => x.Coordinates != turn.Coordinates))
             {
                 throw new InvalidGameStateException("Turn has coordinates that are outside the board");
             }

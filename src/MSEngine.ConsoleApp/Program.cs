@@ -46,6 +46,14 @@ namespace MSEngine.ConsoleApp
                     {
                         Interlocked.Increment(ref wins);
                     }
+                    if (board.Status == BoardStatus.Failed)
+                    {
+                        // display strategy
+                        // display the turn coordinates/operation
+                        // display board before operation
+                        // display board after operation
+                        Console.WriteLine(GetBoardAsciiArt(board));
+                    }
                 });
             watch.Stop();
             Console.WriteLine($"wins = {wins} in {watch.ElapsedMilliseconds} milliseconds");

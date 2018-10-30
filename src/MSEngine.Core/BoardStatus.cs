@@ -2,7 +2,7 @@
 
 namespace MSEngine.Core
 {
-    public enum BoardStatus : byte
+    public enum BoardStatus
     {
         Pending,
         Failed,
