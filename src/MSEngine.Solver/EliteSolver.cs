@@ -6,32 +6,32 @@ using MSEngine.Core;
 
 namespace MSEngine.Solver
 {
-    public class EliteSolver : ISolver
+    public class EliteSolver
     {
-        public Turn ComputeTurn(Board board)
+        public Turn ComputeTurn(Board board, out Strategy strategy)
         {
             if (FirstTurnStrategy.TryUseStrategy(board, out var firstTurn))
             {
-                Console.WriteLine("FirstTurnStrategy");
+                strategy = Strategy.FirstTurn;
                 return firstTurn;
             }
             if (ChordingStrategy.TryUseStrategy(board, out var chordingTurn))
             {
-                Console.WriteLine("ChordingStrategy");
+                strategy = Strategy.Chording;
                 return chordingTurn;
             }
             if (MineCountStrategy.TryUseStrategy(board, out var mineCountTurn))
             {
-                Console.WriteLine("MineCountStrategy");
+                strategy = Strategy.MineCount;
                 return mineCountTurn;
             }
             if (PatternStrategy.TryUseStrategy(board, out var patternTurn))
             {
-                Console.WriteLine("PatternStrategy");
+                strategy = Strategy.OneOneRevealPattern;
                 return patternTurn;
             }
 
-            Console.WriteLine("EducatedGuessStrategy");
+            strategy = Strategy.EducatedGuess;
             return EducatedGuessStrategy.UseStrategy(board);
         }
     }

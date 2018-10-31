@@ -30,6 +30,9 @@ namespace MSEngine.Solver
             var hiddenTiles = board.Tiles
                 .Where(x => x.State == TileState.Hidden)
                 .ToList();
+            var flaggedTiles = board.Tiles
+                .Where(x => x.State == TileState.Flagged)
+                .ToList();
 
             var primaryTileToNextTilesMap = revealedTilesWithAMC.ToDictionary(x => x, x => revealedTilesWithAMC.Where(y => IsNextTo(y.Coordinates, x.Coordinates)));
 
@@ -38,9 +41,11 @@ namespace MSEngine.Solver
                 var primaryHiddenAdjacentTiles = hiddenTiles
                     .Where(x => Engine.IsAdjacentTo(x.Coordinates, primary.Key.Coordinates))
                     .ToList();
+                var primaryFlaggedAjacentTileCount = flaggedTiles.Count(x => Engine.IsAdjacentTo(x.Coordinates, primary.Key.Coordinates));
 
                 foreach (var secondary in primary.Value)
                 {
+                    var secondaryFlaggedAjacentTileCount = flaggedTiles.Count(x => Engine.IsAdjacentTo(x.Coordinates, secondary.Coordinates));
                     var secondaryHiddenAdjacentTiles = hiddenTiles
                         .Where(x => Engine.IsAdjacentTo(x.Coordinates, secondary.Coordinates))
                         .ToList();
@@ -50,13 +55,14 @@ namespace MSEngine.Solver
                         .ToList();
 
                     // the secondary tile must have more hidden adjacent tiles
-                    if (primaryHiddenAdjacentTiles.Count >= secondaryHiddenAdjacentTiles.Count)
+                    if ((primaryHiddenAdjacentTiles.Count - primaryFlaggedAjacentTileCount) >= secondaryHiddenAdjacentTiles.Count - secondaryFlaggedAjacentTileCount)
                     {
                         continue;
                     }
 
                     // both AMC must be less than the shared hidden count
-                    if (primary.Key.AdjacentMineCount >= sharedHiddenTiles.Count || secondary.AdjacentMineCount >= sharedHiddenTiles.Count)
+                    if ((primary.Key.AdjacentMineCount - primaryFlaggedAjacentTileCount) >= sharedHiddenTiles.Count
+                        || (secondary.AdjacentMineCount - secondaryFlaggedAjacentTileCount) >= sharedHiddenTiles.Count)
                     {
                         continue;
                     }

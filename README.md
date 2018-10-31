@@ -1,16 +1,18 @@
 # MSEngine
 #### A Minesweeper Engine built using functional programming paradigms with c# and .NET Standard 2.0
 
+---
 
-### The core concept of MSEngine (pseudocode)
+### The core concept of MSEngine
 ```csharp
-static Board ComputeBoard(Board board, Queue<Turn> turns) => turns.Aggregate(board, ComputeBoard);
+static Board ComputeBoard(Board board, IEnumerable<Turn> turns) => turns.Aggregate(board, ComputeBoard);
+static Board ComputeBoard(Board board, Turn turn);
 ```
 
 ### Who is this library for?
 - Anyone who wants to build a Minesweeper game/UI without having to implement all the ugly/confusing internal logic
 - Anyone planning on creating a Minesweeper solver bot
-- Anyone interested in learning how to implement game logic using functional paradigms
+- Anyone interested in learning how to implement turn-based game logic using functional paradigms
 
 ### Notes
 - With just the initial board and a queue of turns, we can compute the expected state of any minesweeper game
@@ -19,10 +21,10 @@ static Board ComputeBoard(Board board, Queue<Turn> turns) => turns.Aggregate(boa
 - Also inspired by TAS (tool assisted speedruns)
 - Everything immutable
 - Enforce referential transparency
-- The `System.Collections.Immutable` library has abysmal performance relative to it's mutable counterparts
+- The first turn must select a tile without a mine *and* it must have zero adjacent mines (this logic is the responsibility of the client, not the engine)
+- The `System.Collections.Immutable` library has lesser performance relative to it's mutable counterparts
 
-### API
-#### All methods are thread safe
+### API (all methods are thread safe)
 ```csharp
 static Board GenerateRandomBeginnerBoard();
 static Board GenerateRandomIntermediateBoard();
@@ -33,7 +35,7 @@ static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount);
 static void EnsureValidBoardConfiguration(Board board, Turn turn);
 
 [Pure]
-static Board ComputeBoard(Board board, Queue<Turn> turns);
+static Board ComputeBoard(Board board, IEnumerable<Turn> turns);
 
 [Pure]
 static Board ComputeBoard(Board board, Turn turn);

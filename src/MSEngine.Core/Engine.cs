@@ -61,7 +61,7 @@ namespace MSEngine.Core
             return new Board(tiles);
         }
 
-        public static Board ComputeBoard(Board board, Queue<Turn> turns)
+        public static Board ComputeBoard(Board board, IEnumerable<Turn> turns)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
             if (turns == null) { throw new ArgumentNullException(nameof(turns)); }

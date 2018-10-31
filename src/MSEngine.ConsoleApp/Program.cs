@@ -21,38 +21,41 @@ namespace MSEngine.ConsoleApp
 
             // 100ms per iteration for random solving expert board
             // this indicates that more complex solving strategies may take significantly longer?
-            ParallelEnumerable
-                .Range(0, 100)
-                .ForAll(_ =>
+            Enumerable
+                .Range(0, 100).ToList()
+                .ForEach(_ =>
                 {
                     var board = getBoard();
                     var turnCount = 0;
                     while (board.Status == BoardStatus.Pending)
                     {
-                        //Console.WriteLine(GetBoardAsciiArt(board));
-                        var turn = solver.ComputeTurn(board);
-                        //Console.WriteLine(turn.Coordinates.X + "-" + turn.Coordinates.Y + "-" + turn.Operation.ToString());
+                        var foo = GetBoardAsciiArt(board);
+                        var turn = solver.ComputeTurn(board, out var strategy);
                         Engine.EnsureValidBoardConfiguration(board, turn);
                         board = Engine.ComputeBoard(board, turn);
 
-                        // Get new board if mine explodes on first reveal
-                        if (turnCount == 0 && board.Status == BoardStatus.Failed)
+                        // Get new board unless tile has no mine and zero AMC
+                        var targetTile = board.Tiles.Single(x => x.Coordinates == turn.Coordinates);
+                        if (turnCount == 0 && (board.Status == BoardStatus.Failed || targetTile.AdjacentMineCount > 0))
                         {
                             board = getBoard();
+                            continue;
                         }
                         turnCount++;
-                    }
-                    if (board.Status == BoardStatus.Completed)
-                    {
-                        Interlocked.Increment(ref wins);
-                    }
-                    if (board.Status == BoardStatus.Failed)
-                    {
-                        // display strategy
-                        // display the turn coordinates/operation
-                        // display board before operation
-                        // display board after operation
-                        Console.WriteLine(GetBoardAsciiArt(board));
+
+                        // this region could exist outside the while loop?
+                        if (board.Status == BoardStatus.Completed)
+                        {
+                            Interlocked.Increment(ref wins);
+                        }
+                        if (board.Status == BoardStatus.Failed)
+                        {
+                            Console.WriteLine(strategy);
+                            Console.WriteLine(turn.Coordinates.X + "-" + turn.Coordinates.Y + "-" + turn.Operation.ToString());
+                            Console.WriteLine(foo);
+                            Console.WriteLine(GetBoardAsciiArt(board));
+                            throw new Exception("FIN");
+                        }
                     }
                 });
             watch.Stop();
