@@ -19,11 +19,11 @@ namespace MSEngine.Tests
         }
 
         [Fact]
-        public void All_tiles_revealed_if_game_fails()
+        public void All_mines_revealed_if_game_fails()
         {
             var board = Engine.GeneratePureBoard(2, 2, 1);
             var fail = Engine.GetFailedBoard(board);
-            var allTilesRevealed = fail.Tiles.All(x => (x.HasMine && x.State == TileState.Flagged) || x.State == TileState.Revealed);
+            var allTilesRevealed = fail.Tiles.All(x => !x.HasMine || x.State == TileState.Flagged || x.State == TileState.Revealed);
 
             Assert.True(allTilesRevealed);
         }

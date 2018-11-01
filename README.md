@@ -2,9 +2,11 @@
 #### A Minesweeper Engine built using functional programming paradigms with c# and .NET Standard 2.0
 
 ---
+[https://ci.appveyor.com/api/projects/status/github/MSEngine?svg=true](https://ci.appveyor.com/api/projects/status/github/MSEngine?svg=true)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ### The core concept of MSEngine
-```csharp
+```c#
 static Board ComputeBoard(Board board, IEnumerable<Turn> turns) => turns.Aggregate(board, ComputeBoard);
 static Board ComputeBoard(Board board, Turn turn);
 ```
@@ -25,7 +27,7 @@ static Board ComputeBoard(Board board, Turn turn);
 - The `System.Collections.Immutable` library has lesser performance relative to it's mutable counterparts
 
 ### API (all methods are thread safe)
-```csharp
+```c#
 static Board GenerateRandomBeginnerBoard();
 static Board GenerateRandomIntermediateBoard();
 static Board GenerateRandomExpertBoard();

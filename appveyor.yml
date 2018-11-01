@@ -2,8 +2,9 @@ configuration: Release
 
 image: Visual Studio 2017
 
+branches:
+  only:
+    - master
+
 before_build:
   - nuget restore
-
-##build:
-##  project: /src/MSEngine.Core/MSEngine.Core.csproj /src/MSEngine.Tests/MSEngine.Tests.csproj
