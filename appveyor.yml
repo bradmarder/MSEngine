@@ -6,5 +6,6 @@ before_build:
   - nuget restore
 
 build:
-  project: /src/MSEngine.Core/MSEngine.Core.csproj
-  project: /src/MSEngine.Tests/MSEngine.Tests.csproj
+  project:
+    - /src/MSEngine.Core/MSEngine.Core.csproj
+    - /src/MSEngine.Tests/MSEngine.Tests.csproj
