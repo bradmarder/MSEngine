@@ -5,5 +5,5 @@ image: Visual Studio 2017
 before_build:
   - nuget restore
 
-build:
-  project: /src/MSEngine.Core/MSEngine.Core.csproj /src/MSEngine.Tests/MSEngine.Tests.csproj
+##build:
+##  project: /src/MSEngine.Core/MSEngine.Core.csproj /src/MSEngine.Tests/MSEngine.Tests.csproj
