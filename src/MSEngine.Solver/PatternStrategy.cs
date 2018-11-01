@@ -26,14 +26,12 @@ namespace MSEngine.Solver
                 .Where(x => x.State == TileState.Revealed)
                 .Where(x => x.AdjacentMineCount > 0)
                 .ToList();
-
             var hiddenTiles = board.Tiles
                 .Where(x => x.State == TileState.Hidden)
                 .ToList();
             var flaggedTiles = board.Tiles
                 .Where(x => x.State == TileState.Flagged)
                 .ToList();
-
             var primaryTileToNextTilesMap = revealedTilesWithAMC.ToDictionary(x => x, x => revealedTilesWithAMC.Where(y => IsNextTo(y.Coordinates, x.Coordinates)));
 
             foreach (var primary in primaryTileToNextTilesMap)
@@ -61,17 +59,23 @@ namespace MSEngine.Solver
                     }
 
                     // both AMC must be less than the shared hidden count
-                    if ((primary.Key.AdjacentMineCount - primaryFlaggedAjacentTileCount) >= sharedHiddenTiles.Count
-                        || (secondary.AdjacentMineCount - secondaryFlaggedAjacentTileCount) >= sharedHiddenTiles.Count)
+                    if (((primary.Key.AdjacentMineCount - primaryFlaggedAjacentTileCount) >= sharedHiddenTiles.Count)
+                        || ((secondary.AdjacentMineCount - secondaryFlaggedAjacentTileCount) >= sharedHiddenTiles.Count))
                     {
                         continue;
                     }
-
+                    
                     // the primaryHiddenAdjacentTiles must be a subset of the secondaryHiddenAdjacentTiles
                     var extraTiles = secondaryHiddenAdjacentTiles
                         .Except(primaryHiddenAdjacentTiles)
                         .ToList();
                     if (!extraTiles.Any())
+                    {
+                        continue;
+                    }
+
+                    // the secondaryHiddenAdjacentTilesCount must be equal to it's AMC + FlagCount
+                    if (extraTiles.Count + secondaryFlaggedAjacentTileCount > secondary.AdjacentMineCount)
                     {
                         continue;
                     }

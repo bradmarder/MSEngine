@@ -48,9 +48,9 @@ namespace MSEngine.ConsoleApp
                         {
                             Interlocked.Increment(ref wins);
                         }
-                        if (board.Status == BoardStatus.Failed)
+                        if (board.Status == BoardStatus.Failed && strategy == Strategy.OneOneRevealPattern)
                         {
-                            Console.WriteLine(strategy);
+                            // Console.WriteLine(strategy);
                             Console.WriteLine(turn.Coordinates.X + "-" + turn.Coordinates.Y + "-" + turn.Operation.ToString());
                             Console.WriteLine(foo);
                             Console.WriteLine(GetBoardAsciiArt(board));

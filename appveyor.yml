@@ -1,0 +1,4 @@
+configuration: Release
+
+build:
+  project: /src/MSEngine.Core/MSEngine.Core.csproj

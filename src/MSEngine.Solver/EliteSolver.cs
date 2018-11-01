@@ -25,11 +25,11 @@ namespace MSEngine.Solver
                 strategy = Strategy.MineCount;
                 return mineCountTurn;
             }
-            if (PatternStrategy.TryUseStrategy(board, out var patternTurn))
-            {
-                strategy = Strategy.OneOneRevealPattern;
-                return patternTurn;
-            }
+            //if (PatternStrategy.TryUseStrategy(board, out var patternTurn))
+            //{
+            //    strategy = Strategy.OneOneRevealPattern;
+            //    return patternTurn;
+            //}
 
             strategy = Strategy.EducatedGuess;
             return EducatedGuessStrategy.UseStrategy(board);

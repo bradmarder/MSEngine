@@ -91,7 +91,7 @@ namespace MSEngine.Core
 
             if (turn.Operation == TileOperation.Chord)
             {
-                return GetChordBord(board, targetTile);
+                return GetChordBoard(board, targetTile);
             }
 
             throw new NotImplementedException(turn.Operation.ToString());
@@ -204,10 +204,11 @@ namespace MSEngine.Core
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
+            // should we show false flags?
             var tiles = board.Tiles.Select(x =>
-                x.State == TileState.Revealed || (x.State == TileState.Flagged && x.HasMine)
-                ? x
-                : new Tile(x, TileOperation.Reveal));
+                !x.HasMine || x.State == TileState.Revealed || x.State == TileState.Flagged
+                    ? x
+                    : new Tile(x, TileOperation.Reveal));
 
             return new Board(tiles);
         }
@@ -252,18 +253,15 @@ namespace MSEngine.Core
             return new Board(tiles);
         }
 
-        internal static Board GetChordBord(Board board, Tile targetTile)
+        internal static Board GetChordBoard(Board board, Tile targetTile)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
-            var revealCoordinates = board.Tiles
+            return board.Tiles
                 .Where(x => x.State == TileState.Hidden)
                 .Where(x => IsAdjacentTo(x.Coordinates, targetTile.Coordinates))
-                .Select(x => x.Coordinates);
-            var set = new HashSet<Coordinates>(revealCoordinates);
-
-            var tiles = board.Tiles.Select(x => set.Contains(x.Coordinates) ? new Tile(x, TileOperation.Reveal) : x);
-            return new Board(tiles);
+                .Select(x => new Turn(x.Coordinates, TileOperation.Reveal))
+                .Aggregate(board, ComputeBoard);
         }
     }
 }
