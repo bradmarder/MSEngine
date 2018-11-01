@@ -7,3 +7,4 @@ before_build:
 
 build:
   project: /src/MSEngine.Core/MSEngine.Core.csproj
+  project: /src/MSEngine.Tests/MSEngine.Tests.csproj
