@@ -2,7 +2,7 @@
 #### A Minesweeper Engine built using functional programming paradigms with c# and .NET Standard 2.0
 
 ---
-[https://ci.appveyor.com/api/projects/status/github/bradmarder/MSEngine?branch=master&svg=true](https://ci.appveyor.com/project/bradmarder/msengine)
+[![Build status](https://ci.appveyor.com/api/projects/status/github/bradmarder/MSEngine?branch=master&svg=true)](https://ci.appveyor.com/project/bradmarder/msengine)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ### The core concept of MSEngine
