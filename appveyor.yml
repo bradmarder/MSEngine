@@ -13,6 +13,7 @@ before_build:
 
 build:
   publish_nuget: true
+  verbosity: detailed
 
 deploy:
   provider: NuGet
@@ -28,4 +29,12 @@ nuget:
   account_feed: true
 
 cache:
-  - packages -> **\packages.config
+  - '%LocalAppData%\NuGet\v3-cache' # NuGet v3
+
+notifications:
+  - provider: Email
+    to:
+      - rF3rOJnrp78Zda0zX3BkzL5tv2mY9UzvtIU3oAPrk5Q=
+    subject: 'Build {{status}}'                  # optional
+    message: "{{message}}, {{commitId}}, ..."    # optional
+    on_build_status_changed: true
