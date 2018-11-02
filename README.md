@@ -3,6 +3,7 @@
 
 ---
 [![Build status](https://ci.appveyor.com/api/projects/status/github/bradmarder/MSEngine?branch=master&svg=true)](https://ci.appveyor.com/project/bradmarder/msengine)
+[![install from nuget](http://img.shields.io/nuget/v/MSEngine.Core.svg?style=flat-square)](https://www.nuget.org/packages/MSEngine.Core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ### The core concept of MSEngine
