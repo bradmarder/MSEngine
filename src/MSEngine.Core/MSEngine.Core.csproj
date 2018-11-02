@@ -8,6 +8,7 @@
 
   <PropertyGroup>
     <Title>MSEngine.Core</Title>
+    <!--<Version></Version>-->
     <Summary>A Minesweeper Engine built using functional programming paradigms with c# and .NET Standard 2.0</Summary>
     <Description>A Minesweeper Engine built using functional programming paradigms with c# and .NET Standard 2.0</Description>
     <Authors>Brad Marder</Authors>
