@@ -18,3 +18,6 @@ deploy:
       secure: Dln/VbbqTt++lS2ICbG45WE49bv1mmS7oWPet9yMH7bYY3/6ne2eD4UArqx6I58j
     on:
       branch: master
+
+cache:
+  - packages -> **\packages.config
