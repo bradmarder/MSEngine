@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>MSEngine.Core</id>
-    <!--<version>$version$</version>-->
+    <version>$version$</version>
     <title>MSEngine.Core</title>
     <authors>Brad Marder</authors>
     <owners>Brad Marder</owners>
