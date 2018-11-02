@@ -26,8 +26,8 @@ nuget:
   project_feed: true
   account_feed: true
 
- artifacts:
-   path: 'src\MSEngine.Core\bin\Release\*.nupkg'
+artifacts:
+  path: 'src\MSEngine.Core\bin\Release\*.nupkg'
 
 cache:
   - packages -> **\packages.config
