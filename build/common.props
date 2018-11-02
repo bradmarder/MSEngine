@@ -1,7 +1,5 @@
 <Project>
 
-  <Import Project="version.props" />
-
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
     <Optimize>true</Optimize>
