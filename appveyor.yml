@@ -15,19 +15,17 @@ build:
   publish_nuget: true
 
 deploy:
-  - provider: NuGet
-    skip_symbols: true
-    api_key:
-      secure: Dln/VbbqTt++lS2ICbG45WE49bv1mmS7oWPet9yMH7bYY3/6ne2eD4UArqx6I58j
-    on:
-      branch: master
+  provider: NuGet
+  skip_symbols: true
+  artifact: /.*\.nupkg/
+  api_key:
+    secure: Dln/VbbqTt++lS2ICbG45WE49bv1mmS7oWPet9yMH7bYY3/6ne2eD4UArqx6I58j
+  on:
+    branch: master
 
 nuget:
   project_feed: true
   account_feed: true
-
-artifacts:
-  path: 'src\MSEngine.Core\bin\Release\*.nupkg'
 
 cache:
   - packages -> **\packages.config
