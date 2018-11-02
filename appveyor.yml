@@ -11,6 +11,9 @@ branches:
 before_build:
   - nuget restore
 
+build:
+  publish_nuget: true
+
 deploy:
   - provider: NuGet
     skip_symbols: true
@@ -20,8 +23,10 @@ deploy:
       branch: master
 
 nuget:
-  account_feed: false
   project_feed: true
+
+artifacts:
+  - path: '**\*.nupkg'
 
 cache:
   - packages -> **\packages.config
