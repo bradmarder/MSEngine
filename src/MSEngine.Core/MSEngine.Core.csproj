@@ -12,7 +12,7 @@
     <Description>A Minesweeper Engine built using functional programming paradigms with c# and .NET Standard 2.0</Description>
     <Authors>Brad Marder</Authors>
     <Owners>Brad Marder</Owners>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!--<GenerateDocumentationFile>true</GenerateDocumentationFile>-->
     <AssemblyName>MSEngine.Core</AssemblyName>
     <!--<AssemblyOriginatorKeyFile>..\..\.snk</AssemblyOriginatorKeyFile>-->
     <!--<SignAssembly>true</SignAssembly>-->
