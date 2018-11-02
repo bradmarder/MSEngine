@@ -26,8 +26,5 @@ nuget:
   project_feed: true
   account_feed: true
 
-artifacts:
-  - path: '**\*.nupkg'
-
 cache:
   - packages -> **\packages.config
