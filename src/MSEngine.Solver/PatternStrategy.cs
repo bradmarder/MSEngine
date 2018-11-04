@@ -66,23 +66,44 @@ namespace MSEngine.Solver
                     }
                     
                     // the primaryHiddenAdjacentTiles must be a subset of the secondaryHiddenAdjacentTiles
-                    var extraTiles = secondaryHiddenAdjacentTiles
+                    var secondaryExtraTiles = secondaryHiddenAdjacentTiles
                         .Except(primaryHiddenAdjacentTiles)
                         .ToList();
-                    if (!extraTiles.Any())
+                    if (!secondaryExtraTiles.Any())
                     {
                         continue;
                     }
 
                     // the secondaryHiddenAdjacentTilesCount must be equal to it's AMC + FlagCount
-                    if (extraTiles.Count + secondaryFlaggedAjacentTileCount > secondary.AdjacentMineCount)
+                    if (secondaryExtraTiles.Count + secondaryFlaggedAjacentTileCount > secondary.AdjacentMineCount)
                     {
                         continue;
                     }
 
-                    var reveal = extraTiles.First();
-                    turn = new Turn(reveal.Coordinates, TileOperation.Reveal);
-                    return true;
+                    // testing branch
+                    if (primary.Key.AdjacentMineCount == 1)
+                    {
+                        var op = secondary.AdjacentMineCount == 1 ? TileOperation.Reveal : TileOperation.Flag;
+                        turn = new Turn(secondaryExtraTiles.First().Coordinates, op);
+                        return true;
+                    }
+
+                    continue;
+                    //var extraMineCount = Math.Abs(secondary.AdjacentMineCount - primary.Key.AdjacentMineCount);
+                    // MUST look at primary/secondary AMC
+                    //var operation = primary.Key.AdjacentMineCount == secondaryExtraTiles.Count && secondary.AdjacentMineCount > primary.Key.AdjacentMineCount
+                    //    ? TileOperation.Flag
+                    //    : TileOperation.Reveal;
+
+                    //Console.WriteLine("extraMineCount = " + extraMineCount);
+                    //Console.WriteLine("primary = " + primary.Key.Coordinates.X + "," + primary.Key.Coordinates.Y);
+                    //Console.WriteLine("secondary = " + secondary.Coordinates.X + "," + secondary.Coordinates.Y);
+                    //Console.WriteLine("primaryFlaggedAjacentTileCount = " + primaryFlaggedAjacentTileCount); //   0
+                    //Console.WriteLine("secondaryFlaggedAjacentTileCount = " + secondaryFlaggedAjacentTileCount);// 0
+                    //Console.WriteLine("secondaryExtraTiles = " + secondaryExtraTiles.Count); // 1
+                    //var reveal = secondaryExtraTiles.First();
+                    //turn = new Turn(reveal.Coordinates, operation);
+                    //return true;
                 }
             }
 

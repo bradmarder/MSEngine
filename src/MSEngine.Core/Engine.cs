@@ -37,8 +37,8 @@ namespace MSEngine.Core
 
         internal static Board GenerateBoard(byte columns, byte rows, byte mineCount, Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> shuffler)
         {
-            if (columns == byte.MinValue || columns > 30) { throw new ArgumentOutOfRangeException(nameof(columns)); }
-            if (rows == byte.MinValue || rows > 16) { throw new ArgumentOutOfRangeException(nameof(rows)); }
+            if (columns == 0 || columns > 30) { throw new ArgumentOutOfRangeException(nameof(columns)); }
+            if (rows == 0 || rows > 16) { throw new ArgumentOutOfRangeException(nameof(rows)); }
             if (shuffler == null) { throw new ArgumentNullException(nameof(shuffler)); }
 
             // if we allowed tileCount == mineCount, then we would have an infinite loop attempting to generate a board
@@ -146,7 +146,7 @@ namespace MSEngine.Core
                 {
                     throw new InvalidGameStateException("May only chord a revealed tile");
                 }
-                if (targetTile.AdjacentMineCount == byte.MinValue)
+                if (targetTile.AdjacentMineCount == 0)
                 {
                     throw new InvalidGameStateException("May only chord a tile that has adjacent mines");
                 }
@@ -158,7 +158,7 @@ namespace MSEngine.Core
                 {
                     throw new InvalidGameStateException("May only chord a tile when adjacent mine count equals adjacent tile flag count");
                 }
-                if (targetTileAdjacentHiddenCount == byte.MinValue)
+                if (targetTileAdjacentHiddenCount == 0)
                 {
                     throw new InvalidGameStateException("May only chord a tile that has hidden adjacent tiles");
                 }
@@ -185,8 +185,8 @@ namespace MSEngine.Core
 
         internal static IEnumerable<Coordinates> GetCoordinates(byte rows, byte columns)
         {
-            if (columns == byte.MinValue) { throw new ArgumentOutOfRangeException(nameof(columns)); }
-            if (rows == byte.MinValue) { throw new ArgumentOutOfRangeException(nameof(rows)); }
+            if (columns == 0) { throw new ArgumentOutOfRangeException(nameof(columns)); }
+            if (rows == 0) { throw new ArgumentOutOfRangeException(nameof(rows)); }
 
             return Enumerable
                 .Range(0, rows)

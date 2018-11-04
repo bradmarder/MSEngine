@@ -11,13 +11,19 @@ namespace MSEngine.Solver
     /// </summary>
     public static class MineCountStrategy
     {
+        private static readonly IReadOnlyCollection<int> _rangeFromEightToOne =
+            Enumerable
+                .Range(1, 8)
+                .Reverse()
+                .ToList();
+
         public static bool TryUseStrategy(Board board, out Turn turn)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
-            foreach (var i in Enumerable.Range(1, 8).Reverse())
+            foreach (var i in _rangeFromEightToOne)
             {
-                var foo = board.Tiles
+                var tile = board.Tiles
                     .Where(x => x.AdjacentMineCount == i)
                     .Where(x => x.State == TileState.Revealed)
                     .Where(x =>
@@ -30,11 +36,12 @@ namespace MSEngine.Solver
                     })
                     .Select(x => x.Coordinates)
                     .SelectMany(x => board.Tiles.Where(y => y.State == TileState.Hidden && Engine.IsAdjacentTo(x, y.Coordinates)))
-                    .ToList();
+                    .Cast<Tile?>()
+                    .FirstOrDefault();
 
-                if (foo.Any())
+                if (tile != null)
                 {
-                    turn = new Turn(foo.First().Coordinates, TileOperation.Flag);
+                    turn = new Turn(tile.Value.Coordinates, TileOperation.Flag);
                     return true;
                 }
             }

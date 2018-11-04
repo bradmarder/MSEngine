@@ -12,22 +12,23 @@ namespace MSEngine.Solver
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
-            var chordTiles = board.Tiles
+            var tile = board.Tiles
                 .Where(x => x.State == TileState.Revealed)
-                .Where(x => x.AdjacentMineCount > byte.MinValue)
+                .Where(x => x.AdjacentMineCount > 0)
                 .Where(x =>
                 {
                     var adjacentTiles = board.Tiles.Where(y => Engine.IsAdjacentTo(x.Coordinates, y.Coordinates));
                     var adjacentHiddenTileCount = adjacentTiles.Count(y => y.State == TileState.Hidden);
                     var adjacentFlaggedTileCount = adjacentTiles.Count(y => y.State == TileState.Flagged);
 
-                    return adjacentHiddenTileCount > byte.MinValue && x.AdjacentMineCount == adjacentFlaggedTileCount;
+                    return adjacentHiddenTileCount > 0 && x.AdjacentMineCount == adjacentFlaggedTileCount;
                 })
-                .ToList();
+                .Cast<Tile?>()
+                .FirstOrDefault();
 
-            if (chordTiles.Any())
+            if (tile != null)
             {
-                turn = new Turn(chordTiles.First().Coordinates, TileOperation.Chord);
+                turn = new Turn(tile.Value.Coordinates, TileOperation.Chord);
                 return true;
             }
 

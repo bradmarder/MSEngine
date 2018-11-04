@@ -4,6 +4,7 @@ namespace MSEngine.Solver
 {
     public enum Strategy
     {
+        Finish,
         FirstTurn,
         Chording,
         MineCount,

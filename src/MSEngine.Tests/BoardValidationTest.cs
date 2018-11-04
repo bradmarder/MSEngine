@@ -118,7 +118,7 @@ namespace MSEngine.Tests
             var targetTile = boardAfterFirstTurn.Tiles.Single(x => x.Coordinates == origin);
 
             Assert.Equal(TileState.Revealed, targetTile.State);
-            Assert.Equal(byte.MinValue, targetTile.AdjacentMineCount);
+            Assert.Equal(0, targetTile.AdjacentMineCount);
             Assert.Throws<InvalidGameStateException>(() => Engine.EnsureValidBoardConfiguration(boardAfterFirstTurn, secondTurn));
         }
 
