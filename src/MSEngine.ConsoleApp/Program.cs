@@ -14,23 +14,22 @@ namespace MSEngine.ConsoleApp
         static void Main(string[] args)
         {
             var wins = 0;
-            var solver = new EliteSolver();
             var watch = new System.Diagnostics.Stopwatch();
-            Func<Board> getBoard = () => Engine.GenerateRandomBeginnerBoard();
+            Func<Board> getBoard = () => Engine.GenerateRandomExpertBoard();
             watch.Start();
 
             // 100ms per iteration for random solving expert board
             // this indicates that more complex solving strategies may take significantly longer?
-            Enumerable
-                .Range(0, 100).ToList()
-                .ForEach(_ =>
+            ParallelEnumerable
+                .Range(0, 100)//.ToList()
+                .ForAll(_ =>
                 {
                     var board = getBoard();
                     var turnCount = 0;
                     while (board.Status == BoardStatus.Pending)
                     {
                         var foo = GetBoardAsciiArt(board);
-                        var turn = solver.ComputeTurn(board, out var strategy);
+                        var (turn, strategy) = EliteSolver.ComputeTurn(board);
                         Engine.EnsureValidBoardConfiguration(board, turn);
                         board = Engine.ComputeBoard(board, turn);
 
@@ -43,14 +42,39 @@ namespace MSEngine.ConsoleApp
                         }
                         turnCount++;
 
+                        if (turnCount > 255)
+                        {
+                            Console.WriteLine(turn.Coordinates.X + "-" + turn.Coordinates.Y + "-" + turn.Operation.ToString());
+                            Console.WriteLine(foo);
+                            Console.WriteLine(GetBoardAsciiArt(board));
+                            throw new Exception("TURN OVER 255");
+                        }
+
                         // this region could exist outside the while loop?
                         if (board.Status == BoardStatus.Completed)
                         {
                             Interlocked.Increment(ref wins);
                         }
+                        if (board.Status == BoardStatus.Completed)
+                        {
+                            Console.WriteLine("win");
+                        }
+                        if (board.Status == BoardStatus.Failed)
+                        {
+                            Console.WriteLine("lose");
+                        }
+                        if (board.Tiles.Any(x => x.State == TileState.Flagged && !x.HasMine))
+                        {
+                            Console.WriteLine("FALSE FLAG");
+                            Console.WriteLine(turn.Coordinates.X + "-" + turn.Coordinates.Y + "-" + turn.Operation.ToString());
+                            Console.WriteLine(foo);
+                            Console.WriteLine(GetBoardAsciiArt(board));
+                            throw new Exception("FIN");
+                        }
+
                         if (board.Status == BoardStatus.Failed && strategy == Strategy.OneOneRevealPattern)
                         {
-                            // Console.WriteLine(strategy);
+                            Console.WriteLine("one one reveal FAIL");
                             Console.WriteLine(turn.Coordinates.X + "-" + turn.Coordinates.Y + "-" + turn.Operation.ToString());
                             Console.WriteLine(foo);
                             Console.WriteLine(GetBoardAsciiArt(board));
