@@ -8,8 +8,8 @@
 
 ### The core concept of MSEngine
 ```c#
-static Board ComputeBoard(Board board, IEnumerable<Turn> turns) => turns.Aggregate(board, ComputeBoard);
 static Board ComputeBoard(Board board, Turn turn);
+static Board ComputeBoard(Board board, IEnumerable<Turn> turns) => turns.Aggregate(board, ComputeBoard);
 ```
 
 ### Who is this library for?
@@ -50,7 +50,8 @@ To run tests, open a terminal and navigate to `src\MSEngine.Tests\` and execute 
 ### TODO / Future Goals
 - ~~NuGet Package~~
 - Larger boards (current max is expert which is 30x16)
-- Performance Enhancements (while balancing readability)
+- ~~Performance Enhancements (while balancing readability)~~
 - ~~Extensive test suite~~
 - Extra Z dimension
+- Benchmarks
 - ~~Automated Solvers~~ WIP

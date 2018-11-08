@@ -55,7 +55,7 @@ namespace MSEngine.Core
                 .ToDictionary(x => x.Coordinates, x => x.Index < mineCount);
             var coordinatesToAdjacentMineCountMap = coordinates.ToDictionary(
                 x => x,
-                x => (byte)coordinatesToMineMap.Count(y => y.Value && IsAdjacentTo(y.Key, x)));
+                x => coordinatesToMineMap.Count(y => y.Value && IsAdjacentTo(y.Key, x)));
             var tiles = coordinatesToMineMap.Select(x => new Tile(x.Key, x.Value, coordinatesToAdjacentMineCountMap[x.Key]));
 
             return new Board(tiles);
@@ -86,12 +86,12 @@ namespace MSEngine.Core
             {
                 return targetTile.HasMine
                     ? GetFailedBoard(board)
-                    : GetChainReactionBoard(board, targetTile);
+                    : GetChainReactionBoard(board, targetTile.Coordinates);
             }
 
             if (turn.Operation == TileOperation.Chord)
             {
-                return GetChordBoard(board, targetTile);
+                return GetChordBoard(board, targetTile.Coordinates);
             }
 
             throw new NotImplementedException(turn.Operation.ToString());
@@ -213,7 +213,7 @@ namespace MSEngine.Core
             return new Board(tiles);
         }
 
-        internal static Board GetChainReactionBoard(Board board, Tile targetTile)
+        internal static Board GetChainReactionBoard(Board board, Coordinates coordinates)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
@@ -223,7 +223,7 @@ namespace MSEngine.Core
                 .Where(x => x.State == TileState.Hidden)
 
                 .Where(x => x.AdjacentMineCount == 0)
-                .Where(x => x.Coordinates == targetTile.Coordinates || IsAdjacentTo(x.Coordinates, targetTile.Coordinates));
+                .Where(x => x.Coordinates == coordinates || IsAdjacentTo(x.Coordinates, coordinates));
             var expanding = new Queue<Tile>(unrevealedAdjacentTiles);
             var expandedCoordinates = new HashSet<Coordinates>();
 
@@ -253,13 +253,13 @@ namespace MSEngine.Core
             return new Board(tiles);
         }
 
-        internal static Board GetChordBoard(Board board, Tile targetTile)
+        internal static Board GetChordBoard(Board board, Coordinates coordinates)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
             return board.Tiles
                 .Where(x => x.State == TileState.Hidden)
-                .Where(x => IsAdjacentTo(x.Coordinates, targetTile.Coordinates))
+                .Where(x => IsAdjacentTo(x.Coordinates, coordinates))
                 .Select(x => new Turn(x.Coordinates, TileOperation.Reveal))
                 .Aggregate(board, ComputeBoard);
         }

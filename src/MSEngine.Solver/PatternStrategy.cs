@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using MSEngine.Core;
 
@@ -8,6 +9,7 @@ namespace MSEngine.Solver
 {
     public static class PatternStrategy
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNextTo(Coordinates coordinateOne, Coordinates coordinateTwo)
         {
             var x = coordinateOne.X;
