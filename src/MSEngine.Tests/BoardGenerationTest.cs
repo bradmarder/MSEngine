@@ -28,7 +28,7 @@ namespace MSEngine.Tests
             var expectedTileCount = columns * rows;
             var board = Engine.GeneratePureBoard(columns, rows, 0);
 
-            Assert.Equal(expectedTileCount, board.Tiles.Count());
+            Assert.Equal(expectedTileCount, board.Tiles.Count);
         }
 
         [Theory]

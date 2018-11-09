@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace MSEngine.Core
 {
@@ -48,21 +47,9 @@ namespace MSEngine.Core
             ? State == TileState.Flagged
             : State == TileState.Revealed;
 
-        // TODO: use HashCode.Combine(X, Y) with netstandard 2.1 
-        // copy/pasted from https://stackoverflow.com/a/1646913/2089286
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                int hash = 17;
-                hash = hash * 31 + Coordinates.GetHashCode();
-                hash = hash * 31 + HasMine.GetHashCode();
-                hash = hash * 31 + State.GetHashCode();
-                hash = hash * 31 + AdjacentMineCount.GetHashCode();
-                return hash;
-            }
-        }
-
+        public override string ToString() =>
+            $"{nameof(Coordinates)}: {Coordinates}, {nameof(HasMine)}: {HasMine}, {nameof(State)}: {State}, {nameof(AdjacentMineCount)}: {AdjacentMineCount}";
+        public override int GetHashCode() => (Coordinates, HasMine, State, AdjacentMineCount).GetHashCode();
         public override bool Equals(object obj) => obj is Tile x && Equals(x);
         public bool Equals(Tile other) =>
             Coordinates == other.Coordinates

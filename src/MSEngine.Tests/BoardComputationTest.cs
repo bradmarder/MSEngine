@@ -63,7 +63,7 @@ namespace MSEngine.Tests
             var firstTurn = new Turn(0, 0, TileOperation.Flag);
             var secondTurn = new Turn(1, 1, TileOperation.Reveal);
             var thirdTurn = new Turn(1, 1, TileOperation.Chord);
-            var turns = new Queue<Turn>(new[] { firstTurn, secondTurn, thirdTurn });
+            var turns = new List<Turn> { firstTurn, secondTurn, thirdTurn };
             var finalBoard = Engine.ComputeBoard(board, turns);
 
             // 0,0 has the only mine, so we flag it
@@ -94,7 +94,7 @@ namespace MSEngine.Tests
             var board = Engine.GeneratePureBoard(5, 1, 0);
             var firstTurn = new Turn(2, 0, TileOperation.Flag);
             var secondTurn = new Turn(4, 0, TileOperation.Reveal);
-            var turns = new Queue<Turn>(new[] { firstTurn, secondTurn });
+            var turns = new List<Turn> { firstTurn, secondTurn };
             var finalBoard = Engine.ComputeBoard(board, turns);
             var firstTwoTilesAreHidden = finalBoard.Tiles
                 .Where(x => x.Coordinates.X < 2)
