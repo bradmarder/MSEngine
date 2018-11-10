@@ -28,14 +28,14 @@ namespace MSEngine.Solver
                     .Where(x => x.State == TileState.Revealed)
                     .Where(x =>
                     {
-                        var adjacentTiles = board.Tiles.Where(y => Engine.IsAdjacentTo(x.Coordinates, y.Coordinates));
+                        var adjacentTiles = board.Tiles.Where(y => Utilities.IsAdjacentTo(x.Coordinates, y.Coordinates));
                         var flagCount = adjacentTiles.Count(y => y.State == TileState.Flagged);
                         var hiddenCount = adjacentTiles.Count(y => y.State == TileState.Hidden);
 
                         return i == (hiddenCount + flagCount);
                     })
                     .Select(x => x.Coordinates)
-                    .SelectMany(x => board.Tiles.Where(y => y.State == TileState.Hidden && Engine.IsAdjacentTo(x, y.Coordinates)))
+                    .SelectMany(x => board.Tiles.Where(y => y.State == TileState.Hidden && Utilities.IsAdjacentTo(x, y.Coordinates)))
                     .Cast<Tile?>()
                     .FirstOrDefault();
 

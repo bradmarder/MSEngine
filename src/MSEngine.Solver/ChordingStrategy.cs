@@ -17,7 +17,7 @@ namespace MSEngine.Solver
                 .Where(x => x.AdjacentMineCount > 0)
                 .Where(x =>
                 {
-                    var adjacentTiles = board.Tiles.Where(y => Engine.IsAdjacentTo(x.Coordinates, y.Coordinates));
+                    var adjacentTiles = board.Tiles.Where(y => Utilities.IsAdjacentTo(x.Coordinates, y.Coordinates));
                     var adjacentHiddenTileCount = adjacentTiles.Count(y => y.State == TileState.Hidden);
                     var adjacentFlaggedTileCount = adjacentTiles.Count(y => y.State == TileState.Flagged);
 

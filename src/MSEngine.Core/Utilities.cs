@@ -1,16 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
+using System.Runtime.CompilerServices;
 
 namespace MSEngine.Core
 {
-    internal static class Utilities
+    public static class Utilities
     {
         private static readonly Random _random = new Random();
         private static readonly object _lock = new object();
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsNextTo(Coordinates coordinateOne, Coordinates coordinateTwo)
+        {
+            var x = coordinateOne.X;
+            var y = coordinateOne.Y;
 
-        public static List<T> GetShuffledItems<T>(this IEnumerable<T> list)
+            // filters ordered to prioritize short-circuiting
+            return (x == coordinateTwo.X && new[] { y + 1, y - 1 }.Contains(coordinateTwo.Y))
+                || (y == coordinateTwo.Y && new[] { x + 1, x - 1 }.Contains(coordinateTwo.X));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsAdjacentTo(Coordinates coordinateOne, Coordinates coordinateTwo)
+        {
+            var x = coordinateOne.X;
+            var y = coordinateOne.Y;
+
+            // filters ordered to prioritize short-circuiting
+            return new[] { x, x + 1, x - 1 }.Contains(coordinateTwo.X)
+                && new[] { y, y + 1, y - 1 }.Contains(coordinateTwo.Y)
+                && coordinateOne != coordinateTwo;
+        }
+
+        internal static List<T> GetShuffledItems<T>(this IEnumerable<T> list)
         {
             if (list == null) { throw new ArgumentNullException(nameof(list)); }
 
@@ -30,38 +53,6 @@ namespace MSEngine.Core
             }
 
             return items;
-        }
-
-        /// <summary>
-        /// This algorithm is broken for large lists...
-        /// https://stackoverflow.com/a/1262619/2089286
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="list"></param>
-        /// <returns></returns>
-        public static List<T> GetCryptographicallySecureShuffledItems<T>(this IEnumerable<T> list)
-        {
-            if (list == null) { throw new ArgumentNullException(nameof(list)); }
-
-            using (var provider = new RNGCryptoServiceProvider())
-            {
-                var items = list.ToList();
-                int n = items.Count;
-
-                while (n > 1)
-                {
-                    byte[] box = new byte[1];
-                    do provider.GetBytes(box);
-                    while (!(box[0] < n * (byte.MaxValue / n)));
-                    int k = (box[0] % n);
-                    n--;
-                    T value = items[k];
-                    items[k] = items[n];
-                    items[n] = value;
-                }
-
-                return items;
-            }
         }
     }
 }

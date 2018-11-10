@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 using MSEngine.Core;
 
@@ -9,17 +8,6 @@ namespace MSEngine.Solver
 {
     public static class PatternStrategy
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsNextTo(Coordinates coordinateOne, Coordinates coordinateTwo)
-        {
-            var x = coordinateOne.X;
-            var y = coordinateOne.Y;
-
-            // filters ordered to prioritize short-circuiting
-            return (x == coordinateTwo.X && new[] { y + 1, y - 1 }.Contains(coordinateTwo.Y))
-                || (y == coordinateTwo.Y && new[] { x + 1, x - 1 }.Contains(coordinateTwo.X));
-        }
-
         public static bool TryUseStrategy(Board board, out Turn turn)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
@@ -34,20 +22,20 @@ namespace MSEngine.Solver
             var flaggedTiles = board.Tiles
                 .Where(x => x.State == TileState.Flagged)
                 .ToList();
-            var primaryTileToNextTilesMap = revealedTilesWithAMC.ToDictionary(x => x, x => revealedTilesWithAMC.Where(y => IsNextTo(y.Coordinates, x.Coordinates)));
+            var primaryTileToNextTilesMap = revealedTilesWithAMC.ToDictionary(x => x, x => revealedTilesWithAMC.Where(y => Utilities.IsNextTo(y.Coordinates, x.Coordinates)));
 
             foreach (var primary in primaryTileToNextTilesMap)
             {
                 var primaryHiddenAdjacentTiles = hiddenTiles
-                    .Where(x => Engine.IsAdjacentTo(x.Coordinates, primary.Key.Coordinates))
+                    .Where(x => Utilities.IsAdjacentTo(x.Coordinates, primary.Key.Coordinates))
                     .ToList();
-                var primaryFlaggedAjacentTileCount = flaggedTiles.Count(x => Engine.IsAdjacentTo(x.Coordinates, primary.Key.Coordinates));
+                var primaryFlaggedAjacentTileCount = flaggedTiles.Count(x => Utilities.IsAdjacentTo(x.Coordinates, primary.Key.Coordinates));
 
                 foreach (var secondary in primary.Value)
                 {
-                    var secondaryFlaggedAjacentTileCount = flaggedTiles.Count(x => Engine.IsAdjacentTo(x.Coordinates, secondary.Coordinates));
+                    var secondaryFlaggedAjacentTileCount = flaggedTiles.Count(x => Utilities.IsAdjacentTo(x.Coordinates, secondary.Coordinates));
                     var secondaryHiddenAdjacentTiles = hiddenTiles
-                        .Where(x => Engine.IsAdjacentTo(x.Coordinates, secondary.Coordinates))
+                        .Where(x => Utilities.IsAdjacentTo(x.Coordinates, secondary.Coordinates))
                         .ToList();
 
                     var sharedHiddenTiles = primaryHiddenAdjacentTiles

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using Xunit;
+﻿using Xunit;
 using MSEngine.Core;
 
 namespace MSEngine.Tests
@@ -20,7 +18,7 @@ namespace MSEngine.Tests
         {
             var origin = new Coordinates(2, 2);
             var coordindates = new Coordinates(x, y);
-            var isAdjacent = Engine.IsAdjacentTo(origin, coordindates);
+            var isAdjacent = Utilities.IsAdjacentTo(origin, coordindates);
 
             Assert.True(isAdjacent);
         }
@@ -47,7 +45,7 @@ namespace MSEngine.Tests
         {
             var origin = new Coordinates(2, 2);
             var coordindates = new Coordinates(x, y);
-            var isAdjacent = Engine.IsAdjacentTo(origin, coordindates);
+            var isAdjacent = Utilities.IsAdjacentTo(origin, coordindates);
 
             Assert.False(isAdjacent);
         }

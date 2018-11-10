@@ -15,7 +15,7 @@ namespace MSEngine.ConsoleApp
         {
             var wins = 0;
             var watch = new System.Diagnostics.Stopwatch();
-            Func<Board> getBoard = () => Engine.GenerateRandomExpertBoard();
+            Func<Board> getBoard = () => Engine.GenerateRandomIntermediateBoard();
             watch.Start();
 
             // 100ms per iteration for random solving expert board
@@ -30,8 +30,8 @@ namespace MSEngine.ConsoleApp
                     {
                         var foo = GetBoardAsciiArt(board);
                         var (turn, strategy) = EliteSolver.ComputeTurn(board);
-                        Engine.EnsureValidBoardConfiguration(board, turn);
-                        board = Engine.ComputeBoard(board, turn);
+                        Computer.EnsureValidBoardConfiguration(board, turn);
+                        board = Computer.ComputeBoard(board, turn);
 
                         // Get new board unless tile has no mine and zero AMC
                         var targetTile = board.Tiles.Single(x => x.Coordinates == turn.Coordinates);
@@ -127,7 +127,7 @@ namespace MSEngine.ConsoleApp
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static char GetTileChar(Tile tile)
+        public static char GetTileChar(in Tile tile)
         {
             switch (tile)
             {

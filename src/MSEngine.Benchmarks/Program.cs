@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Engines;
 using BenchmarkDotNet.Running;
 using MSEngine.Core;
 
@@ -17,9 +19,6 @@ namespace MSEngine.Benchmarks
     public class Test
     {
         [Benchmark]
-        public Board GeneratePureBoard() => Engine.GeneratePureBoard(30, 16, 99);
-
-        [Benchmark]
-        public Board GenerateRandomBoard() => Engine.GenerateRandomExpertBoard();
+        public void GenerateRandomExpertBoard() => MSEngine.Core.Engine.GetCoordinates(30, 16).Consume(new Consumer());
     }
 }
