@@ -32,17 +32,19 @@ namespace MSEngine.Solver
 
             var hiddenTile = board.Tiles
                 .Where(x => x.State == TileState.Hidden)
-                .OrderBy(tile =>
-                {
-                    var adjacentTiles = board.Tiles
-                        .Where(x => tileToMineProbabilityMap.Keys.Contains(x))
-                        .Where(x => Utilities.IsAdjacentTo(tile.Coordinates, x.Coordinates))
-                        .ToList();
+                .OrderBy(x => x.Coordinates.X)
+                .ThenBy(x => x.Coordinates.Y)
+                //.OrderBy(tile =>
+                //{
+                //    var adjacentTiles = board.Tiles
+                //        .Where(x => tileToMineProbabilityMap.Keys.Contains(x))
+                //        .Where(x => Utilities.IsAdjacentTo(tile.Coordinates, x.Coordinates))
+                //        .ToList();
 
-                    return adjacentTiles.Any()
-                        ? adjacentTiles.Max(x => tileToMineProbabilityMap[x])
-                        : defaultMineProbability;
-                })
+                //    return adjacentTiles.Any()
+                //        ? adjacentTiles.Max(x => tileToMineProbabilityMap[x])
+                //        : defaultMineProbability;
+                //})
                 .First();
 
             return new Turn(hiddenTile.Coordinates, TileOperation.Reveal);

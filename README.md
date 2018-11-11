@@ -42,16 +42,16 @@ To run tests, open a terminal and navigate to `src\MSEngine.Tests\` and execute 
 ### Benchmarks
 To run benchmarks, open a terminal and navigate to `src\MSEngine.Benchmarks\` and execute `dotnet run`
 
-                          Method |       Mean |     Error |    StdDev |     Median | Gen 0/1k Op | Gen 1/1k Op | Gen 2/1k Op | Allocated Memory/Op |
--------------------------------- |-----------:|----------:|----------:|-----------:|------------:|------------:|------------:|--------------------:|
-     GenerateRandomBeginnerBoard |   110.9 us |  2.201 us |  5.480 us |   108.2 us |     13.0615 |           - |           - |            53.81 KB |
- GenerateRandomIntermediateBoard | 1,441.4 us |  6.867 us |  6.424 us | 1,439.3 us |    132.8125 |           - |           - |           548.06 KB |
-       GenerateRandomExpertBoard | 5,112.5 us | 33.829 us | 31.644 us | 5,104.7 us |    531.2500 |           - |           - |          2188.05 KB |
+|                          Method |       Mean |     Error |    StdDev |     Median | Gen 0/1k Op | Gen 1/1k Op | Gen 2/1k Op | Allocated Memory/Op |
+|-------------------------------- |-----------:|----------:|----------:|-----------:|------------:|------------:|------------:|--------------------:|
+|     GenerateRandomBeginnerBoard |   110.9 us |  2.201 us |  5.480 us |   108.2 us |     13.0615 |           - |           - |            53.81 KB |
+| GenerateRandomIntermediateBoard | 1,441.4 us |  6.867 us |  6.424 us | 1,439.3 us |    132.8125 |           - |           - |           548.06 KB |
+|       GenerateRandomExpertBoard | 5,112.5 us | 33.829 us | 31.644 us | 5,104.7 us |    531.2500 |           - |           - |          2188.05 KB |
 
 ### TODO / Future Goals
 - ~~NuGet Package~~
 - ~~Performance Enhancements (while balancing readability)~~
 - ~~Extensive and deterministic test suite~~
 - ~~Benchmarks~~
-- ~~Automated Solver~~ (WIP - 50% win ratio on intermediate, need to complete logic on `PatternStrategy` and `EducatedGuessStrategy`
+- ~~Automated Solver~~ (WIP - 80% win ratio on intermediate, need to verify logic on `PatternStrategy` and implement `EducatedGuessStrategy`
 - Extra Z dimension

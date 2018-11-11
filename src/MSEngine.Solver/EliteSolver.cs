@@ -14,23 +14,27 @@ namespace MSEngine.Solver
             {
                 return (turn, Strategy.Finish);
             }
+
             if (FirstTurnStrategy.TryUseStrategy(board, out var firstTurn))
             {
                 return (firstTurn, Strategy.FirstTurn);
             }
+
             if (ChordingStrategy.TryUseStrategy(board, out var chordingTurn))
             {
                 return (chordingTurn, Strategy.Chording);
             }
+
             if (MineCountStrategy.TryUseStrategy(board, out var mineCountTurn))
             {
                 return (mineCountTurn, Strategy.MineCount);
             }
-            //if (PatternStrategy.TryUseStrategy(board, out var patternTurn))
-            //{
-            //    strategy = Strategy.OneOneRevealPattern;
-            //    return patternTurn;
-            //}
+
+            if (PatternStrategy.TryUseStrategy(board, out var patternTurn))
+            {
+                return (patternTurn, Strategy.Pattern);
+            }
+
             var guess = EducatedGuessStrategy.UseStrategy(board);
             return (guess, Strategy.EducatedGuess);
         }

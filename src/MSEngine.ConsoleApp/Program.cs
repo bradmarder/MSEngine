@@ -20,9 +20,9 @@ namespace MSEngine.ConsoleApp
 
             // 100ms per iteration for random solving expert board
             // this indicates that more complex solving strategies may take significantly longer?
-            ParallelEnumerable
-                .Range(0, 3000)//.ToList()
-                .ForAll(_ =>
+            Enumerable
+                .Range(0, 1000).ToList()
+                .ForEach(_ =>
                 {
                     var board = getBoard();
                     var turnCount = 0;
@@ -54,9 +54,6 @@ namespace MSEngine.ConsoleApp
                         if (board.Status == BoardStatus.Completed)
                         {
                             Interlocked.Increment(ref wins);
-                        }
-                        if (board.Status == BoardStatus.Completed)
-                        {
                             Console.WriteLine("win");
                         }
                         if (board.Status == BoardStatus.Failed)
@@ -74,7 +71,7 @@ namespace MSEngine.ConsoleApp
 
                         if (board.Status == BoardStatus.Failed && strategy == Strategy.Pattern)
                         {
-                            Console.WriteLine("one one reveal FAIL");
+                            Console.WriteLine("MINE REVEAL");
                             Console.WriteLine(turn.Coordinates.X + "-" + turn.Coordinates.Y + "-" + turn.Operation.ToString());
                             Console.WriteLine(foo);
                             Console.WriteLine(GetBoardAsciiArt(board));
