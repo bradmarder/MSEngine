@@ -8,8 +8,7 @@ namespace MSEngine.Solver
         FirstTurn,
         Chording,
         MineCount,
-        OneOneRevealPattern,
-        OneTwoFlagPattern,
+        Pattern,
         EducatedGuess
     }
 }

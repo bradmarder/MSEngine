@@ -1,28 +1,51 @@
 ﻿using System;
 using System.Linq;
-using System.Collections.Generic;
 
 using MSEngine.Core;
 
 namespace MSEngine.Solver
 {
-    /// <summary>
-    /// // reveal the first hidden tile\
-    /// TODO: select tile with lower probabilty of having a mine
-    /// we need to order by x/y because the tiles are currently ordered by HasMine
-    /// </summary>
     public static class EducatedGuessStrategy
     {
         public static Turn UseStrategy(Board board)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
-            var firstHiddenTile = board.Tiles
-                .OrderBy(x => x.Coordinates.Y)
-                .ThenBy(x => x.Coordinates.X)
-                .First(x => x.State == TileState.Hidden);
+            var tileToMineProbabilityMap = board.Tiles
+                .Where(x => x.State == TileState.Revealed)
+                .Where(x => x.AdjacentMineCount > 0)
+                .ToDictionary(x => x, tile =>
+                {
+                    var adjacentTiles = board.Tiles
+                        .Where(x => Utilities.IsAdjacentTo(x.Coordinates, tile.Coordinates))
+                        .ToList();
+                    var adjacentHiddenTileCount = adjacentTiles.Count(x => x.State == TileState.Hidden);
+                    var adjacentFlaggedTileCount = adjacentTiles.Count(x => x.State == TileState.Flagged);
 
-            return new Turn(firstHiddenTile.Coordinates, TileOperation.Reveal);
+                    return adjacentHiddenTileCount == 0
+                        ? 0
+                        : (tile.AdjacentMineCount - adjacentFlaggedTileCount) / adjacentHiddenTileCount;
+                });
+
+            var hiddenTileCount = board.Tiles.Count(x => x.State == TileState.Hidden);
+            var defaultMineProbability = board.FlagsAvailable / hiddenTileCount;
+
+            var hiddenTile = board.Tiles
+                .Where(x => x.State == TileState.Hidden)
+                .OrderBy(tile =>
+                {
+                    var adjacentTiles = board.Tiles
+                        .Where(x => tileToMineProbabilityMap.Keys.Contains(x))
+                        .Where(x => Utilities.IsAdjacentTo(tile.Coordinates, x.Coordinates))
+                        .ToList();
+
+                    return adjacentTiles.Any()
+                        ? adjacentTiles.Max(x => tileToMineProbabilityMap[x])
+                        : defaultMineProbability;
+                })
+                .First();
+
+            return new Turn(hiddenTile.Coordinates, TileOperation.Reveal);
         }
     }
 }

@@ -21,7 +21,7 @@ namespace MSEngine.ConsoleApp
             // 100ms per iteration for random solving expert board
             // this indicates that more complex solving strategies may take significantly longer?
             ParallelEnumerable
-                .Range(0, 100)//.ToList()
+                .Range(0, 3000)//.ToList()
                 .ForAll(_ =>
                 {
                     var board = getBoard();
@@ -72,7 +72,7 @@ namespace MSEngine.ConsoleApp
                             throw new Exception("FIN");
                         }
 
-                        if (board.Status == BoardStatus.Failed && strategy == Strategy.OneOneRevealPattern)
+                        if (board.Status == BoardStatus.Failed && strategy == Strategy.Pattern)
                         {
                             Console.WriteLine("one one reveal FAIL");
                             Console.WriteLine(turn.Coordinates.X + "-" + turn.Coordinates.Y + "-" + turn.Operation.ToString());
@@ -84,24 +84,6 @@ namespace MSEngine.ConsoleApp
                 });
             watch.Stop();
             Console.WriteLine($"wins = {wins} in {watch.ElapsedMilliseconds} milliseconds");
-
-            //var board = Engine.GenerateRandomExpertBoard();
-            //var turn = new Turn(4, 4, TileOperation.Reveal);
-            //var foo = Engine.ComputeBoard(board, turn);
-
-            //Console.WriteLine(GetBoardAsciiArt(foo));
-        }
-
-        private static void MeasureExpertBoardGeneration()
-        {
-            const int boardCount = 100;
-            var genWatch = new System.Diagnostics.Stopwatch();
-            genWatch.Start();
-            ParallelEnumerable
-                .Range(0, boardCount)
-                .ForAll(_ => Engine.GenerateRandomExpertBoard());
-            genWatch.Stop();
-            Console.WriteLine($"Time to generate {boardCount} expert boards = {genWatch.ElapsedMilliseconds} milliseconds");
         }
 
         public static string GetBoardAsciiArt(Board board)

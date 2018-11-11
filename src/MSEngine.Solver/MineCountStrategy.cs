@@ -28,7 +28,9 @@ namespace MSEngine.Solver
                     .Where(x => x.State == TileState.Revealed)
                     .Where(x =>
                     {
-                        var adjacentTiles = board.Tiles.Where(y => Utilities.IsAdjacentTo(x.Coordinates, y.Coordinates));
+                        var adjacentTiles = board.Tiles
+                            .Where(y => Utilities.IsAdjacentTo(x.Coordinates, y.Coordinates))
+                            .ToList();
                         var flagCount = adjacentTiles.Count(y => y.State == TileState.Flagged);
                         var hiddenCount = adjacentTiles.Count(y => y.State == TileState.Hidden);
 

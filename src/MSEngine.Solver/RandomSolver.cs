@@ -5,7 +5,7 @@ using MSEngine.Core;
 
 namespace MSEngine.Solver
 {
-    public class RandomSolver : ISolver
+    public class RandomSolver
     {
         public Turn ComputeTurn(Board board)
         {

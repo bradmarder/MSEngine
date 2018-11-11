@@ -19,6 +19,12 @@ namespace MSEngine.Benchmarks
     public class Test
     {
         [Benchmark]
-        public void GenerateRandomExpertBoard() => MSEngine.Core.Engine.GetCoordinates(30, 16).Consume(new Consumer());
+        public void GenerateRandomBeginnerBoard() => MSEngine.Core.Engine.GenerateRandomBeginnerBoard();
+
+        [Benchmark]
+        public void GenerateRandomIntermediateBoard() => MSEngine.Core.Engine.GenerateRandomIntermediateBoard();
+
+        [Benchmark]
+        public void GenerateRandomExpertBoard() => MSEngine.Core.Engine.GenerateRandomExpertBoard();
     }
 }
