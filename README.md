@@ -22,7 +22,7 @@ static Board ComputeBoard(Board board, IEnumerable<Turn> turns) => turns.Aggrega
 - This approach allows for easy debugging, **replays** and **backwards time travel**
 - Inspired by the Starcraft 2 replay engine and TAS (tool assisted speedruns)
 - Everything immutable, enforce referential transparency
-- The first turn must select a tile without a mine *and* it must have zero adjacent mines (this logic is the responsibility of the client, not the engine)
+- The first turn must select a tile without a mine *and* having zero adjacent mines (this logic is the responsibility of the client, not the engine)
 - The `System.Collections.Immutable` library has lesser performance relative to it's mutable counterparts
 
 ### API (all methods are thread safe)
@@ -53,5 +53,7 @@ To run benchmarks, open a terminal and navigate to `src\MSEngine.Benchmarks\` an
 - ~~Performance Enhancements (while balancing readability)~~
 - ~~Extensive and deterministic test suite~~
 - ~~Benchmarks~~
-- ~~Automated Solver~~ (WIP - 80% win ratio on intermediate, need to verify logic on `PatternStrategy` and implement `EducatedGuessStrategy`
+- ~~Automated Solver~~ 
+    - ~85% win ratio on beginner, ~80% on intermediate, ~25% on expert
+	- need to verify logic on `PatternStrategy` and implement `EducatedGuessStrategy`
 - Extra Z dimension

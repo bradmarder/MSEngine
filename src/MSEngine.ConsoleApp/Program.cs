@@ -15,22 +15,20 @@ namespace MSEngine.ConsoleApp
         {
             var wins = 0;
             var watch = new System.Diagnostics.Stopwatch();
-            Func<Board> getBoard = () => Engine.GenerateRandomIntermediateBoard();
+            Func<Board> getBoard = () => Engine.GenerateRandomBeginnerBoard();
             watch.Start();
-
-            // 100ms per iteration for random solving expert board
-            // this indicates that more complex solving strategies may take significantly longer?
-            Enumerable
-                .Range(0, 1000).ToList()
-                .ForEach(_ =>
+            
+            ParallelEnumerable
+                .Range(0, 10000)
+                .ForAll(_ =>
                 {
                     var board = getBoard();
                     var turnCount = 0;
+
                     while (board.Status == BoardStatus.Pending)
                     {
                         var foo = GetBoardAsciiArt(board);
                         var (turn, strategy) = EliteSolver.ComputeTurn(board);
-                        Computer.EnsureValidBoardConfiguration(board, turn);
                         board = Computer.ComputeBoard(board, turn);
 
                         // Get new board unless tile has no mine and zero AMC
@@ -42,15 +40,6 @@ namespace MSEngine.ConsoleApp
                         }
                         turnCount++;
 
-                        if (turnCount > 255)
-                        {
-                            Console.WriteLine(turn.Coordinates.X + "-" + turn.Coordinates.Y + "-" + turn.Operation.ToString());
-                            Console.WriteLine(foo);
-                            Console.WriteLine(GetBoardAsciiArt(board));
-                            throw new Exception("TURN OVER 255");
-                        }
-
-                        // this region could exist outside the while loop?
                         if (board.Status == BoardStatus.Completed)
                         {
                             Interlocked.Increment(ref wins);
@@ -60,25 +49,9 @@ namespace MSEngine.ConsoleApp
                         {
                             Console.WriteLine("lose");
                         }
-                        if (board.Tiles.Any(x => x.State == TileState.Flagged && !x.HasMine))
-                        {
-                            Console.WriteLine("FALSE FLAG");
-                            Console.WriteLine(turn.Coordinates.X + "-" + turn.Coordinates.Y + "-" + turn.Operation.ToString());
-                            Console.WriteLine(foo);
-                            Console.WriteLine(GetBoardAsciiArt(board));
-                            throw new Exception("FIN");
-                        }
-
-                        if (board.Status == BoardStatus.Failed && strategy == Strategy.Pattern)
-                        {
-                            Console.WriteLine("MINE REVEAL");
-                            Console.WriteLine(turn.Coordinates.X + "-" + turn.Coordinates.Y + "-" + turn.Operation.ToString());
-                            Console.WriteLine(foo);
-                            Console.WriteLine(GetBoardAsciiArt(board));
-                            throw new Exception("FIN");
-                        }
                     }
                 });
+
             watch.Stop();
             Console.WriteLine($"wins = {wins} in {watch.ElapsedMilliseconds} milliseconds");
         }

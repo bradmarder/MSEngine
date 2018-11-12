@@ -27,39 +27,40 @@ namespace MSEngine.Solver
 
             foreach (var primary in primaryTileToNextTilesMap)
             {
+                var primaryFlaggedAjacentTileCount = flaggedTiles.Count(x => Utilities.IsAdjacentTo(x.Coordinates, primary.Key.Coordinates));
                 var primaryHiddenAdjacentTiles = hiddenTiles
                     .Where(x => Utilities.IsAdjacentTo(x.Coordinates, primary.Key.Coordinates))
                     .ToList();
-                var primaryFlaggedAjacentTileCount = flaggedTiles.Count(x => Utilities.IsAdjacentTo(x.Coordinates, primary.Key.Coordinates));
 
                 foreach (var secondary in primary.Value)
                 {
-                    var secondaryFlaggedAjacentTileCount = flaggedTiles.Count(x => Utilities.IsAdjacentTo(x.Coordinates, secondary.Coordinates));
                     var secondaryHiddenAdjacentTiles = hiddenTiles
                         .Where(x => Utilities.IsAdjacentTo(x.Coordinates, secondary.Coordinates))
                         .ToList();
-                    var sharedHiddenTiles = Enumerable
-                        .Intersect(primaryHiddenAdjacentTiles, secondaryHiddenAdjacentTiles)
-                        .ToList();
-                    
                     var secondaryExtraTiles = Enumerable
                         .Except(secondaryHiddenAdjacentTiles, primaryHiddenAdjacentTiles)
                         .ToList();
+
                     if (!secondaryExtraTiles.Any())
                     {
                         continue;
                     }
 
+                    var secondaryFlaggedAjacentTileCount = flaggedTiles.Count(x => Utilities.IsAdjacentTo(x.Coordinates, secondary.Coordinates));
+                    var sharedHiddenTileCount = Enumerable
+                        .Intersect(primaryHiddenAdjacentTiles, secondaryHiddenAdjacentTiles)
+                        .Count();
+
                     // we know there are n mines in the sharedHiddenTiles
                     var sharedHiddenTileMineCount = primary.Key.AdjacentMineCount - primaryFlaggedAjacentTileCount;
                     var extraMineCount = secondary.AdjacentMineCount - secondaryFlaggedAjacentTileCount;
 
-                    if (primaryHiddenAdjacentTiles.Count == sharedHiddenTiles.Count && extraMineCount == sharedHiddenTileMineCount)
+                    if (primaryHiddenAdjacentTiles.Count == sharedHiddenTileCount && extraMineCount == sharedHiddenTileMineCount)
                     {
                         turn = new Turn(secondaryExtraTiles.First().Coordinates, TileOperation.Reveal);
                         return true;
                     }
-                    
+
                     if (extraMineCount > sharedHiddenTileMineCount && (extraMineCount - sharedHiddenTileMineCount) == secondaryExtraTiles.Count)
                     {
                         turn = new Turn(secondaryExtraTiles.First().Coordinates, TileOperation.Flag);
