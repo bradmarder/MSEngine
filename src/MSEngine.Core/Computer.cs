@@ -15,9 +15,13 @@ namespace MSEngine.Core
         /// -Turns are not allowed if board status is completed/failed
         /// -Turn has coordinates that are outside the board
         /// -No more flags available
-        /// -Operations not allowed on revealed tiles
+        /// -Only chord operations are allowed on revealed tiles
         /// -May not flag a tile that is already flagged
         /// -Impossible to remove flag from un-flagged tile
+        /// -May only chord a revealed tile
+        /// -May only chord a tile that has adjacent mines
+        /// -May only chord a tile when adjacent mine count equals adjacent tile flag count
+        /// -May only chord a tile that has hidden adjacent tiles
         /// </exception>
         public static void EnsureValidBoardConfiguration(Board board, Turn turn)
         {

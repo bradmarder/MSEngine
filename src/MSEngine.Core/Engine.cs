@@ -62,7 +62,7 @@ namespace MSEngine.Core
         /// </summary>
         internal static Board GeneratePureBoard(byte columns, byte rows, byte mineCount) =>
             GenerateBoard(columns, rows, mineCount, Enumerable.AsEnumerable);
-        
+
         internal static IEnumerable<Coordinates> GetCoordinates(byte rows, byte columns)
         {
             if (columns == 0) { throw new ArgumentOutOfRangeException(nameof(columns)); }
@@ -70,9 +70,11 @@ namespace MSEngine.Core
 
             return Enumerable
                 .Range(0, rows)
+                .Select(x => { Console.WriteLine(x); return x; })
                 .SelectMany(x => Enumerable
                     .Range(0, columns)
-                    .Select(y => new Coordinates((byte)x, (byte)y)));
+                    .Select(y => new Coordinates((byte)x, (byte)y)))
+                .ToList();
         }
     }
 }

@@ -23,10 +23,17 @@ namespace MSEngine.Solver
                 .ToList();
             var primaryTileToNextTilesMap = revealedTilesWithAMC.ToDictionary(
                 x => x,
-                x => revealedTilesWithAMC.Where(y => Utilities.IsNextTo(y.Coordinates, x.Coordinates)));
+                x => revealedTilesWithAMC
+                    .Where(y => Utilities.IsNextTo(y.Coordinates, x.Coordinates))
+                    .ToList());
 
             foreach (var primary in primaryTileToNextTilesMap)
             {
+                if (!primary.Value.Any())
+                {
+                    continue;
+                }
+
                 var primaryFlaggedAjacentTileCount = flaggedTiles.Count(x => Utilities.IsAdjacentTo(x.Coordinates, primary.Key.Coordinates));
                 var primaryHiddenAdjacentTiles = hiddenTiles
                     .Where(x => Utilities.IsAdjacentTo(x.Coordinates, primary.Key.Coordinates))
