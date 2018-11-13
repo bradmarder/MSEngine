@@ -70,7 +70,6 @@ namespace MSEngine.Core
 
             return Enumerable
                 .Range(0, rows)
-                .Select(x => { Console.WriteLine(x); return x; })
                 .SelectMany(x => Enumerable
                     .Range(0, columns)
                     .Select(y => new Coordinates((byte)x, (byte)y)))
