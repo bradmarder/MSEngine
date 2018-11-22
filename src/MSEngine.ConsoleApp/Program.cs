@@ -11,15 +11,18 @@ namespace MSEngine.ConsoleApp
 {
     class Program
     {
+        private static readonly object _lock = new object();
+
         static void Main(string[] args)
         {
             var wins = 0;
+            var gamesPlayedCount = 0;
             var watch = new System.Diagnostics.Stopwatch();
             Func<Board> getBoard = () => Engine.GenerateRandomBeginnerBoard();
             watch.Start();
-            
+
             ParallelEnumerable
-                .Range(0, 10000)
+                .Range(0, 2000)
                 .ForAll(_ =>
                 {
                     var board = getBoard();
@@ -27,7 +30,6 @@ namespace MSEngine.ConsoleApp
 
                     while (board.Status == BoardStatus.Pending)
                     {
-                        var foo = GetBoardAsciiArt(board);
                         var (turn, strategy) = EliteSolver.ComputeTurn(board);
                         board = Computer.ComputeBoard(board, turn);
 
@@ -40,20 +42,26 @@ namespace MSEngine.ConsoleApp
                         }
                         turnCount++;
 
+                        if (board.Status == BoardStatus.Pending)
+                        {
+                            continue;
+                        }
+
+                        Interlocked.Increment(ref gamesPlayedCount);
+
                         if (board.Status == BoardStatus.Completed)
                         {
                             Interlocked.Increment(ref wins);
-                            Console.WriteLine("win");
                         }
-                        if (board.Status == BoardStatus.Failed)
+
+                        lock (_lock)
                         {
-                            Console.WriteLine("lose");
+                            var winRatio = ((decimal)wins / gamesPlayedCount) * 100;
+                            Console.SetCursorPosition(0, Console.CursorTop);
+                            Console.Write($"{wins} of {gamesPlayedCount} --- Win Ratio = {winRatio}%  within {watch.ElapsedMilliseconds} milliseconds");
                         }
                     }
                 });
-
-            watch.Stop();
-            Console.WriteLine($"wins = {wins} in {watch.ElapsedMilliseconds} milliseconds");
         }
 
         public static string GetBoardAsciiArt(Board board)

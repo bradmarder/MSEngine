@@ -8,10 +8,10 @@ namespace MSEngine.Core
     {
         internal Board(IEnumerable<Tile> tiles)
         {
-            Tiles = tiles?.ToList() ?? throw new ArgumentNullException(nameof(tiles));
+            Tiles = tiles?.ToArray() ?? throw new ArgumentNullException(nameof(tiles));
         }
 
-        public List<Tile> Tiles { get; }
+        public Tile[] Tiles { get; }
 
         public byte Width => (byte)(1 + Tiles.Max(x => x.Coordinates.X));
         public byte Height => (byte)(1 + Tiles.Max(x => x.Coordinates.Y));
