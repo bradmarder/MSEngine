@@ -2,14 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 
 namespace MSEngine.Core
 {
     public static class Utilities
     {
-        private static readonly Random _random = new Random();
-        private static readonly object _lock = new object();
-        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNextTo(Coordinates coordinateOne, Coordinates coordinateTwo)
         {
@@ -38,15 +36,19 @@ namespace MSEngine.Core
             if (list == null) { throw new ArgumentNullException(nameof(list)); }
 
             var items = list.ToList();
-            int n = items.Count;
+            var n = items.Count;
 
-            lock (_lock)
+            using (var provider = new RNGCryptoServiceProvider())
             {
+                var data = new byte[4];
+
                 while (n > 1)
                 {
                     n--;
-                    int k = _random.Next(n + 1);
-                    T value = items[k];
+                    provider.GetBytes(data);
+                    var seed = BitConverter.ToInt32(data, 0);
+                    var k = new Random(seed).Next(n + 1);
+                    var value = items[k];
                     items[k] = items[n];
                     items[n] = value;
                 }
