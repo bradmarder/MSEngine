@@ -1,12 +1,13 @@
 ﻿using System;
-
 using MSEngine.Core;
 
 namespace MSEngine.Solver
 {
-    public static class EliteSolver
+    public class EliteSolver : ISolver
     {
-        public static (Turn, Strategy) ComputeTurn(Board board)
+        public static ISolver Instance { get; } = new EliteSolver();
+
+        public (Turn, Strategy) ComputeTurn(Board board)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 

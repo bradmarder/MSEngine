@@ -5,30 +5,14 @@ using static MSEngine.Core.Utilities;
 
 namespace MSEngine.Core
 {
-    public static class Engine
+    public class Engine : IEngine
     {
-        /// <summary>
-        /// Generates an 8x8 board with 10 mines
-        /// </summary>
-        public static Board GenerateRandomBeginnerBoard() => GenerateRandomBoard(8, 8, 10);
+        public static IEngine Instance { get; } = new Engine();
 
-        /// <summary>
-        /// Generates a 16x16 board with 40 mines
-        /// </summary>
-        public static Board GenerateRandomIntermediateBoard() => GenerateRandomBoard(16, 16, 40);
-
-        /// <summary>
-        /// Generates a 30x16 board with 99 mines
-        /// </summary>
-        public static Board GenerateRandomExpertBoard() => GenerateRandomBoard(30, 16, 99);
-
-        /// <summary>
-        /// Generates a random minesweeper board.
-        /// </summary>
-        /// <param name="columns">Max value of 30</param>
-        /// <param name="rows">Max value of 16</param>
-        /// <param name="mineCount">Must be less than tile count (columns * height)</param>
-        public static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount) =>
+        public Board GenerateRandomBeginnerBoard() => GenerateRandomBoard(8, 8, 10);
+        public Board GenerateRandomIntermediateBoard() => GenerateRandomBoard(16, 16, 40);
+        public Board GenerateRandomExpertBoard() => GenerateRandomBoard(30, 16, 99);
+        public Board GenerateRandomBoard(byte columns, byte rows, byte mineCount) =>
             GenerateBoard(columns, rows, mineCount, Utilities.GetShuffledItems);
 
         internal static Board GenerateBoard(byte columns, byte rows, byte mineCount, Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> shuffler)

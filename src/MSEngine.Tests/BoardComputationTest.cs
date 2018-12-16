@@ -8,12 +8,14 @@ namespace MSEngine.Tests
 {
     public class BoardComputationTest
     {
+        private static readonly IBoardStateMachine _boardStateMachine = new BoardStateMachine();
+
         [Fact]
         public void Zero_mine_count_with_one_reveal_completes_board()
         {
             var board = Engine.GeneratePureBoard(8, 8, 0);
             var turn = new Turn(0, 0, TileOperation.Reveal);
-            var completedBoard = Computer.ComputeBoard(board, turn);
+            var completedBoard = _boardStateMachine.ComputeBoard(board, turn);
 
             Assert.Equal(BoardStatus.Completed, completedBoard.Status);
         }
@@ -22,7 +24,7 @@ namespace MSEngine.Tests
         public void All_mines_revealed_if_game_fails()
         {
             var board = Engine.GeneratePureBoard(2, 2, 1);
-            var fail = Computer.GetFailedBoard(board);
+            var fail = BoardStateMachine.GetFailedBoard(board);
             var allTilesRevealed = fail.Tiles.All(x => !x.HasMine || x.State == TileState.Flagged || x.State == TileState.Revealed);
 
             Assert.True(allTilesRevealed);
@@ -34,7 +36,7 @@ namespace MSEngine.Tests
             var board = Engine.GeneratePureBoard(2, 2, 1);
             var origin = new Coordinates(0, 0);
             var turn = new Turn(origin, TileOperation.Flag);
-            var fin = Computer.ComputeBoard(board, turn);
+            var fin = _boardStateMachine.ComputeBoard(board, turn);
             var tile = fin.Tiles.Single(x => x.Coordinates == origin);
             var everyOtherTileHasNotChanged = fin.Tiles.All(x => x.Equals(tile) || board.Tiles.Contains(x));
 
@@ -48,7 +50,7 @@ namespace MSEngine.Tests
             var board = Engine.GeneratePureBoard(2, 2, 1);
             var origin = new Coordinates(1, 0);
             var turn = new Turn(origin, TileOperation.Reveal);
-            var fin = Computer.ComputeBoard(board, turn);
+            var fin = _boardStateMachine.ComputeBoard(board, turn);
             var tile = fin.Tiles.Single(x => x.Coordinates == origin);
             var everyOtherTileHasNotChanged = fin.Tiles.All(x => x.Equals(tile) || board.Tiles.Contains(x));
 
@@ -64,7 +66,7 @@ namespace MSEngine.Tests
             var secondTurn = new Turn(1, 1, TileOperation.Reveal);
             var thirdTurn = new Turn(1, 1, TileOperation.Chord);
             var turns = new List<Turn> { firstTurn, secondTurn, thirdTurn };
-            var finalBoard = Computer.ComputeBoard(board, turns);
+            var finalBoard = _boardStateMachine.ComputeBoard(board, turns);
 
             // 0,0 has the only mine, so we flag it
             // revealing 1,1 shows a 1
@@ -78,7 +80,7 @@ namespace MSEngine.Tests
             var board = Engine.GeneratePureBoard(3, 3, 1);
             var targetTile = board.Tiles.Single(x => x.Coordinates.X == 2 && x.Coordinates.Y == 2);
             var firstTurn = new Turn(2, 2, TileOperation.Reveal);
-            var finalBoard = Computer.ComputeBoard(board, firstTurn);
+            var finalBoard = _boardStateMachine.ComputeBoard(board, firstTurn);
             var mineTile = finalBoard.Tiles.Single(x => x.Coordinates.X == 0 && x.Coordinates.Y == 0);
             var everyTileOtherThanMineTile = finalBoard.Tiles.Where(x => x.Coordinates != mineTile.Coordinates);
 
@@ -95,7 +97,7 @@ namespace MSEngine.Tests
             var firstTurn = new Turn(2, 0, TileOperation.Flag);
             var secondTurn = new Turn(4, 0, TileOperation.Reveal);
             var turns = new List<Turn> { firstTurn, secondTurn };
-            var finalBoard = Computer.ComputeBoard(board, turns);
+            var finalBoard = _boardStateMachine.ComputeBoard(board, turns);
             var firstTwoTilesAreHidden = finalBoard.Tiles
                 .Where(x => x.Coordinates.X < 2)
                 .All(x => x.State == TileState.Hidden);

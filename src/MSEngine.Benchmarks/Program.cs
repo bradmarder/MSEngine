@@ -19,12 +19,12 @@ namespace MSEngine.Benchmarks
     public class Test
     {
         [Benchmark]
-        public void GenerateRandomBeginnerBoard() => MSEngine.Core.Engine.GenerateRandomBeginnerBoard();
+        public void GenerateRandomBeginnerBoard() => MSEngine.Core.Engine.Instance.GenerateRandomBeginnerBoard();
 
         [Benchmark]
-        public void GenerateRandomIntermediateBoard() => MSEngine.Core.Engine.GenerateRandomIntermediateBoard();
+        public void GenerateRandomIntermediateBoard() => MSEngine.Core.Engine.Instance.GenerateRandomIntermediateBoard();
 
         [Benchmark]
-        public void GenerateRandomExpertBoard() => MSEngine.Core.Engine.GenerateRandomExpertBoard();
+        public void GenerateRandomExpertBoard() => MSEngine.Core.Engine.Instance.GenerateRandomExpertBoard();
     }
 }

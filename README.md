@@ -8,8 +8,8 @@
 
 ### The core concept of MSEngine
 ```c#
-static Board ComputeBoard(Board board, Turn turn);
-static Board ComputeBoard(Board board, IEnumerable<Turn> turns) => turns.Aggregate(board, ComputeBoard);
+Board ComputeBoard(Board board, Turn turn);
+Board ComputeBoard(Board board, IEnumerable<Turn> turns) => turns.Aggregate(board, ComputeBoard);
 ```
 
 ### Who is this library for?
@@ -25,15 +25,22 @@ static Board ComputeBoard(Board board, IEnumerable<Turn> turns) => turns.Aggrega
 - The first turn must select a tile without a mine *and* having zero adjacent mines (this logic is the responsibility of the client, not the engine)
 - The `System.Collections.Immutable` library has lesser performance relative to it's mutable counterparts
 
-### API (all methods are thread safe)
+### API (Instances are thread safe)
 ```c#
-static Board GenerateRandomBeginnerBoard();
-static Board GenerateRandomIntermediateBoard();
-static Board GenerateRandomExpertBoard();
-static Board GenerateRandomBoard(byte columns, byte rows, byte mineCount);
-static void EnsureValidBoardConfiguration(Board board, Turn turn);
-static Board ComputeBoard(Board board, IEnumerable<Turn> turns);
-static Board ComputeBoard(Board board, Turn turn);
+    public interface IEngine
+    {
+        Board GenerateRandomBeginnerBoard();
+        Board GenerateRandomIntermediateBoard();
+        Board GenerateRandomExpertBoard();
+        Board GenerateRandomBoard(byte columns, byte rows, byte mineCount);
+    }
+	
+	public interface IBoardStateMachine
+    {
+        void EnsureValidBoardConfiguration(Board board, Turn turn);
+        Board ComputeBoard(Board board, IEnumerable<Turn> turns);
+        Board ComputeBoard(Board board, Turn turn);
+    }
 ```
 
 ### Tests

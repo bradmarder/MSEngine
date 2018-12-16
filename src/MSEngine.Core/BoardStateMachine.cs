@@ -5,25 +5,11 @@ using static MSEngine.Core.Utilities;
 
 namespace MSEngine.Core
 {
-    public static class Computer
+    public class BoardStateMachine : IBoardStateMachine
     {
-        /// <summary>
-        /// Validates a board-turn configuration-operation.
-        /// Calling this method is optional - It's intended usage is only when building-testing a client
-        /// </summary>
-        /// <exception cref="InvalidGameStateException">
-        /// -Turns are not allowed if board status is completed/failed
-        /// -Turn has coordinates that are outside the board
-        /// -No more flags available
-        /// -Only chord operations are allowed on revealed tiles
-        /// -May not flag a tile that is already flagged
-        /// -Impossible to remove flag from un-flagged tile
-        /// -May only chord a revealed tile
-        /// -May only chord a tile that has adjacent mines
-        /// -May only chord a tile when adjacent mine count equals adjacent tile flag count
-        /// -May only chord a tile that has hidden adjacent tiles
-        /// </exception>
-        public static void EnsureValidBoardConfiguration(Board board, Turn turn)
+        public static IBoardStateMachine Instance { get; } = new BoardStateMachine();
+
+        public void EnsureValidBoardConfiguration(Board board, Turn turn)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
@@ -78,16 +64,14 @@ namespace MSEngine.Core
                 }
             }
         }
-
-        public static Board ComputeBoard(Board board, IEnumerable<Turn> turns)
+        public Board ComputeBoard(Board board, IEnumerable<Turn> turns)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
             if (turns == null) { throw new ArgumentNullException(nameof(turns)); }
 
             return turns.Aggregate(board, ComputeBoard);
         }
-
-        public static Board ComputeBoard(Board board, Turn turn)
+        public Board ComputeBoard(Board board, Turn turn)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
@@ -127,7 +111,6 @@ namespace MSEngine.Core
 
             return new Board(tiles);
         }
-
         internal static Board GetChainReactionBoard(Board board, Coordinates coordinates)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
@@ -168,7 +151,7 @@ namespace MSEngine.Core
             return new Board(tiles);
         }
 
-        internal static Board GetChordBoard(Board board, Coordinates coordinates)
+        internal Board GetChordBoard(Board board, Coordinates coordinates)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 

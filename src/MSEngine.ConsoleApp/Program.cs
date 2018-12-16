@@ -18,28 +18,24 @@ namespace MSEngine.ConsoleApp
 
         static void Main(string[] args)
         {
-            RunBoardRandomSimulation();
-            //RunBeginnerSimulations();
+            RunRandomDistributionTest(Engine.Instance.GenerateRandomBeginnerBoard);
+            //RunSimulations(20000, Engine.GenerateRandomBeginnerBoard);
         }
 
-        private static void RunBoardRandomSimulation()
+        private static void RunRandomDistributionTest(Func<Board> boardGenerator)
         {
-            var expectedAverage = 99m / (30 * 16);
-            Console.WriteLine("Expected Average = " + expectedAverage);
-
-            var map = Engine
-                .GenerateRandomExpertBoard()
-                .Tiles
-                .ToDictionary(x => x.Coordinates, _ => 0);
+            if (boardGenerator == null) { throw new ArgumentNullException(nameof(boardGenerator)); }
 
             var iteration = 0;
+            var board = boardGenerator();
+            var expectedAverage = board.MineCount / (decimal)(board.Width * board.Height);
+            var map = board.Tiles.ToDictionary(x => x.Coordinates, _ => 0);
             
             while (true)
             {
                 iteration++;
 
-                Engine
-                    .GenerateRandomExpertBoard()
+                boardGenerator()
                     .Tiles
                     .Where(x => x.HasMine)
                     .ToList()
@@ -48,37 +44,45 @@ namespace MSEngine.ConsoleApp
                 var means = map
                     .Select(y => y.Value / (decimal)iteration)
                     .ToArray();
-                var min = means.Min(); //.00369639666
-                var max = means.Max(); //.00333032896
+                var min = means.Min(); 
+                var max = means.Max(); 
+                var minDiff = Math.Abs(expectedAverage - min); //.00369639666
+                var maxDiff = Math.Abs(expectedAverage - max); //.00333032896
 
                 Console.SetCursorPosition(0, Console.CursorTop);
-                Console.Write($"Min = {min} and Max = {max}");
+                Console.Write($"MinDiff = {minDiff} and MaxDiff = {maxDiff}");
+
+                // beginner
+                // MinDiff = 0.0008879570668942427624236854 and MaxDiff = 0.0007066073655878684435107989
+                // MinDiff = 0.0003602253545151916915500224 and MaxDiff = 0.0004654803596709192191884712
             }
         }
 
-        private static void RunBeginnerSimulations()
+        private static void RunSimulations(int count, Func<Board> boardGenerator)
         {
+            if (count < 1) { throw new ArgumentOutOfRangeException(nameof(count)); }
+            if (boardGenerator == null) { throw new ArgumentNullException(nameof(boardGenerator)); }
+
             var watch = new System.Diagnostics.Stopwatch();
-            Func<Board> getBoard = () => Engine.GenerateRandomBeginnerBoard();
             watch.Start();
 
             ParallelEnumerable
-                .Range(0, 20000)
+                .Range(0, count)
                 .ForAll(_ =>
                 {
-                    var board = getBoard();
+                    var board = boardGenerator();
                     var turnCount = 0;
 
                     while (board.Status == BoardStatus.Pending)
                     {
-                        var (turn, strategy) = EliteSolver.ComputeTurn(board);
-                        board = Computer.ComputeBoard(board, turn);
+                        var (turn, strategy) = EliteSolver.Instance.ComputeTurn(board);
+                        board = BoardStateMachine.Instance.ComputeBoard(board, turn);
 
                         // Get new board unless tile has no mine and zero AMC
                         var targetTile = board.Tiles.Single(x => x.Coordinates == turn.Coordinates);
                         if (turnCount == 0 && (board.Status == BoardStatus.Failed || targetTile.AdjacentMineCount > 0))
                         {
-                            board = getBoard();
+                            board = boardGenerator();
                             continue;
                         }
                         turnCount++;
@@ -107,6 +111,8 @@ namespace MSEngine.ConsoleApp
 
         private static string GetBoardAsciiArt(Board board)
         {
+            if (board == null) { throw new ArgumentNullException(nameof(board)); }
+
             var sb = new StringBuilder(board.Tiles.Count());
 
             for (byte y = 0; y < board.Height; y++)
