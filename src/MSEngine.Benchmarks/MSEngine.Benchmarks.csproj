@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MSEngine.Core\MSEngine.Core.csproj" />
+    <ProjectReference Include="..\MSEngine.Solver\MSEngine.Solver.csproj" />
   </ItemGroup>
 
 </Project>

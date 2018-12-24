@@ -13,7 +13,7 @@ namespace MSEngine.Tests
         [Fact]
         public void Zero_mine_count_with_one_reveal_completes_board()
         {
-            var board = Engine.GeneratePureBoard(8, 8, 0);
+            var board = Engine.PureInstance.GenerateBoard(8, 8, 0);
             var turn = new Turn(0, 0, TileOperation.Reveal);
             var completedBoard = _boardStateMachine.ComputeBoard(board, turn);
 
@@ -23,7 +23,7 @@ namespace MSEngine.Tests
         [Fact]
         public void All_mines_revealed_if_game_fails()
         {
-            var board = Engine.GeneratePureBoard(2, 2, 1);
+            var board = Engine.PureInstance.GenerateBoard(2, 2, 1);
             var fail = BoardStateMachine.GetFailedBoard(board);
             var allTilesRevealed = fail.Tiles.All(x => !x.HasMine || x.State == TileState.Flagged || x.State == TileState.Revealed);
 
@@ -33,7 +33,7 @@ namespace MSEngine.Tests
         [Fact]
         public void Flagging_tile_only_flags_single_tile()
         {
-            var board = Engine.GeneratePureBoard(2, 2, 1);
+            var board = Engine.PureInstance.GenerateBoard(2, 2, 1);
             var origin = new Coordinates(0, 0);
             var turn = new Turn(origin, TileOperation.Flag);
             var fin = _boardStateMachine.ComputeBoard(board, turn);
@@ -47,7 +47,7 @@ namespace MSEngine.Tests
         [Fact]
         public void Revealing_tile_with_no_mine_and_has_adjacent_mines_only_reveals_single_tile()
         {
-            var board = Engine.GeneratePureBoard(2, 2, 1);
+            var board = Engine.PureInstance.GenerateBoard(2, 2, 1);
             var origin = new Coordinates(1, 0);
             var turn = new Turn(origin, TileOperation.Reveal);
             var fin = _boardStateMachine.ComputeBoard(board, turn);
@@ -61,7 +61,7 @@ namespace MSEngine.Tests
         [Fact]
         public void Chording_tile_reveals_surrounding_tiles()
         {
-            var board = Engine.GeneratePureBoard(2, 2, 1);
+            var board = Engine.PureInstance.GenerateBoard(2, 2, 1);
             var firstTurn = new Turn(0, 0, TileOperation.Flag);
             var secondTurn = new Turn(1, 1, TileOperation.Reveal);
             var thirdTurn = new Turn(1, 1, TileOperation.Chord);
@@ -77,7 +77,7 @@ namespace MSEngine.Tests
         [Fact]
         public void Revealing_tile_without_mine_and_zero_adjacent_mines_triggers_chain_reaction()
         {
-            var board = Engine.GeneratePureBoard(3, 3, 1);
+            var board = Engine.PureInstance.GenerateBoard(3, 3, 1);
             var targetTile = board.Tiles.Single(x => x.Coordinates.X == 2 && x.Coordinates.Y == 2);
             var firstTurn = new Turn(2, 2, TileOperation.Reveal);
             var finalBoard = _boardStateMachine.ComputeBoard(board, firstTurn);
@@ -93,7 +93,7 @@ namespace MSEngine.Tests
         [Fact]
         public void Chain_reaction_is_blocked_by_false_flag()
         {
-            var board = Engine.GeneratePureBoard(5, 1, 0);
+            var board = Engine.PureInstance.GenerateBoard(5, 1, 0);
             var firstTurn = new Turn(2, 0, TileOperation.Flag);
             var secondTurn = new Turn(4, 0, TileOperation.Reveal);
             var turns = new List<Turn> { firstTurn, secondTurn };

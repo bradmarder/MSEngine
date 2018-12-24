@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Engines;
 using BenchmarkDotNet.Running;
 using MSEngine.Core;
+using MSEngine.Solver;
 
 namespace MSEngine.Benchmarks
 {
@@ -18,13 +19,44 @@ namespace MSEngine.Benchmarks
     [MemoryDiagnoser]
     public class Test
     {
-        [Benchmark]
-        public void GenerateRandomBeginnerBoard() => MSEngine.Core.Engine.Instance.GenerateRandomBeginnerBoard();
+        private static readonly int _defaultInt = default;
+        private static readonly Board PseudoRandomExpertBoard = Core.Engine.PseudoRandomInstance.GenerateExpertBoard();
+        private static readonly Board PseudoRandomExpertBoard2 = Core.Engine.PseudoRandomInstance.GenerateExpertBoard();
 
         [Benchmark]
-        public void GenerateRandomIntermediateBoard() => MSEngine.Core.Engine.Instance.GenerateRandomIntermediateBoard();
+        public void Foo()
+        {
+            Enumerable.Range(0, 1000).Select(x => _defaultInt).ToList();
+        }
 
         [Benchmark]
-        public void GenerateRandomExpertBoard() => MSEngine.Core.Engine.Instance.GenerateRandomExpertBoard();
+        public void Bar()
+        {
+            Enumerable.Range(0, 1000).Select(x => default(int)).ToList();
+        }
+
+        //[Benchmark]
+        //public void SolveExpertBoard()
+        //{
+        //    var board = Core.Engine.PseudoRandomInstance.GenerateExpertBoard();
+
+        //    while (board.Status == BoardStatus.Pending)
+        //    {
+        //        var (turn, strategy) = EliteSolver.Instance.ComputeTurn(board);
+        //        board = BoardStateMachine.Instance.ComputeBoard(board, turn);
+        //    }
+        //}
+
+        //[Benchmark]
+        //public void SolveTestExpertBoard()
+        //{
+        //    var board = Core.Engine.PseudoRandomInstance.GenerateExpertBoard();
+
+        //    while (board.Status == BoardStatus.Pending)
+        //    {
+        //        var (turn, strategy) = EliteSolver.Instance.ComputeTurn(board);
+        //        board = BoardStateMachine.Instance.ComputeBoard(board, turn);
+        //    }
+        //}
     }
 }

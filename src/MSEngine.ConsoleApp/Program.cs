@@ -18,11 +18,11 @@ namespace MSEngine.ConsoleApp
 
         static void Main(string[] args)
         {
-            RunRandomDistributionTest(Engine.Instance.GenerateRandomBeginnerBoard);
-            //RunSimulations(20000, Engine.GenerateRandomBeginnerBoard);
+            //RunRandomDistributionTest(Engine.Instance.GenerateRandomBeginnerBoard);
+            RunSimulations(10000, Engine.Instance.GenerateExpertBoard);
         }
 
-        private static void RunRandomDistributionTest(Func<Board> boardGenerator)
+        private static void RunRandomDistributionTest(Func<Board> boardGenerator, int maxIterationCount = int.MaxValue)
         {
             if (boardGenerator == null) { throw new ArgumentNullException(nameof(boardGenerator)); }
 
@@ -30,8 +30,8 @@ namespace MSEngine.ConsoleApp
             var board = boardGenerator();
             var expectedAverage = board.MineCount / (decimal)(board.Width * board.Height);
             var map = board.Tiles.ToDictionary(x => x.Coordinates, _ => 0);
-            
-            while (true)
+
+            while (iteration < maxIterationCount)
             {
                 iteration++;
 
@@ -44,8 +44,8 @@ namespace MSEngine.ConsoleApp
                 var means = map
                     .Select(y => y.Value / (decimal)iteration)
                     .ToArray();
-                var min = means.Min(); 
-                var max = means.Max(); 
+                var min = means.Min();
+                var max = means.Max();
                 var minDiff = Math.Abs(expectedAverage - min); //.00369639666
                 var maxDiff = Math.Abs(expectedAverage - max); //.00333032896
 
@@ -56,6 +56,8 @@ namespace MSEngine.ConsoleApp
                 // MinDiff = 0.0008879570668942427624236854 and MaxDiff = 0.0007066073655878684435107989
                 // MinDiff = 0.0003602253545151916915500224 and MaxDiff = 0.0004654803596709192191884712
             }
+
+            Console.ReadLine();
         }
 
         private static void RunSimulations(int count, Func<Board> boardGenerator)
@@ -79,7 +81,7 @@ namespace MSEngine.ConsoleApp
                         board = BoardStateMachine.Instance.ComputeBoard(board, turn);
 
                         // Get new board unless tile has no mine and zero AMC
-                        var targetTile = board.Tiles.Single(x => x.Coordinates == turn.Coordinates);
+                        var targetTile = board.Tiles.First(x => x.Coordinates == turn.Coordinates);
                         if (turnCount == 0 && (board.Status == BoardStatus.Failed || targetTile.AdjacentMineCount > 0))
                         {
                             board = boardGenerator();
@@ -147,7 +149,7 @@ namespace MSEngine.ConsoleApp
                 case var z when z.State == TileState.Revealed:
                     return z.AdjacentMineCount.ToString().First();
                 default:
-                    throw new NotImplementedException();
+                    throw new NotImplementedException(tile.ToString());
             }
         }
     }

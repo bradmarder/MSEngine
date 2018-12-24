@@ -13,6 +13,14 @@ namespace MSEngine.Core
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
+            var distinctCoordinateCount = board.Tiles
+                .Select(x => x.Coordinates)
+                .Distinct()
+                .Count();
+            if (board.Tiles.Length > distinctCoordinateCount)
+            {
+                throw new InvalidGameStateException("Multiple tiles have matching coordinates");
+            }
             if (board.Status == BoardStatus.Completed || board.Status == BoardStatus.Failed)
             {
                 throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
@@ -26,7 +34,7 @@ namespace MSEngine.Core
                 throw new InvalidGameStateException("No more flags available");
             }
 
-            var targetTile = board.Tiles.Single(x => x.Coordinates == turn.Coordinates);
+            var targetTile = board.Tiles.First(x => x.Coordinates == turn.Coordinates);
 
             if (targetTile.State == TileState.Revealed && turn.Operation != TileOperation.Chord)
             {
@@ -75,7 +83,7 @@ namespace MSEngine.Core
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
-            var targetTile = board.Tiles.Single(x => x.Coordinates == turn.Coordinates);
+            var targetTile = board.Tiles.First(x => x.Coordinates == turn.Coordinates);
 
             // these cases will only affect a single tile
             if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !targetTile.HasMine && targetTile.AdjacentMineCount > 0))

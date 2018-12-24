@@ -60,6 +60,7 @@ To run benchmarks, open a terminal and navigate to `src\MSEngine.Benchmarks\` an
 - ~~Extensive and deterministic test suite~~
 - ~~Benchmarks~~
 - ~~Automated Solver~~ 
-    - ~85% win ratio on beginner, ~80% on intermediate, ~25% on expert
+    - ~85% win ratio on beginner, ~80% on intermediate, ~29% on expert
 	- need to verify logic on `PatternStrategy` and implement `EducatedGuessStrategy`
 - Extra Z dimension
+- Matrix based board/solver

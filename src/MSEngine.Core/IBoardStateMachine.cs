@@ -10,6 +10,7 @@ namespace MSEngine.Core
         /// Calling this method is optional - It's intended usage is only when building-testing a client
         /// </summary>
         /// <exception cref="InvalidGameStateException">
+        /// -Multiple tiles have matching coordinates
         /// -Turns are not allowed if board status is completed/failed
         /// -Turn has coordinates that are outside the board
         /// -No more flags available

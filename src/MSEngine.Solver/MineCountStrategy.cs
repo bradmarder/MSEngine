@@ -37,7 +37,10 @@ namespace MSEngine.Solver
                         return i == (hiddenCount + flagCount);
                     })
                     .Select(x => x.Coordinates)
-                    .SelectMany(x => board.Tiles.Where(y => y.State == TileState.Hidden && Utilities.IsAdjacentTo(x, y.Coordinates)))
+                    .SelectMany(x =>
+                        board.Tiles
+                            .Where(y => y.State == TileState.Hidden)
+                            .Where(y => Utilities.IsAdjacentTo(x, y.Coordinates)))
                     .Cast<Tile?>()
                     .FirstOrDefault();
 

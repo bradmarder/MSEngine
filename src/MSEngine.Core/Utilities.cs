@@ -31,27 +31,57 @@ namespace MSEngine.Core
                 && coordinateOne != coordinateTwo;
         }
 
-        internal static List<T> GetShuffledItems<T>(this IEnumerable<T> list)
+        internal static T[] GetShuffledItems<T>(this IEnumerable<T> list)
         {
             if (list == null) { throw new ArgumentNullException(nameof(list)); }
 
-            var items = list.ToList();
-            var n = items.Count;
+            var items = list.ToArray();
+            var n = items.Length;
+            var data = new byte[4];
 
             using (var provider = new RNGCryptoServiceProvider())
             {
-                var data = new byte[4];
-
                 while (n > 1)
                 {
                     n--;
                     provider.GetBytes(data);
                     var seed = BitConverter.ToInt32(data, 0);
+
+                    // we use Random because it has a simple API for getting a random number in a specified range
                     var k = new Random(seed).Next(n + 1);
+
                     var value = items[k];
                     items[k] = items[n];
                     items[n] = value;
                 }
+            }
+
+            return items;
+        }
+
+        /// <summary>
+        /// Intended for testing/benchmarking a deterministic board that requires zero guesses to solve
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="list"></param>
+        /// <returns></returns>
+        internal static T[] GetPseudoShuffledItems<T>(this IEnumerable<T> list)
+        {
+            if (list == null) { throw new ArgumentNullException(nameof(list)); }
+
+            var items = list.ToArray();
+            var n = items.Length;
+
+            // magic seed that produces a solvable board
+            var random = new Random(653635);
+
+            while (n > 1)
+            {
+                n--;
+                var k = random.Next(n + 1);
+                var value = items[k];
+                items[k] = items[n];
+                items[n] = value;
             }
 
             return items;

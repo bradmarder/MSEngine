@@ -24,7 +24,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSEngine.Solver", "src\MSEngine.Solver\MSEngine.Solver.csproj", "{46327F42-4E28-4A0E-A6B2-A73C5C6D105E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSEngine.Benchmarks", "src\MSEngine.Benchmarks\MSEngine.Benchmarks.csproj", "{75E7A550-2217-4823-BBCF-AE67EB04D3FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSEngine.Benchmarks", "src\MSEngine.Benchmarks\MSEngine.Benchmarks.csproj", "{75E7A550-2217-4823-BBCF-AE67EB04D3FD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{46327F42-4E28-4A0E-A6B2-A73C5C6D105E} = {46327F42-4E28-4A0E-A6B2-A73C5C6D105E}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
