@@ -26,7 +26,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSource>true</IncludeSource>
     <IncludeSymbols>false</IncludeSymbols>
-    <tags>minesweeper engine immutable functional</tags>
+    <PackageTags>c# minesweeper engine immutable functional</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
