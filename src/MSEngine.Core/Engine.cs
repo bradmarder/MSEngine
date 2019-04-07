@@ -5,7 +5,7 @@ using static MSEngine.Core.Utilities;
 
 namespace MSEngine.Core
 {
-    public sealed class Engine : IEngine
+    public class Engine : IEngine
     {
         public static IEngine Instance { get; } = new Engine(Utilities.GetShuffledItems);
         public static IEngine PureInstance { get; } = new Engine(Enumerable.AsEnumerable);
@@ -18,25 +18,19 @@ namespace MSEngine.Core
             _shuffler = shuffler ?? throw new ArgumentNullException(nameof(shuffler));
         }
 
-        public Board GenerateBeginnerBoard() => GenerateBoard(8, 8, 10);
-        public Board GenerateIntermediateBoard() => GenerateBoard(16, 16, 40);
-        public Board GenerateExpertBoard() => GenerateBoard(30, 16, 99);
-        public Board GenerateBoard(byte columns, byte rows, byte mineCount)
+        public virtual Board GenerateBeginnerBoard() => GenerateBoard(8, 8, 10);
+        public virtual Board GenerateIntermediateBoard() => GenerateBoard(16, 16, 40);
+        public virtual Board GenerateExpertBoard() => GenerateBoard(30, 16, 99);
+        public virtual Board GenerateBoard(byte columns, byte rows, byte mineCount)
         {
             if (columns == 0 || columns > 30) { throw new ArgumentOutOfRangeException(nameof(columns)); }
             if (rows == 0 || rows > 16) { throw new ArgumentOutOfRangeException(nameof(rows)); }
-
-            // if we allowed tileCount == mineCount, then we would have an infinite loop attempting to generate a board
-            // because logic dictates the first tile revealed must not be a mine
             var tileCount = columns * rows;
             if (mineCount >= tileCount) { throw new ArgumentOutOfRangeException(nameof(mineCount)); }
 
             var coordinates = GetCoordinates(columns, rows);
             var coordinatesToMineMap = _shuffler(coordinates)
-
-                // we use a select expression to get the index, since ToDictionary() does not give access to it
                 .Select((x, i) => (Coordinates: x, Index: i))
-
                 .ToDictionary(x => x.Coordinates, x => x.Index < mineCount);
             var coordinatesToAdjacentMineCountMap = coordinates.ToDictionary(
                 x => x,

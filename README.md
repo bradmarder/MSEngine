@@ -17,6 +17,10 @@ Board ComputeBoard(Board board, IEnumerable<Turn> turns) => turns.Aggregate(boar
 - Anyone planning on creating a Minesweeper solver bot
 - Anyone interested in learning how to implement turn-based game logic using functional paradigms
 
+### How do I use this library?
+- See the example `RunSimulations()` inside the console app `src\MSEngine.ConsoleApp\` 
+- This example uses the automated solver, but the selection of a turn may come from any UI/input
+
 ### Notes
 - With just the initial board and a queue of turns, we can compute the expected state of any minesweeper game
 - This approach allows for easy debugging, **replays** and **backwards time travel**

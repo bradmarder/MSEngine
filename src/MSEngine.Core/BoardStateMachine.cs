@@ -9,7 +9,7 @@ namespace MSEngine.Core
     {
         public static IBoardStateMachine Instance { get; } = new BoardStateMachine();
 
-        public void EnsureValidBoardConfiguration(Board board, Turn turn)
+        public virtual void EnsureValidBoardConfiguration(Board board, Turn turn)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 
@@ -72,14 +72,14 @@ namespace MSEngine.Core
                 }
             }
         }
-        public Board ComputeBoard(Board board, IEnumerable<Turn> turns)
+        public virtual Board ComputeBoard(Board board, IEnumerable<Turn> turns)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
             if (turns == null) { throw new ArgumentNullException(nameof(turns)); }
 
             return turns.Aggregate(board, ComputeBoard);
         }
-        public Board ComputeBoard(Board board, Turn turn)
+        public virtual Board ComputeBoard(Board board, Turn turn)
         {
             if (board == null) { throw new ArgumentNullException(nameof(board)); }
 

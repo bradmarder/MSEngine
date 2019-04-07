@@ -62,10 +62,12 @@ namespace MSEngine.Tests
         public void Chording_tile_reveals_surrounding_tiles()
         {
             var board = Engine.PureInstance.GenerateBoard(2, 2, 1);
-            var firstTurn = new Turn(0, 0, TileOperation.Flag);
-            var secondTurn = new Turn(1, 1, TileOperation.Reveal);
-            var thirdTurn = new Turn(1, 1, TileOperation.Chord);
-            var turns = new List<Turn> { firstTurn, secondTurn, thirdTurn };
+            var turns = new List<Turn>
+            {
+                new Turn(0, 0, TileOperation.Flag),
+                new Turn(1, 1, TileOperation.Reveal),
+                new Turn(1, 1, TileOperation.Chord)
+            };
             var finalBoard = _boardStateMachine.ComputeBoard(board, turns);
 
             // 0,0 has the only mine, so we flag it
@@ -94,9 +96,11 @@ namespace MSEngine.Tests
         public void Chain_reaction_is_blocked_by_false_flag()
         {
             var board = Engine.PureInstance.GenerateBoard(5, 1, 0);
-            var firstTurn = new Turn(2, 0, TileOperation.Flag);
-            var secondTurn = new Turn(4, 0, TileOperation.Reveal);
-            var turns = new List<Turn> { firstTurn, secondTurn };
+            var turns = new List<Turn>
+            {
+                new Turn(2, 0, TileOperation.Flag),
+                new Turn(4, 0, TileOperation.Reveal)
+            };
             var finalBoard = _boardStateMachine.ComputeBoard(board, turns);
             var firstTwoTilesAreHidden = finalBoard.Tiles
                 .Where(x => x.Coordinates.X < 2)
