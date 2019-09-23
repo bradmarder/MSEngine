@@ -25,6 +25,6 @@ namespace MSEngine.Core
         /// <param name="columns">Max value of 30</param>
         /// <param name="rows">Max value of 16</param>
         /// <param name="mineCount">Must be less than tile count (columns * height)</param>
-        Board GenerateBoard(byte columns, byte rows, byte mineCount);
+        Board GenerateCustomBoard(byte columns, byte rows, byte mineCount);
     }
 }

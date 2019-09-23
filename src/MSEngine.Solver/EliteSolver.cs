@@ -9,8 +9,6 @@ namespace MSEngine.Solver
 
         public (Turn, Strategy) ComputeTurn(Board board)
         {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-
             if (FinishStrategy.TryUseStrategy(board, out var turn))
             {
                 return (turn, Strategy.Finish);

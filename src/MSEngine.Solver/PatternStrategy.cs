@@ -9,8 +9,6 @@ namespace MSEngine.Solver
     {
         public static bool TryUseStrategy(Board board, out Turn turn)
         {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-
             var revealedTilesWithAMC = board.Tiles
                 .Where(x => x.State == TileState.Revealed)
                 .Where(x => x.AdjacentMineCount > 0)

@@ -18,7 +18,7 @@ namespace MSEngine.Core
         public TileOperation Operation { get; }
 
         public override string ToString() => $"{nameof(Coordinates)}: {Coordinates}, {nameof(Operation)}: {Operation}";
-        public override int GetHashCode() => (Coordinates, Operation).GetHashCode();
+        public override int GetHashCode() => HashCode.Combine(Coordinates, Operation);
         public override bool Equals(object obj) => obj is Turn x && Equals(x);
         public bool Equals(Turn other) => Coordinates == other.Coordinates && Operation == other.Operation;
         public static bool operator ==(Turn c1, Turn c2) => c1.Equals(c2);

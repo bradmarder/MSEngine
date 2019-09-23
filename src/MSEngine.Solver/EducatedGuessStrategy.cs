@@ -9,8 +9,6 @@ namespace MSEngine.Solver
     {
         public static Turn UseStrategy(Board board)
         {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-
             var tileToMineProbabilityMap = board.Tiles
                 .Where(x => x.State == TileState.Revealed)
                 .Where(x => x.AdjacentMineCount > 0)

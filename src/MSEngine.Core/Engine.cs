@@ -15,13 +15,13 @@ namespace MSEngine.Core
 
         public Engine(Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> shuffler)
         {
-            _shuffler = shuffler ?? throw new ArgumentNullException(nameof(shuffler));
+            _shuffler = shuffler;
         }
 
-        public virtual Board GenerateBeginnerBoard() => GenerateBoard(8, 8, 10);
-        public virtual Board GenerateIntermediateBoard() => GenerateBoard(16, 16, 40);
-        public virtual Board GenerateExpertBoard() => GenerateBoard(30, 16, 99);
-        public virtual Board GenerateBoard(byte columns, byte rows, byte mineCount)
+        public virtual Board GenerateBeginnerBoard() => GenerateCustomBoard(8, 8, 10);
+        public virtual Board GenerateIntermediateBoard() => GenerateCustomBoard(16, 16, 40);
+        public virtual Board GenerateExpertBoard() => GenerateCustomBoard(30, 16, 99);
+        public virtual Board GenerateCustomBoard(byte columns, byte rows, byte mineCount)
         {
             if (columns == 0 || columns > 30) { throw new ArgumentOutOfRangeException(nameof(columns)); }
             if (rows == 0 || rows > 16) { throw new ArgumentOutOfRangeException(nameof(rows)); }

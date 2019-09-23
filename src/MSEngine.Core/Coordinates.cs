@@ -14,7 +14,7 @@ namespace MSEngine.Core
         public byte Y { get; }
 
         public override string ToString() => $"{nameof(X)}: {X}, {nameof(Y)}: {Y}";
-        public override int GetHashCode() => (X, Y).GetHashCode();
+        public override int GetHashCode() => HashCode.Combine(X, Y);
         public override bool Equals(object obj) => obj is Coordinates x && Equals(x);
         public bool Equals(Coordinates other) => X == other.X && Y == other.Y;
         public static bool operator ==(Coordinates c1, Coordinates c2) => c1.Equals(c2);

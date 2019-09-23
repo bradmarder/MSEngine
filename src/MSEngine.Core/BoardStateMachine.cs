@@ -11,8 +11,6 @@ namespace MSEngine.Core
 
         public virtual void EnsureValidBoardConfiguration(Board board, Turn turn)
         {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-
             var distinctCoordinateCount = board.Tiles
                 .Select(x => x.Coordinates)
                 .Distinct()
@@ -72,17 +70,9 @@ namespace MSEngine.Core
                 }
             }
         }
-        public virtual Board ComputeBoard(Board board, IEnumerable<Turn> turns)
-        {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-            if (turns == null) { throw new ArgumentNullException(nameof(turns)); }
-
-            return turns.Aggregate(board, ComputeBoard);
-        }
+        public virtual Board ComputeBoard(Board board, IEnumerable<Turn> turns) => turns.Aggregate(board, ComputeBoard);
         public virtual Board ComputeBoard(Board board, Turn turn)
         {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-
             var targetTile = board.Tiles.First(x => x.Coordinates == turn.Coordinates);
 
             // these cases will only affect a single tile
@@ -109,8 +99,6 @@ namespace MSEngine.Core
 
         internal static Board GetFailedBoard(Board board)
         {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-
             // should we show false flags?
             var tiles = board.Tiles.Select(x =>
                 !x.HasMine || x.State == TileState.Revealed || x.State == TileState.Flagged
@@ -121,8 +109,6 @@ namespace MSEngine.Core
         }
         internal static Board GetChainReactionBoard(Board board, Coordinates coordinates)
         {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-
             var unrevealedAdjacentTiles = board.Tiles
 
                 // if an adjacent tile has a "false flag", it does not expand revealing
@@ -159,15 +145,11 @@ namespace MSEngine.Core
             return new Board(tiles);
         }
 
-        internal Board GetChordBoard(Board board, Coordinates coordinates)
-        {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-
-            return board.Tiles
+        internal Board GetChordBoard(Board board, Coordinates coordinates) =>
+            board.Tiles
                 .Where(x => x.State == TileState.Hidden)
                 .Where(x => IsAdjacentTo(x.Coordinates, coordinates))
                 .Select(x => new Turn(x.Coordinates, TileOperation.Reveal))
                 .Aggregate(board, ComputeBoard);
-        }
     }
 }

@@ -9,8 +9,6 @@ namespace MSEngine.Solver
     {
         public Turn ComputeTurn(Board board)
         {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-
             var randomTile = board.Tiles
                 .Where(x => x.State == TileState.Hidden)
                 .OrderBy(x => Guid.NewGuid().GetHashCode())

@@ -14,13 +14,29 @@ namespace MSEngine.Benchmarks
     {
         static void Main(string[] args)
         {
-            const string input = "testing ";
-            var b = HashTest.CreateMD5(input);
-            var c = HashTest.SpanCreateMD5(input);
+            BenchmarkRunner.Run<BoardGenTests>();
+        }
+    }
 
-            Console.WriteLine(b);
-            Console.WriteLine(c);
-            BenchmarkRunner.Run<HashTest>();
+    [MemoryDiagnoser]
+    public class BoardGenTests
+    {
+        [Benchmark]
+        public void Beginner()
+        {
+            Engine.Instance.GenerateBeginnerBoard();
+        }
+
+        //[Benchmark]
+        public void Intermediate()
+        {
+            Engine.Instance.GenerateIntermediateBoard();
+        }
+
+        //[Benchmark]
+        public void Expert()
+        {
+            Engine.Instance.GenerateExpertBoard();
         }
     }
 

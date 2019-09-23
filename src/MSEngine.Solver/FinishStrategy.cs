@@ -9,8 +9,6 @@ namespace MSEngine.Solver
     {
         public static bool TryUseStrategy(Board board, out Turn turn)
         {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-
             if (board.AllMinesFlagged)
             {
                 var tile = board.Tiles.First(x => x.State == TileState.Hidden);

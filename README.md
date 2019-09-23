@@ -1,5 +1,5 @@
 # MSEngine
-#### A Minesweeper Engine built using functional programming paradigms with c# and .NET Standard 2.0
+#### A Minesweeper Engine built using functional programming paradigms with c# and .NET Standard 2.1
 
 ---
 [![Build status](https://ci.appveyor.com/api/projects/status/github/bradmarder/MSEngine?branch=master&svg=true)](https://ci.appveyor.com/project/bradmarder/msengine)
@@ -36,7 +36,7 @@ public interface IEngine
     Board GenerateBeginnerBoard();
     Board GenerateIntermediateBoard();
     Board GenerateExpertBoard();
-    Board GenerateBoard(byte columns, byte rows, byte mineCount);
+    Board GenerateCustomBoard(byte columns, byte rows, byte mineCount);
 }
 public interface IBoardStateMachine
 {

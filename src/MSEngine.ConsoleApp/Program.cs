@@ -24,8 +24,6 @@ namespace MSEngine.ConsoleApp
 
         private static void RunRandomDistributionTest(Func<Board> boardGenerator, int maxIterationCount = int.MaxValue)
         {
-            if (boardGenerator == null) { throw new ArgumentNullException(nameof(boardGenerator)); }
-
             var iteration = 0;
             var board = boardGenerator();
             var expectedAverage = board.MineCount / (decimal)(board.Width * board.Height);
@@ -63,7 +61,6 @@ namespace MSEngine.ConsoleApp
         private static void RunSimulations(int count, Func<Board> boardGenerator)
         {
             if (count < 1) { throw new ArgumentOutOfRangeException(nameof(count)); }
-            if (boardGenerator == null) { throw new ArgumentNullException(nameof(boardGenerator)); }
 
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
@@ -113,8 +110,6 @@ namespace MSEngine.ConsoleApp
 
         private static string GetBoardAsciiArt(Board board)
         {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-
             var sb = new StringBuilder(board.Tiles.Count());
 
             for (byte y = 0; y < board.Height; y++)

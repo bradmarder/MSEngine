@@ -1,6 +1,7 @@
 <Project>
 
   <PropertyGroup>
+    <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
     <Optimize>true</Optimize>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

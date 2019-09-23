@@ -33,27 +33,16 @@ namespace MSEngine.Core
 
         internal static T[] GetShuffledItems<T>(this IEnumerable<T> list)
         {
-            if (list == null) { throw new ArgumentNullException(nameof(list)); }
-
             var items = list.ToArray();
             var n = items.Length;
-            var data = new byte[4];
 
-            using (var provider = new RNGCryptoServiceProvider())
+            while (n > 1)
             {
-                while (n > 1)
-                {
-                    n--;
-                    provider.GetBytes(data);
-                    var seed = BitConverter.ToInt32(data, 0);
-
-                    // we use Random because it has a simple API for getting a random number in a specified range
-                    var k = new Random(seed).Next(n + 1);
-
-                    var value = items[k];
-                    items[k] = items[n];
-                    items[n] = value;
-                }
+                n--;
+                var k = RandomNumberGenerator.GetInt32(n + 1);
+                var value = items[k];
+                items[k] = items[n];
+                items[n] = value;
             }
 
             return items;
@@ -67,8 +56,6 @@ namespace MSEngine.Core
         /// <returns></returns>
         internal static T[] GetPseudoShuffledItems<T>(this IEnumerable<T> list)
         {
-            if (list == null) { throw new ArgumentNullException(nameof(list)); }
-
             var items = list.ToArray();
             var n = items.Length;
 

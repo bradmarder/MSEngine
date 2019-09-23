@@ -8,7 +8,7 @@ namespace MSEngine.Core
     {
         internal Board(IEnumerable<Tile> tiles)
         {
-            Tiles = tiles?.ToArray() ?? throw new ArgumentNullException(nameof(tiles));
+            Tiles = tiles.ToArray();
         }
 
         public Tile[] Tiles { get; }

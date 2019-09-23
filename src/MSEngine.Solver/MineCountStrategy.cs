@@ -19,8 +19,6 @@ namespace MSEngine.Solver
 
         public static bool TryUseStrategy(Board board, out Turn turn)
         {
-            if (board == null) { throw new ArgumentNullException(nameof(board)); }
-
             foreach (var i in _rangeFromEightToOne)
             {
                 var tile = board.Tiles
