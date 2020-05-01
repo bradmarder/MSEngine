@@ -19,8 +19,10 @@ namespace MSEngine.ConsoleApp
         static void Main(string[] args)
         {
             //RunRandomDistributionTest(Engine.Instance.GenerateRandomBeginnerBoard);
-            RunSimulations(10000, Engine.Instance.GenerateExpertBoard);
+            // RunSimulations(1, () => Engine.Instance.GenerateCustomBoard(4, 4, 2));
+            RunSimulations(10000, Engine.Instance.GenerateBeginnerBoard);
         }
+
 
         private static void RunRandomDistributionTest(Func<Board> boardGenerator, int maxIterationCount = int.MaxValue)
         {
@@ -62,19 +64,40 @@ namespace MSEngine.ConsoleApp
         {
             if (count < 1) { throw new ArgumentOutOfRangeException(nameof(count)); }
 
-            var watch = new System.Diagnostics.Stopwatch();
-            watch.Start();
+            var watch = System.Diagnostics.Stopwatch.StartNew();
 
             ParallelEnumerable
                 .Range(0, count)
+                //.WithDegreeOfParallelism(1)
                 .ForAll(_ =>
                 {
                     var board = boardGenerator();
                     var turnCount = 0;
+                    var turns = new Queue<Turn>();
 
                     while (board.Status == BoardStatus.Pending)
                     {
-                        var (turn, strategy) = EliteSolver.Instance.ComputeTurn(board);
+                        if (turnCount == 0 && FirstTurnStrategy.TryUseStrategy(board, out var foo))
+                        {
+                            turns.Enqueue(foo);
+                        }
+
+                        if (!turns.Any())
+                        {
+                            MatrixSolver
+                                .CalculateTurns(board)
+                                .ForEach(turns.Enqueue);
+                        }
+
+                        // if the matrix solver couldn't calculate any turns, we just select a random hidden tile
+                        if (!turns.Any())
+                        {
+                            var guess = EducatedGuessStrategy.UseStrategy(board);
+                            turns.Enqueue(guess);
+                        }
+
+                        var turn = turns.Dequeue();
+
                         board = BoardStateMachine.Instance.ComputeBoard(board, turn);
 
                         // Get new board unless tile has no mine and zero AMC
@@ -82,17 +105,17 @@ namespace MSEngine.ConsoleApp
                         if (turnCount == 0 && (board.Status == BoardStatus.Failed || targetTile.AdjacentMineCount > 0))
                         {
                             board = boardGenerator();
+                            turns.Clear();
                             continue;
                         }
                         turnCount++;
-
+                        
                         if (board.Status == BoardStatus.Pending)
                         {
                             continue;
                         }
 
                         Interlocked.Increment(ref _gamesPlayedCount);
-
                         if (board.Status == BoardStatus.Completed)
                         {
                             Interlocked.Increment(ref _wins);
