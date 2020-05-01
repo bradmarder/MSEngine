@@ -67,4 +67,4 @@ To run benchmarks, open a terminal and navigate to `src\MSEngine.Benchmarks\` an
     - ~85% win ratio on beginner, ~80% on intermediate, ~29% on expert
 	- need to verify logic on `PatternStrategy` and implement `EducatedGuessStrategy`
 - Extra Z dimension
-~~Matrix / Linera Algebra solver~~ *(Special thanks to [Robert Massaioli](https://massaioli.wordpress.com/2013/01/12/solving-minesweeper-with-matricies/) for providing an extremely detailed implementation)*
+- ~~Matrix / Linera Algebra solver~~ *(Special thanks to [Robert Massaioli](https://massaioli.wordpress.com/2013/01/12/solving-minesweeper-with-matricies/) for providing an extremely detailed implementation)*
