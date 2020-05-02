@@ -22,11 +22,12 @@ namespace MSEngine.Solver
         {
             for (var r = array.GetLowerBound(0); r <= array.GetUpperBound(0); ++r)
             {
-                yield return row(array, r);
+                yield return Row(array, r);
             }
         }
 
-        private static IEnumerable<T> row<T>(T[,] array, int r)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static IEnumerable<T> Row<T>(T[,] array, int r)
         {
             for (var c = array.GetLowerBound(1); c <= array.GetUpperBound(1); ++c)
             {
@@ -80,11 +81,12 @@ namespace MSEngine.Solver
             return matrix
                 .GaussEliminate()
                 .Rows()
+                .Select(Enumerable.ToList)
                 .Select(vector =>
                 {
                     // exclude the augmented column
                     var vals = vector
-                        .Take(vector.Count() - 1)
+                        .Take(vector.Count - 1)
                         .ToList();
 
                     var final = vector.Last();
