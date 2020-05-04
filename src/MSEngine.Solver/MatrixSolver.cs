@@ -18,20 +18,26 @@ namespace MSEngine.Solver
                 && Utilities.IsAdjacentTo(x.Coordinates, coordinates));
         }
 
-        public static IEnumerable<IEnumerable<T>> Rows<T>(this T[,] array)
+        public static IEnumerable<IEnumerable<T>> Rows<T>(this T[,] matrix)
         {
-            for (var r = array.GetLowerBound(0); r <= array.GetUpperBound(0); ++r)
+            var min = matrix.GetLowerBound(0);
+            var max = matrix.GetUpperBound(0);
+
+            for (var x = min; x <= max; x++)
             {
-                yield return Row(array, r);
+                yield return Row(matrix, x);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static IEnumerable<T> Row<T>(T[,] array, int r)
+        private static IEnumerable<T> Row<T>(T[,] matrix, int r)
         {
-            for (var c = array.GetLowerBound(1); c <= array.GetUpperBound(1); ++c)
+            var min = matrix.GetLowerBound(1);
+            var max = matrix.GetUpperBound(1);
+
+            for (var x = min; x <= max; x++)
             {
-                yield return array[r, c];
+                yield return matrix[r, x];
             }
         }
 
