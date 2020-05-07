@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -8,27 +9,56 @@ namespace MSEngine.Core
 {
     public static class Utilities
     {
+        private static readonly ConcurrentDictionary<uint, bool> _adjacentTileMap = new ConcurrentDictionary<uint, bool>();
+        private static readonly ConcurrentDictionary<uint, bool> _nextTileMap = new ConcurrentDictionary<uint, bool>();
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNextTo(Coordinates coordinateOne, Coordinates coordinateTwo)
         {
+            var key = coordinateOne.X
+                | (uint)coordinateOne.Y << 8
+                | (uint)coordinateTwo.X << 16
+                | (uint)coordinateTwo.Y << 24;
+
+            if (_nextTileMap.TryGetValue(key, out var value))
+            {
+                return value;
+            }
+
             var x = coordinateOne.X;
             var y = coordinateOne.Y;
 
-            // filters ordered to prioritize short-circuiting
-            return (x == coordinateTwo.X && new[] { y + 1, y - 1 }.Contains(coordinateTwo.Y))
+            var val = (x == coordinateTwo.X && new[] { y + 1, y - 1 }.Contains(coordinateTwo.Y))
                 || (y == coordinateTwo.Y && new[] { x + 1, x - 1 }.Contains(coordinateTwo.X));
+
+            _nextTileMap.TryAdd(key, val);
+
+            return val;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsAdjacentTo(Coordinates coordinateOne, Coordinates coordinateTwo)
         {
+            var key = coordinateOne.X
+                | (uint)coordinateOne.Y << 8
+                | (uint)coordinateTwo.X << 16
+                | (uint)coordinateTwo.Y << 24;
+
+            if (_adjacentTileMap.TryGetValue(key, out var value))
+            {
+                return value;
+            }
+
             var x = coordinateOne.X;
             var y = coordinateOne.Y;
 
-            // filters ordered to prioritize short-circuiting
-            return new[] { x, x + 1, x - 1 }.Contains(coordinateTwo.X)
+            var val = new[] { x, x + 1, x - 1 }.Contains(coordinateTwo.X)
                 && new[] { y, y + 1, y - 1 }.Contains(coordinateTwo.Y)
                 && coordinateOne != coordinateTwo;
+
+            _adjacentTileMap.TryAdd(key, val);
+
+            return val;
         }
 
         internal static T[] GetShuffledItems<T>(this IEnumerable<T> list)
