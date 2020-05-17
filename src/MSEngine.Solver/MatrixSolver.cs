@@ -74,48 +74,47 @@ namespace MSEngine.Solver
                 }
             }
 
-            matrix.GaussEliminate();
+            matrix = matrix.GaussEliminate();
 
             // impossible to have more turns than tiles, so we set a max capacity
             var turns = new List<Turn>(rowCount * columnCount);
 
             for (var row = 0; row < rowCount; row++)
             {
-                Span<sbyte> vector = stackalloc sbyte[columnCount];
-                for (var column = 0; column < columnCount; column++)
+                // exclude the augmented column
+                var finalIndex = columnCount - 1;
+                Span<sbyte> vector = stackalloc sbyte[finalIndex];
+                for (var column = 0; column < finalIndex; column++)
                 {
                     vector[column] = matrix[row, column];
+                }
+                
+                var final = matrix[row, finalIndex];
+                var min = 0;
+                var max = 0;
+                foreach (var x in vector)
+                {
+                    max += x > 0 ? x : 0;
+                    min += x < 0 ? x : 0;
+                }
 
-                    // exclude the augmented column
-                    var finalIndex = columnCount - 1;
-                    var vals = vector.Slice(0, finalIndex);
-                    var final = vector[finalIndex];
-                    var min = 0;
-                    var max = 0;
-                    foreach (var x in vector)
-                    {
-                        max += x > 0 ? x : 0;
-                        min += x < 0 ? x : 0;
-                    }
+                var nonZeroValues = vector
+                    .ToArray()
+                    .Select((x, i) => (Val: x, Coordinates: adjacentHiddenCoordinates[i]))
+                    .Where(x => x.Val != 0);
 
-                    var nonZeroValues = vals
-                        .ToArray()
-                        .Select((x, i) => (Val: x, Coordinates: adjacentHiddenCoordinates[i]))
-                        .Where(x => x.Val != 0);
+                // All of the negative numbers in that row are mines and all of the positive values in that row are not mines
+                if (final == min)
+                {
+                    turns.AddRange(
+                        nonZeroValues.Select(x => new Turn(x.Coordinates.X, x.Coordinates.Y, x.Val > 0 ? TileOperation.Reveal : TileOperation.Flag)).ToList());
+                }
 
-                    // All of the negative numbers in that row are mines and all of the positive values in that row are not mines
-                    if (final == min)
-                    {
-                        turns.AddRange(
-                            nonZeroValues.Select(x => new Turn(x.Coordinates.X, x.Coordinates.Y, x.Val > 0 ? TileOperation.Reveal : TileOperation.Flag)));
-                    }
-
-                    // All of the negative numbers in that row are not mines and all of the positive values in that row are mines.
-                    if (final == max)
-                    {
-                        turns.AddRange(
-                            nonZeroValues.Select(x => new Turn(x.Coordinates.X, x.Coordinates.Y, x.Val > 0 ? TileOperation.Flag : TileOperation.Reveal)));
-                    }
+                // All of the negative numbers in that row are not mines and all of the positive values in that row are mines.
+                if (final == max)
+                {
+                    turns.AddRange(
+                        nonZeroValues.Select(x => new Turn(x.Coordinates.X, x.Coordinates.Y, x.Val > 0 ? TileOperation.Flag : TileOperation.Reveal)).ToList());
                 }
             }
 
