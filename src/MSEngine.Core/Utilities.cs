@@ -10,31 +10,7 @@ namespace MSEngine.Core
     public static class Utilities
     {
         private static readonly ConcurrentDictionary<uint, bool> _adjacentTileMap = new ConcurrentDictionary<uint, bool>();
-        private static readonly ConcurrentDictionary<uint, bool> _nextTileMap = new ConcurrentDictionary<uint, bool>();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsNextTo(Coordinates coordinateOne, Coordinates coordinateTwo)
-        {
-            var key = coordinateOne.X
-                | (uint)coordinateOne.Y << 8
-                | (uint)coordinateTwo.X << 16
-                | (uint)coordinateTwo.Y << 24;
-
-            if (_nextTileMap.TryGetValue(key, out var value))
-            {
-                return value;
-            }
-
-            var x = coordinateOne.X;
-            var y = coordinateOne.Y;
-
-            var val = (x == coordinateTwo.X && new[] { y + 1, y - 1 }.Contains(coordinateTwo.Y))
-                || (y == coordinateTwo.Y && new[] { x + 1, x - 1 }.Contains(coordinateTwo.X));
-
-            _nextTileMap.TryAdd(key, val);
-
-            return val;
-        }
+        private static readonly ConcurrentDictionary<uint, Tile> _keyToTileMap = new ConcurrentDictionary<uint, Tile>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsAdjacentTo(Coordinates coordinateOne, Coordinates coordinateTwo)
@@ -59,6 +35,39 @@ namespace MSEngine.Core
             _adjacentTileMap.TryAdd(key, val);
 
             return val;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static Tile GetTile(Coordinates coordinates, bool hasMine, int adjacentMineCount)
+        {
+            return GetTile(coordinates, hasMine, adjacentMineCount, TileOperation.RemoveFlag);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static Tile GetTile(in Tile tile, TileOperation operation)
+        {
+            return GetTile(tile.Coordinates, tile.HasMine, tile.AdjacentMineCount, operation);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static Tile GetTile(Coordinates coordinates, bool hasMine, int adjacentMineCount, TileOperation operation)
+        {
+            var key = (hasMine ? 1 : uint.MinValue) // 1 bit
+                | (uint)operation << 1              // 7 bits (only needs 2)
+                | (uint)adjacentMineCount << 8      // 8 bits
+                | (uint)coordinates.X << 16         // 8 bits
+                | (uint)coordinates.Y << 24;        // 8 bits
+
+            if (_keyToTileMap.TryGetValue(key, out var value))
+            {
+                return value;
+            }
+
+            var tile = new Tile(coordinates, hasMine, adjacentMineCount, operation);
+
+            _keyToTileMap.TryAdd(key, tile);
+
+            return tile;
         }
 
         internal static T[] GetShuffledItems<T>(this IEnumerable<T> list)

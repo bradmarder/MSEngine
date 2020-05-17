@@ -12,10 +12,12 @@ namespace MSEngine.Core
             [TileOperation.Reveal] = TileState.Revealed
         };
 
+        public static int _count = 0; // 4m+ instances
+
         internal Tile(Coordinates coordinates, bool hasMine, int adjacentMineCount)
         {
             if (adjacentMineCount < 0 || adjacentMineCount > 8) { throw new ArgumentOutOfRangeException(nameof(adjacentMineCount)); }
-
+            System.Threading.Interlocked.Increment(ref _count);
             Coordinates = coordinates;
             HasMine = hasMine;
             AdjacentMineCount = (byte)adjacentMineCount;
@@ -25,10 +27,21 @@ namespace MSEngine.Core
         internal Tile(in Tile tile, TileOperation operation)
         {
             if (!Enum.IsDefined(typeof(TileOperation), operation)) { throw new ArgumentOutOfRangeException(nameof(operation)); }
-
+            System.Threading.Interlocked.Increment(ref _count);
             Coordinates = tile.Coordinates;
             HasMine = tile.HasMine;
             AdjacentMineCount = tile.AdjacentMineCount;
+            State = _operationToStateMap[operation];
+        }
+
+        internal Tile(Coordinates coordinates, bool hasMine, int adjacentMineCount, TileOperation operation)
+        {
+            if (adjacentMineCount < 0 || adjacentMineCount > 8) { throw new ArgumentOutOfRangeException(nameof(adjacentMineCount)); }
+
+            System.Threading.Interlocked.Increment(ref _count);
+            Coordinates = coordinates;
+            HasMine = hasMine;
+            AdjacentMineCount = (byte)adjacentMineCount;
             State = _operationToStateMap[operation];
         }
 

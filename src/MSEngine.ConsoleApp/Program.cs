@@ -125,7 +125,8 @@ namespace MSEngine.ConsoleApp
                         {
                             var winRatio = ((decimal)_wins / _gamesPlayedCount) * 100;
                             Console.SetCursorPosition(0, Console.CursorTop);
-                            Console.Write($"{_wins} of {_gamesPlayedCount} --- Win Ratio = {winRatio}%  within {watch.ElapsedMilliseconds} milliseconds");
+                            //Console.WriteLine("count = " + Tile._count);
+                            Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio}%  {watch.ElapsedMilliseconds}ms");
                         }
                     }
                 });

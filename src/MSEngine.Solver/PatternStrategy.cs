@@ -1,12 +1,39 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Linq;
-
+using System.Runtime.CompilerServices;
 using MSEngine.Core;
 
 namespace MSEngine.Solver
 {
     public static class PatternStrategy
     {
+        private static readonly ConcurrentDictionary<uint, bool> _nextTileMap = new ConcurrentDictionary<uint, bool>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsNextTo(Coordinates coordinateOne, Coordinates coordinateTwo)
+        {
+            var key = coordinateOne.X
+                | (uint)coordinateOne.Y << 8
+                | (uint)coordinateTwo.X << 16
+                | (uint)coordinateTwo.Y << 24;
+
+            if (_nextTileMap.TryGetValue(key, out var value))
+            {
+                return value;
+            }
+
+            var x = coordinateOne.X;
+            var y = coordinateOne.Y;
+
+            var val = (x == coordinateTwo.X && new[] { y + 1, y - 1 }.Contains(coordinateTwo.Y))
+                || (y == coordinateTwo.Y && new[] { x + 1, x - 1 }.Contains(coordinateTwo.X));
+
+            _nextTileMap.TryAdd(key, val);
+
+            return val;
+        }
+
         public static bool TryUseStrategy(Board board, out Turn turn)
         {
             var revealedTilesWithAMC = board.Tiles
@@ -22,7 +49,7 @@ namespace MSEngine.Solver
             var primaryTileToNextTilesMap = revealedTilesWithAMC.ToDictionary(
                 x => x,
                 x => revealedTilesWithAMC
-                    .Where(y => Utilities.IsNextTo(y.Coordinates, x.Coordinates))
+                    .Where(y => IsNextTo(y.Coordinates, x.Coordinates))
                     .ToList());
 
             foreach (var primary in primaryTileToNextTilesMap)
