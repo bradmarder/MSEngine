@@ -79,11 +79,12 @@ namespace MSEngine.Solver
             // impossible to have more turns than tiles, so we set a max capacity
             var turns = new List<Turn>(rowCount * columnCount);
 
+            // exclude the augmented column
+            var finalIndex = columnCount - 1;
+            Span<sbyte> vector = stackalloc sbyte[finalIndex];
+
             for (var row = 0; row < rowCount; row++)
             {
-                // exclude the augmented column
-                var finalIndex = columnCount - 1;
-                Span<sbyte> vector = stackalloc sbyte[finalIndex];
                 for (var column = 0; column < finalIndex; column++)
                 {
                     vector[column] = matrix[row, column];
@@ -107,14 +108,14 @@ namespace MSEngine.Solver
                 if (final == min)
                 {
                     turns.AddRange(
-                        nonZeroValues.Select(x => new Turn(x.Coordinates.X, x.Coordinates.Y, x.Val > 0 ? TileOperation.Reveal : TileOperation.Flag)).ToList());
+                        nonZeroValues.Select(x => new Turn(x.Coordinates.X, x.Coordinates.Y, x.Val > 0 ? TileOperation.Reveal : TileOperation.Flag)));
                 }
 
                 // All of the negative numbers in that row are not mines and all of the positive values in that row are mines.
                 if (final == max)
                 {
                     turns.AddRange(
-                        nonZeroValues.Select(x => new Turn(x.Coordinates.X, x.Coordinates.Y, x.Val > 0 ? TileOperation.Flag : TileOperation.Reveal)).ToList());
+                        nonZeroValues.Select(x => new Turn(x.Coordinates.X, x.Coordinates.Y, x.Val > 0 ? TileOperation.Flag : TileOperation.Reveal)));
                 }
             }
 
