@@ -29,6 +29,14 @@ namespace MSEngine.Solver
 
         public static List<Turn> CalculateTurns(Board board)
         {
+            return GetTurns(board)
+                .Distinct()
+                //.OrderByDescending(x => x.Operation) // questionable optimization: Flag before Reveal
+                .ToList();
+        }
+
+        private static IEnumerable<Turn> GetTurns(Board board)
+        {
             var hiddenCoordinates = board.Tiles
                 .Where(x => x.State == TileState.Hidden)
                 .Select(x => x.Coordinates)
@@ -54,12 +62,11 @@ namespace MSEngine.Solver
 
             var rowCount = list.Count;
             var columnCount = adjacentHiddenCoordinates.Count + 1;
-            var matrix = new sbyte[rowCount, columnCount];
+            //var matrix = new sbyte[rowCount, columnCount];
 
-            //var key = GetMatrixKey(rowCount, columnCount);
-            //var matrix = _matrices.TryRemove(key, out var val)
-            //    ? val
-            //    : new sbyte[rowCount, columnCount];
+            Span<sbyte> foo = stackalloc sbyte[rowCount * columnCount];
+            var matrix = new Foo<sbyte>(ref foo, columnCount);
+
             for (var row = 0; row < rowCount; row++)
             {
                 for (var column = 0; column < columnCount; column++)
@@ -74,7 +81,7 @@ namespace MSEngine.Solver
                 }
             }
 
-            matrix = matrix.GaussEliminate();
+            matrix.GaussEliminate(rowCount, columnCount);
 
             // impossible to have more turns than tiles, so we set a max capacity
             var turns = new List<Turn>(rowCount * columnCount);
@@ -99,34 +106,32 @@ namespace MSEngine.Solver
                     min += x < 0 ? x : 0;
                 }
 
-                var nonZeroValues = vector
-                    .ToArray()
-                    .Select((x, i) => (Val: x, Coordinates: adjacentHiddenCoordinates[i]))
-                    .Where(x => x.Val != 0);
-
-                // All of the negative numbers in that row are mines and all of the positive values in that row are not mines
-                if (final == min)
+                if (final != min && final != max)
                 {
-                    turns.AddRange(
-                        nonZeroValues.Select(x => new Turn(x.Coordinates.X, x.Coordinates.Y, x.Val > 0 ? TileOperation.Reveal : TileOperation.Flag)));
+                    continue;
                 }
 
-                // All of the negative numbers in that row are not mines and all of the positive values in that row are mines.
-                if (final == max)
+                for (var column = 0; column < finalIndex; column++)
                 {
-                    turns.AddRange(
-                        nonZeroValues.Select(x => new Turn(x.Coordinates.X, x.Coordinates.Y, x.Val > 0 ? TileOperation.Flag : TileOperation.Reveal)));
+                    var val = vector[column];
+                    if (val == 0)
+                    {
+                        continue;
+                    }
+                    var xy = adjacentHiddenCoordinates[column];
+                    var turn = final == min
+
+                        // All of the negative numbers in that row are mines and all of the positive values in that row are not mines
+                        ? new Turn(xy.X, xy.Y, val > 0 ? TileOperation.Reveal : TileOperation.Flag)
+
+                        // All of the negative numbers in that row are not mines and all of the positive values in that row are mines.
+                        : new Turn(xy.X, xy.Y, val > 0 ? TileOperation.Flag : TileOperation.Reveal);
+
+                    turns.Add(turn);
                 }
             }
 
-            return turns
-                .Distinct()
-                //.OrderByDescending(x => x.Operation) // questionable optimization: Flag before Reveal
-                .ToList();
-
-            // in the time gap between renting and returning this matrix, it's possible another
-            // matrix with the same row/column count was added
-            //_matrices.TryAdd(key, matrix);
+            return turns;
         }
     }
 }
