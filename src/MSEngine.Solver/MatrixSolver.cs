@@ -1,6 +1,5 @@
 ﻿using MSEngine.Core;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -10,14 +9,6 @@ namespace MSEngine.Solver
     public static class MatrixSolver
     {
         private static readonly List<Turn> _emptyTurns = new List<Turn>(0);
-        private static readonly ConcurrentDictionary<ulong, sbyte[,]> _matrices = new ConcurrentDictionary<ulong, sbyte[,]>();
-
-        private static ulong GetMatrixKey(int rowCount, int columnCount)
-        {
-            var row = (ulong)rowCount << 16;
-            var col = (ulong)columnCount;
-            return row | col;
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int GetAdjacentFlaggedTileCount(Board board, Coordinates coordinates)
@@ -29,49 +20,40 @@ namespace MSEngine.Solver
 
         public static List<Turn> CalculateTurns(Board board)
         {
-            return GetTurns(board)
-                .Distinct()
-                //.OrderByDescending(x => x.Operation) // questionable optimization: Flag before Reveal
-                .ToList();
-        }
-
-        private static IEnumerable<Turn> GetTurns(Board board)
-        {
             var hiddenCoordinates = board.Tiles
                 .Where(x => x.State == TileState.Hidden)
                 .Select(x => x.Coordinates)
                 .ToList();
-            var list = board.Tiles
+            var revealedAMCTiles = board.Tiles
                 .Where(x => x.State == TileState.Revealed)
                 .Where(x => x.AdjacentMineCount > 0)
                 .Where(x => hiddenCoordinates.Any(y => Utilities.IsAdjacentTo(y, x.Coordinates)))
                 //.Where(x => x.AdjacentMineCount > GetAdjacentFlaggedTileCount(board, x.Coordinates)) insignificant optimzation
                 .ToList();
 
-            if (!list.Any())
+            if (!revealedAMCTiles.Any())
             {
                 return _emptyTurns;
             }
 
-            var revealedCoordinates = list
+            var revealedCoordinates = revealedAMCTiles
                 .Select(x => x.Coordinates)
                 .ToList();
             var adjacentHiddenCoordinates = hiddenCoordinates
                 .Where(x => revealedCoordinates.Any(y => Utilities.IsAdjacentTo(y, x)))
                 .ToList();
 
-            var rowCount = list.Count;
+            var rowCount = revealedAMCTiles.Count;
             var columnCount = adjacentHiddenCoordinates.Count + 1;
-            //var matrix = new sbyte[rowCount, columnCount];
 
             Span<sbyte> foo = stackalloc sbyte[rowCount * columnCount];
-            var matrix = new Foo<sbyte>(ref foo, columnCount);
+            var matrix = new FlatMatrix<sbyte>(ref foo, columnCount);
 
             for (var row = 0; row < rowCount; row++)
             {
                 for (var column = 0; column < columnCount; column++)
                 {
-                    var tile = list[row];
+                    var tile = revealedAMCTiles[row];
                     matrix[row, column] = (sbyte)(column == columnCount - 1
 
                         // augmented column has special logic
@@ -81,7 +63,7 @@ namespace MSEngine.Solver
                 }
             }
 
-            matrix.GaussEliminate(rowCount, columnCount);
+            matrix.GaussEliminate();
 
             // impossible to have more turns than tiles, so we set a max capacity
             var turns = new List<Turn>(rowCount * columnCount);
@@ -131,7 +113,10 @@ namespace MSEngine.Solver
                 }
             }
 
-            return turns;
+            return turns
+                 .Distinct()
+                 //.OrderByDescending(x => x.Operation) // questionable optimization: Flag before Reveal
+                 .ToList();
         }
     }
 }

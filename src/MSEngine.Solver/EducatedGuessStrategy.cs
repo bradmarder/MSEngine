@@ -30,8 +30,7 @@ namespace MSEngine.Solver
 
             var hiddenTile = board.Tiles
                 .Where(x => x.State == TileState.Hidden)
-                .OrderBy(x => x.Coordinates.X)
-                .ThenBy(x => x.Coordinates.Y)
+                .OrderBy(x => x.GetHashCode())
                 //.OrderBy(tile =>
                 //{
                 //    var adjacentTiles = board.Tiles
