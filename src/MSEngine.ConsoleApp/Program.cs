@@ -21,7 +21,7 @@ namespace MSEngine.ConsoleApp
         {
             //RunRandomDistributionTest(Engine.Instance.GenerateRandomBeginnerBoard);
             // RunSimulations(1, () => Engine.Instance.GenerateCustomBoard(4, 4, 2));
-            RunSimulations(10000, Engine.Instance.GenerateBeginnerBoard);
+            RunSimulations(100000, Engine.Instance.GenerateBeginnerBoard);
         }
 
 
@@ -98,8 +98,6 @@ namespace MSEngine.ConsoleApp
                         }
 
                         var turn = turns.Dequeue();
-
-                        BoardStateMachine.Instance.EnsureValidBoardConfiguration(board, turn);
                         board = BoardStateMachine.Instance.ComputeBoard(board, turn);
 
                         // Get new board unless tile has no mine and zero AMC

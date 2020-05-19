@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 
 namespace MSEngine.Solver
 {
@@ -16,14 +15,6 @@ namespace MSEngine.Solver
 
         public readonly int ColumnCount { get; }
         public readonly int RowCount => _matrix.Length / ColumnCount;
-
-        public T this[int row, int column]
-        {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => _matrix[row * ColumnCount + column];
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set => _matrix[row * ColumnCount + column] = value;
-        }
+        public readonly ref T this[int row, int column] => ref _matrix[row * ColumnCount + column];
     }
 }
