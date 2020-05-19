@@ -5,15 +5,25 @@ using static MSEngine.Core.Utilities;
 
 namespace MSEngine.Core
 {
+    internal enum Shuffler
+    {
+        None,
+        Random,
+        Hacked
+    }
     public class Engine : IEngine
     {
-        public static IEngine Instance { get; } = new Engine(Utilities.GetShuffledItems);
-        public static IEngine PureInstance { get; } = new Engine(Enumerable.AsEnumerable);
-        public static IEngine PseudoRandomInstance { get; } = new Engine(Utilities.GetPseudoShuffledItems);
+        public static IEngine Instance { get; } = new Engine(Shuffler.Random);
+        public static IEngine PureInstance { get; } = new Engine(Shuffler.None);
+        public static IEngine HackedInstance { get; } = new Engine(Shuffler.Hacked);
 
-        private readonly Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> _shuffler;
+        private static readonly Coordinates[] _beginnerCoordinates = GetCoordinates(8, 8);
+        private static readonly Coordinates[] _intermediateCoordinates = GetCoordinates(16, 16);
+        private static readonly Coordinates[] _expertCoordinates = GetCoordinates(30, 16);
 
-        public Engine(Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> shuffler)
+        private readonly Shuffler _shuffler;
+
+        private Engine(Shuffler shuffler)
         {
             _shuffler = shuffler;
         }
@@ -28,15 +38,44 @@ namespace MSEngine.Core
             var tileCount = columns * rows;
             if (mineCount >= tileCount) { throw new ArgumentOutOfRangeException(nameof(mineCount)); }
 
-            var coordinates = GetCoordinates(columns, rows);
-            var coordinatesToMineMap = _shuffler(coordinates)
-                .Select((x, i) => (Coordinates: x, Index: i))
-                .ToDictionary(x => x.Coordinates, x => x.Index < mineCount);
-            var coordinatesToAdjacentMineCountMap = coordinates.ToDictionary(
-                x => x,
-                x => coordinatesToMineMap.Count(y => y.Value && IsAdjacentTo(y.Key, x)));
-            var tiles = coordinatesToMineMap.Select(x => new Tile(x.Key, x.Value, coordinatesToAdjacentMineCountMap[x.Key]));
+            Span<Coordinates> coordinates = stackalloc Coordinates[rows * columns];
+            var temp = columns switch
+            {
+                8 => _beginnerCoordinates,
+                16 => _intermediateCoordinates,
+                30 => _expertCoordinates,
+                _ => GetCoordinates(rows, columns)
+            };
+            temp.CopyTo(coordinates);
 
+            switch (_shuffler)
+            {
+                case Shuffler.Random:
+                    Utilities.ShuffleItems(ref coordinates);
+                    break;
+                case Shuffler.Hacked:
+                    Utilities.PseudoShuffleItems(ref coordinates);
+                    break;
+            };
+
+            var i = 0;
+            var coordinatesToMineMap = new Dictionary<Coordinates, bool>(coordinates.Length);
+            foreach (var x in coordinates)
+            {
+                coordinatesToMineMap.Add(x, i < mineCount);
+                i++;
+            }
+
+            var n = 0;
+            var coordinatesToAdjacentMineCountMap = new Dictionary<Coordinates, int>(coordinates.Length);
+            foreach (var x in coordinates)
+            {
+                var amc = coordinatesToMineMap.Count(y => y.Value && IsAdjacentTo(y.Key, x));
+                coordinatesToAdjacentMineCountMap.Add(x, amc);
+                n++;
+            }
+
+            var tiles = coordinatesToMineMap.Select(x => new Tile(x.Key, x.Value, coordinatesToAdjacentMineCountMap[x.Key]));
             return new Board(tiles);
         }
 

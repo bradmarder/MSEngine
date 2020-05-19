@@ -59,9 +59,8 @@ namespace MSEngine.Core
             return tile;
         }
 
-        internal static T[] GetShuffledItems<T>(this IEnumerable<T> list)
+        internal static void ShuffleItems<T>(ref this Span<T> items)
         {
-            var items = list.ToArray();
             var n = items.Length;
 
             while (n > 1)
@@ -72,8 +71,6 @@ namespace MSEngine.Core
                 items[k] = items[n];
                 items[n] = value;
             }
-
-            return items;
         }
 
         /// <summary>
@@ -82,9 +79,8 @@ namespace MSEngine.Core
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>
         /// <returns></returns>
-        internal static T[] GetPseudoShuffledItems<T>(this IEnumerable<T> list)
+        internal static void PseudoShuffleItems<T>(ref this Span<T> items)
         {
-            var items = list.ToArray();
             var n = items.Length;
 
             // magic seed that produces a solvable board
@@ -98,8 +94,6 @@ namespace MSEngine.Core
                 items[k] = items[n];
                 items[n] = value;
             }
-
-            return items;
         }
     }
 }
