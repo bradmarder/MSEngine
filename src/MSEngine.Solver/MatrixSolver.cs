@@ -65,8 +65,7 @@ namespace MSEngine.Solver
 
             matrix.GaussEliminate();
 
-            // impossible to have more turns than tiles, so we set a max capacity
-            var turns = new List<Turn>(rowCount * columnCount);
+            var turns = new List<Turn>();
 
             // exclude the augmented column
             var finalIndex = columnCount - 1;
@@ -100,14 +99,14 @@ namespace MSEngine.Solver
                     {
                         continue;
                     }
-                    var xy = adjacentHiddenCoordinates[column];
+                    var coor = adjacentHiddenCoordinates[column];
                     var turn = final == min
 
                         // All of the negative numbers in that row are mines and all of the positive values in that row are not mines
-                        ? new Turn(xy.X, xy.Y, val > 0 ? TileOperation.Reveal : TileOperation.Flag)
+                        ? new Turn(coor.X, coor.Y, val > 0 ? TileOperation.Reveal : TileOperation.Flag)
 
                         // All of the negative numbers in that row are not mines and all of the positive values in that row are mines.
-                        : new Turn(xy.X, xy.Y, val > 0 ? TileOperation.Flag : TileOperation.Reveal);
+                        : new Turn(coor.X, coor.Y, val > 0 ? TileOperation.Flag : TileOperation.Reveal);
 
                     turns.Add(turn);
                 }

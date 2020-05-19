@@ -5,7 +5,7 @@ namespace MSEngine.Solver
 {
     public readonly ref struct FlatMatrix<T> where T : struct
     {
-        private Span<T> _matrix { get; }
+        private readonly Span<T> _matrix;
 
         public FlatMatrix(ref Span<T> matrix, int columnCount)
         {

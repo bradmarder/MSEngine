@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -75,7 +76,7 @@ namespace MSEngine.ConsoleApp
                     var turnCount = 0;
                     var turns = new Queue<Turn>();
 
-                    while (board.Status == BoardStatus.Pending)
+                    while (true)
                     {
                         if (turnCount == 0 && FirstTurnStrategy.TryUseStrategy(board, out var foo))
                         {
@@ -89,7 +90,7 @@ namespace MSEngine.ConsoleApp
                                 .ForEach(turns.Enqueue);
                         }
 
-                        // if the matrix solver couldn't calculate any turns, we just select a random hidden tile
+                        // if the matrix solver couldn't calculate any turns, we just select a "random" hidden tile
                         if (!turns.Any())
                         {
                             var guess = EducatedGuessStrategy.UseStrategy(board);
@@ -98,11 +99,13 @@ namespace MSEngine.ConsoleApp
 
                         var turn = turns.Dequeue();
 
+                        BoardStateMachine.Instance.EnsureValidBoardConfiguration(board, turn);
                         board = BoardStateMachine.Instance.ComputeBoard(board, turn);
 
                         // Get new board unless tile has no mine and zero AMC
                         var targetTile = board.Tiles.First(x => x.Coordinates == turn.Coordinates);
-                        if (turnCount == 0 && (board.Status == BoardStatus.Failed || targetTile.AdjacentMineCount > 0))
+                        var status = board.Status;
+                        if (turnCount == 0 && (targetTile.AdjacentMineCount > 0 || status == BoardStatus.Failed))
                         {
                             board = boardGenerator();
                             turns.Clear();
@@ -110,13 +113,13 @@ namespace MSEngine.ConsoleApp
                         }
                         turnCount++;
                         
-                        if (board.Status == BoardStatus.Pending)
+                        if (status == BoardStatus.Pending)
                         {
                             continue;
                         }
 
                         Interlocked.Increment(ref _gamesPlayedCount);
-                        if (board.Status == BoardStatus.Completed)
+                        if (status == BoardStatus.Completed)
                         {
                             Interlocked.Increment(ref _wins);
                         }
@@ -125,9 +128,9 @@ namespace MSEngine.ConsoleApp
                         {
                             var winRatio = ((decimal)_wins / _gamesPlayedCount) * 100;
                             Console.SetCursorPosition(0, Console.CursorTop);
-                            //Console.WriteLine("count = " + Tile._count);
                             Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio}%  {watch.ElapsedMilliseconds}ms");
                         }
+                        break;
                     }
                 });
         }

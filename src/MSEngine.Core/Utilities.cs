@@ -9,32 +9,21 @@ namespace MSEngine.Core
 {
     public static class Utilities
     {
-        private static readonly ConcurrentDictionary<uint, bool> _adjacentTileMap = new ConcurrentDictionary<uint, bool>();
         private static readonly ConcurrentDictionary<uint, Tile> _keyToTileMap = new ConcurrentDictionary<uint, Tile>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsAdjacentTo(Coordinates coordinateOne, Coordinates coordinateTwo)
         {
-            var key = coordinateOne.X
-                | (uint)coordinateOne.Y << 8
-                | (uint)coordinateTwo.X << 16
-                | (uint)coordinateTwo.Y << 24;
+            var x1 = coordinateOne.X;
+            var y1 = coordinateOne.Y;
+            var x2 = coordinateTwo.X;
+            var y2 = coordinateTwo.Y;
 
-            if (_adjacentTileMap.TryGetValue(key, out var value))
-            {
-                return value;
-            }
-
-            var x = coordinateOne.X;
-            var y = coordinateOne.Y;
-
-            var val = new[] { x, x + 1, x - 1 }.Contains(coordinateTwo.X)
-                && new[] { y, y + 1, y - 1 }.Contains(coordinateTwo.Y)
+            return x2 > (x1 - 2)
+                && x2 < (x1 + 2)
+                && y2 > (y1 - 2)
+                && y2 < (y1 + 2)
                 && coordinateOne != coordinateTwo;
-
-            _adjacentTileMap.TryAdd(key, val);
-
-            return val;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
