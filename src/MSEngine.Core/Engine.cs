@@ -44,7 +44,11 @@ namespace MSEngine.Core
             var tileCount = columns * rows;
             if (mineCount >= tileCount) { throw new ArgumentOutOfRangeException(nameof(mineCount)); }
 
-            Span<Coordinates> coordinates = stackalloc Coordinates[rows * columns];
+            Span<Coordinates> coordinates = stackalloc Coordinates[tileCount];
+            Span<bool> mineMap = stackalloc bool[tileCount];
+            Span<int> amcMap = stackalloc int[tileCount];
+            Span<Tile> tiles = stackalloc Tile[tileCount];
+
             (difficulty switch
             {
                 Difficulty.Beginner => _beginnerCoordinates,
@@ -64,30 +68,26 @@ namespace MSEngine.Core
                     break;
             };
 
-            Span<bool> mineMap = stackalloc bool[coordinates.Length];
-            for (var i = 0; i < coordinates.Length; i++)
+            for (var i = 0; i < tileCount; i++)
             {
                 mineMap[i] = i < mineCount;
             }
-
-            Span<int> amcMap = stackalloc int[coordinates.Length];
-            for (var i = 0; i < coordinates.Length; i++)
+            for (var i = 0; i < tileCount; i++)
             {
-                amcMap[i] = GetAdjacentMineCount(coordinates[i], mineMap, coordinates);
+                amcMap[i] = GetAdjacentMineCount(coordinates[i], mineMap, coordinates, tileCount);
             }
-
-            Span<Tile> tiles = stackalloc Tile[coordinates.Length];
-            for (var i = 0; i < coordinates.Length; i++)
+            for (var i = 0; i < tileCount; i++)
             {
                 tiles[i] = new Tile(coordinates[i], mineMap[i], amcMap[i]);
             }
+
             return new Board(tiles);
         }
 
-        private static int GetAdjacentMineCount(Coordinates coor, Span<bool> mineMap, Span<Coordinates> coordinates)
+        private static int GetAdjacentMineCount(Coordinates coor, Span<bool> mineMap, Span<Coordinates> coordinates, int tileCount)
         {
             var n = 0;
-            for (var i = 0; i < coordinates.Length; i++)
+            for (var i = 0; i < tileCount; i++)
             {
                 if (mineMap[i] && IsAdjacentTo(coor, coordinates[i]))
                 {

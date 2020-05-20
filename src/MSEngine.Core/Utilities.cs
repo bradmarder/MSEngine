@@ -59,7 +59,7 @@ namespace MSEngine.Core
             return tile;
         }
 
-        internal static void ShuffleItems<T>(ref this Span<T> items)
+        internal static void ShuffleItems<T>(this Span<T> items)
         {
             var n = items.Length;
 
@@ -79,7 +79,7 @@ namespace MSEngine.Core
         /// <typeparam name="T"></typeparam>
         /// <param name="list"></param>
         /// <returns></returns>
-        internal static void PseudoShuffleItems<T>(ref this Span<T> items)
+        internal static void PseudoShuffleItems<T>(this Span<T> items)
         {
             var n = items.Length;
 
