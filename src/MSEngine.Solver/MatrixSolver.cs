@@ -1,6 +1,6 @@
 ﻿using MSEngine.Core;
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -8,32 +8,74 @@ namespace MSEngine.Solver
 {
     public static class MatrixSolver
     {
-        private static readonly List<Turn> _emptyTurns = new List<Turn>(0);
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int GetAdjacentFlaggedTileCount(Board board, Coordinates coordinates)
+        private static int GetAdjacentFlaggedTileCount(Span<Tile> tiles, Coordinates coordinates)
         {
-            return board.Tiles.Count(x =>
-                x.State == TileState.Flagged
-                && Utilities.IsAdjacentTo(x.Coordinates, coordinates));
+            var n = 0;
+            for (int i = 0, l = tiles.Length; i < l; i++)
+            {
+                var tile = tiles[i];
+                if (tile.State == TileState.Flagged && Utilities.IsAdjacentTo(tile.Coordinates, coordinates))
+                {
+                    n++;
+                }
+            }
+            return n;
         }
 
-        public static List<Turn> CalculateTurns(Board board)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool HasHiddenAdjacentTiles(Span<Coordinates> coordinates, Coordinates coors)
         {
-            var hiddenCoordinates = board.Tiles
-                .Where(x => x.State == TileState.Hidden)
-                .Select(x => x.Coordinates)
-                .ToList();
-            var revealedAMCTiles = board.Tiles
-                .Where(x => x.State == TileState.Revealed)
-                .Where(x => x.AdjacentMineCount > 0)
-                .Where(x => hiddenCoordinates.Any(y => Utilities.IsAdjacentTo(y, x.Coordinates)))
-                //.Where(x => x.AdjacentMineCount > GetAdjacentFlaggedTileCount(board, x.Coordinates)) insignificant optimzation
-                .ToList();
-
-            if (!revealedAMCTiles.Any())
+            for (int i = 0, l = coordinates.Length; i < l; i++)
             {
-                return _emptyTurns;
+                if (Utilities.IsAdjacentTo(coordinates[i], coors))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // we overallocate to the ~maximum possible number of turns
+        // Span<Turn> turns = stackalloc Turn[tiles.Length];
+        // because we can't use distinct, ensure this turn does NOT already exist, THEN we add it.
+        // ...PROBLEM! default turns fill the span already...
+        // should we REF the span of turns and just SLICE it?? 
+        public static void CalculateTurns(Span<Tile> tiles, ref Span<Turn> turns)
+        {
+            // overallocated
+            Span<Coordinates> hiddenCoordinates = stackalloc Coordinates[tiles.Length];
+            Span<Tile> revealedAMCTiles = stackalloc Tile[tiles.Length];
+
+            var hiddenTileCount = 0;
+            for (int i = 0, l = tiles.Length; i < l; i++)
+            {
+                var tile = tiles[i];
+                if (tile.State == TileState.Hidden)
+                {
+                    hiddenCoordinates[hiddenTileCount] = tile.Coordinates;
+                    hiddenTileCount++;
+                }
+            }
+            hiddenCoordinates = hiddenCoordinates.Slice(0, hiddenTileCount);
+
+            var revealedAMCTileCount = 0;
+            for (int i = 0, l = tiles.Length; i < l; i++)
+            {
+                var tile = tiles[i];
+                if (tile.State == TileState.Revealed && tile.AdjacentMineCount > 0 && HasHiddenAdjacentTiles(hiddenCoordinates, tile.Coordinates))
+                {
+                    revealedAMCTiles[revealedAMCTileCount] = tile;
+                    revealedAMCTileCount++;
+                }
+            }
+            revealedAMCTiles = revealedAMCTiles.Slice(0, revealedAMCTileCount);
+
+            if (revealedAMCTileCount == 0)
+            {
+                turns.Clear();
+                Debug.Assert(turns.Length == 0);
+                return;
             }
 
             var revealedCoordinates = revealedAMCTiles
@@ -43,7 +85,7 @@ namespace MSEngine.Solver
                 .Where(x => revealedCoordinates.Any(y => Utilities.IsAdjacentTo(y, x)))
                 .ToList();
 
-            var rowCount = revealedAMCTiles.Count;
+            var rowCount = revealedAMCTiles.Length;
             var columnCount = adjacentHiddenCoordinates.Count + 1;
 
             Span<sbyte> foo = stackalloc sbyte[rowCount * columnCount];
@@ -57,7 +99,7 @@ namespace MSEngine.Solver
                     matrix[row, column] = (sbyte)(column == columnCount - 1
 
                         // augmented column has special logic
-                        ? tile.AdjacentMineCount - GetAdjacentFlaggedTileCount(board, tile.Coordinates)
+                        ? tile.AdjacentMineCount - GetAdjacentFlaggedTileCount(tiles, tile.Coordinates)
 
                         : Utilities.IsAdjacentTo(revealedCoordinates[row], adjacentHiddenCoordinates[column]) ? 1 : 0);
                 }
@@ -65,11 +107,10 @@ namespace MSEngine.Solver
 
             matrix.GaussEliminate();
 
-            var turns = new List<Turn>();
-
             // exclude the augmented column
             var finalIndex = columnCount - 1;
             Span<sbyte> vector = stackalloc sbyte[finalIndex];
+            var turnCount = 0;
 
             for (var row = 0; row < rowCount; row++)
             {
@@ -100,7 +141,7 @@ namespace MSEngine.Solver
                         continue;
                     }
                     var coor = adjacentHiddenCoordinates[column];
-                    var turn = final == min
+                    turns[turnCount] = final == min
 
                         // All of the negative numbers in that row are mines and all of the positive values in that row are not mines
                         ? new Turn(coor.X, coor.Y, val > 0 ? TileOperation.Reveal : TileOperation.Flag)
@@ -108,14 +149,15 @@ namespace MSEngine.Solver
                         // All of the negative numbers in that row are not mines and all of the positive values in that row are mines.
                         : new Turn(coor.X, coor.Y, val > 0 ? TileOperation.Flag : TileOperation.Reveal);
 
-                    turns.Add(turn);
+                    turnCount++;
+                    
+                    // because we can't use distinct, ensure this turn does NOT already exist, THEN we add it.
+                    // ...PROBLEM! default turns fill the span already...
                 }
             }
 
-            return turns
-                 .Distinct()
-                 //.OrderByDescending(x => x.Operation) // questionable optimization: Flag before Reveal
-                 .ToList();
+            // N = TURNS WE ADDED (because we overallocated)
+            turns = turns.Slice(0, turnCount);
         }
     }
 }

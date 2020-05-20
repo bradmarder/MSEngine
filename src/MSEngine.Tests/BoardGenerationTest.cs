@@ -14,7 +14,11 @@ namespace MSEngine.Tests
         [InlineData(30, 17)]
         public void Throws_on_invalid_columns(byte columns, byte rows)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => Engine.PureInstance.GenerateCustomBoard(columns, rows, 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+            {
+                Span<Tile> tiles = stackalloc Tile[columns * rows];
+                Engine.PureInstance.GenerateCustomBoard(tiles, columns, rows, 0);
+            });
         }
 
         [Theory]
@@ -22,12 +26,29 @@ namespace MSEngine.Tests
         [InlineData(8, 8)]
         [InlineData(16, 16)]
         [InlineData(30, 16)]
-        public void Expected_tile_count_equals_actual_tile_count(byte columns, byte rows)
+        public void ThrowsOnInsufficientBuffer(byte columns, byte rows)
         {
-            var expectedTileCount = columns * rows;
-            var board = Engine.PureInstance.GenerateCustomBoard(columns, rows, 0);
+            var tileCount = columns * rows;
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+            {
+                Span<Tile> tiles = stackalloc Tile[tileCount - 1];
+                Engine.PureInstance.GenerateCustomBoard(tiles, columns, rows, 0);
+            });
+        }
 
-            Assert.Equal(expectedTileCount, board.Tiles.Length);
+        [Theory]
+        [InlineData(1, 1)]
+        [InlineData(8, 8)]
+        [InlineData(16, 16)]
+        [InlineData(30, 16)]
+        public void ThrowsOnOverallocatedBuffer(byte columns, byte rows)
+        {
+            var tileCount = columns * rows;
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+            {
+                Span<Tile> tiles = stackalloc Tile[tileCount + 1];
+                Engine.PureInstance.GenerateCustomBoard(tiles, columns, rows, 0);
+            });
         }
 
         [Theory]
@@ -36,9 +57,12 @@ namespace MSEngine.Tests
         [InlineData(99)]
         public void Expected_mine_count_equals_actual_mine_count(byte expectedMineCount)
         {
-            var board = Engine.PureInstance.GenerateCustomBoard(30, 16, expectedMineCount);
+            byte columns = 30;
+            byte rows = 16;
+            Span<Tile> tiles = stackalloc Tile[columns * rows];
+            Engine.PureInstance.GenerateCustomBoard(tiles, columns, rows, expectedMineCount);
 
-            Assert.Equal(expectedMineCount, board.MineCount);
+            Assert.Equal(expectedMineCount, tiles.MineCount());
         }
 
         [Theory]
@@ -46,7 +70,11 @@ namespace MSEngine.Tests
         [InlineData(65)]
         public void Throws_if_mine_count_is_greater_than_or_equal_to_tile_count(byte mineCount)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => Engine.PureInstance.GenerateCustomBoard(8, 8, mineCount));
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+            {
+                Span<Tile> tiles = stackalloc Tile[64];
+                Engine.PureInstance.GenerateCustomBoard(tiles, 8, 8, mineCount);
+            });
         }
     }
 }

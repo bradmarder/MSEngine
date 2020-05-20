@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace MSEngine.Core
 {
@@ -22,22 +21,9 @@ namespace MSEngine.Core
         /// -May only chord a tile when adjacent mine count equals adjacent tile flag count
         /// -May only chord a tile that has hidden adjacent tiles
         /// </exception>
-        void EnsureValidBoardConfiguration(Board board, Turn turn);
+        void EnsureValidBoardConfiguration(Span<Tile> tiles, Turn turn);
         
-        /// <summary>
-        /// Returns a new Board with turns applied
-        /// </summary>
-        /// <param name="board"></param>
-        /// <param name="turns"></param>
-        /// <returns></returns>
-        Board ComputeBoard(Board board, IEnumerable<Turn> turns);
-
-        /// <summary>
-        /// Returns a new Board with the turn applied
-        /// </summary>
-        /// <param name="board"></param>
-        /// <param name="turn"></param>
-        /// <returns></returns>
-        Board ComputeBoard(Board board, Turn turn);
+        void ComputeBoard(Span<Tile> tiles, Span<Turn> turns);
+        void ComputeBoard(Span<Tile> tiles, Turn turn);
     }
 }

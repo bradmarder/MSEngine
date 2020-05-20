@@ -7,8 +7,6 @@ namespace MSEngine.Tests
 {
     public class BoardValidationTest
     {
-        private static readonly IBoardStateMachine _boardStateMachine = new BoardStateMachine();
-
         [Fact]
         public void Throws_if_board_has_duplicate_coordinates()
         {
@@ -16,7 +14,7 @@ namespace MSEngine.Tests
             var tile = new Tile(dupeCoordinates, false, 0);
             var board = new Board(new[] { tile, tile });
 
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(board, new Turn()));
+            Assert.Throws<InvalidGameStateException>(() => BoardStateMachine.Instance.EnsureValidBoardConfiguration(board, new Turn()));
         }
 
         [Theory]
@@ -29,10 +27,10 @@ namespace MSEngine.Tests
             var board = Engine.PureInstance.GenerateCustomBoard(8, 8, 0);
             var firstTurn = new Turn(0, 0, TileOperation.Reveal);
             var secondTurn = new Turn(0, 1, operation);
-            var boardAfterFirstTurn = _boardStateMachine.ComputeBoard(board, firstTurn);
+            var boardAfterFirstTurn = BoardStateMachine.Instance.ComputeBoard(board, firstTurn);
 
             Assert.Equal(BoardStatus.Completed, boardAfterFirstTurn.Status);
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(boardAfterFirstTurn, secondTurn));
+            Assert.Throws<InvalidGameStateException>(() => BoardStateMachine.Instance.EnsureValidBoardConfiguration(boardAfterFirstTurn, secondTurn));
         }
 
         [Theory]
@@ -45,10 +43,10 @@ namespace MSEngine.Tests
             var board = Engine.PureInstance.GenerateCustomBoard(8, 8, 1);
             var firstTurn = new Turn(0, 0, TileOperation.Reveal);
             var secondTurn = new Turn(0, 1, operation);
-            var boardAfterFirstTurn = _boardStateMachine.ComputeBoard(board, firstTurn);
+            var boardAfterFirstTurn = BoardStateMachine.Instance.ComputeBoard(board, firstTurn);
 
             Assert.Equal(BoardStatus.Failed, boardAfterFirstTurn.Status);
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(boardAfterFirstTurn, secondTurn));
+            Assert.Throws<InvalidGameStateException>(() => BoardStateMachine.Instance.EnsureValidBoardConfiguration(boardAfterFirstTurn, secondTurn));
         }
 
         [Theory]
@@ -59,10 +57,10 @@ namespace MSEngine.Tests
         {
             var board = Engine.PureInstance.GenerateCustomBoard(2, 2, 1);
             var firstTurn = new Turn(1, 1, TileOperation.Reveal);
-            var boardAfterFirstTurn = _boardStateMachine.ComputeBoard(board, firstTurn);
+            var boardAfterFirstTurn = BoardStateMachine.Instance.ComputeBoard(board, firstTurn);
             var secondTurn = new Turn(1, 1, operation);
 
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(boardAfterFirstTurn, secondTurn));
+            Assert.Throws<InvalidGameStateException>(() => BoardStateMachine.Instance.EnsureValidBoardConfiguration(boardAfterFirstTurn, secondTurn));
         }
 
         [Fact]
@@ -71,7 +69,7 @@ namespace MSEngine.Tests
             var board = Engine.PureInstance.GenerateCustomBoard(1, 1, 0);
             var turn = new Turn(1, 0, TileOperation.Reveal);
 
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(board, turn));
+            Assert.Throws<InvalidGameStateException>(() => BoardStateMachine.Instance.EnsureValidBoardConfiguration(board, turn));
         }
 
         [Fact]
@@ -80,7 +78,7 @@ namespace MSEngine.Tests
             var board = Engine.PureInstance.GenerateCustomBoard(1, 1, 0);
             var turn = new Turn(0, 0, TileOperation.Flag);
 
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(board, turn));
+            Assert.Throws<InvalidGameStateException>(() => BoardStateMachine.Instance.EnsureValidBoardConfiguration(board, turn));
         }
 
         [Fact]
@@ -88,10 +86,10 @@ namespace MSEngine.Tests
         {
             var board = Engine.PureInstance.GenerateCustomBoard(1, 2, 1);
             var turn = new Turn(0, 0, TileOperation.Flag);
-            var boardAfterFirstTurn = _boardStateMachine.ComputeBoard(board, turn);
+            var boardAfterFirstTurn = BoardStateMachine.Instance.ComputeBoard(board, turn);
 
             Assert.Equal(BoardStatus.Pending, boardAfterFirstTurn.Status);
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(boardAfterFirstTurn, turn));
+            Assert.Throws<InvalidGameStateException>(() => BoardStateMachine.Instance.EnsureValidBoardConfiguration(boardAfterFirstTurn, turn));
         }
 
         [Fact]
@@ -100,7 +98,7 @@ namespace MSEngine.Tests
             var board = Engine.PureInstance.GenerateCustomBoard(2, 2, 2);
             var turn = new Turn(0, 0, TileOperation.RemoveFlag);
             
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(board, turn));
+            Assert.Throws<InvalidGameStateException>(() => BoardStateMachine.Instance.EnsureValidBoardConfiguration(board, turn));
         }
 
         [Fact]
@@ -109,7 +107,7 @@ namespace MSEngine.Tests
             var board = Engine.PureInstance.GenerateCustomBoard(1, 1, 0);
             var turn = new Turn(0, 0, TileOperation.Chord);
 
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(board, turn));
+            Assert.Throws<InvalidGameStateException>(() => BoardStateMachine.Instance.EnsureValidBoardConfiguration(board, turn));
         }
 
         [Fact]
@@ -119,12 +117,12 @@ namespace MSEngine.Tests
             var board = Engine.PureInstance.GenerateCustomBoard(3, 3, 1);
             var firstTurn = new Turn(origin, TileOperation.Reveal);
             var secondTurn = new Turn(origin, TileOperation.Chord);
-            var boardAfterFirstTurn = _boardStateMachine.ComputeBoard(board, firstTurn);
+            var boardAfterFirstTurn = BoardStateMachine.Instance.ComputeBoard(board, firstTurn);
             var targetTile = boardAfterFirstTurn.Tiles.Single(x => x.Coordinates == origin);
 
             Assert.Equal(TileState.Revealed, targetTile.State);
             Assert.Equal(0, targetTile.AdjacentMineCount);
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(boardAfterFirstTurn, secondTurn));
+            Assert.Throws<InvalidGameStateException>(() => BoardStateMachine.Instance.EnsureValidBoardConfiguration(boardAfterFirstTurn, secondTurn));
         }
 
         [Fact]
@@ -135,10 +133,10 @@ namespace MSEngine.Tests
             var firstTurn = new Turn(0, 0, TileOperation.Flag);
             var secondTurn = new Turn(origin, TileOperation.Reveal);
             var thirdTurn = new Turn(origin, TileOperation.Chord);
-            var boardAfterFirstTurn = _boardStateMachine.ComputeBoard(board, firstTurn);
-            var boardAfterSecondTurn = _boardStateMachine.ComputeBoard(boardAfterFirstTurn, secondTurn);
+            var boardAfterFirstTurn = BoardStateMachine.Instance.ComputeBoard(board, firstTurn);
+            var boardAfterSecondTurn = BoardStateMachine.Instance.ComputeBoard(boardAfterFirstTurn, secondTurn);
             
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(boardAfterSecondTurn, thirdTurn));
+            Assert.Throws<InvalidGameStateException>(() => BoardStateMachine.Instance.EnsureValidBoardConfiguration(boardAfterSecondTurn, thirdTurn));
         }
 
         [Fact]

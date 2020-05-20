@@ -7,24 +7,25 @@ namespace MSEngine.Core
         /// <summary>
         /// Generates an 8x8 board with 10 mines
         /// </summary>
-        Board GenerateBeginnerBoard();
+        void GenerateBeginnerBoard(Span<Tile> tiles);
 
         /// <summary>
         /// Generates a 16x16 board with 40 mines
         /// </summary>
-        Board GenerateIntermediateBoard();
+        void GenerateIntermediateBoard(Span<Tile> tiles);
 
         /// <summary>
         /// Generates a 30x16 board with 99 mines
         /// </summary>
-        Board GenerateExpertBoard();
+        void GenerateExpertBoard(Span<Tile> tiles);
 
         /// <summary>
         /// Generates a random minesweeper board.
         /// </summary>
+        /// <param name="tiles">Preallocated Tiles</param>
         /// <param name="columns">Max value of 30</param>
         /// <param name="rows">Max value of 16</param>
         /// <param name="mineCount">Must be less than tile count (columns * height)</param>
-        Board GenerateCustomBoard(byte columns, byte rows, byte mineCount, Difficulty? difficulty = null);
+        void GenerateCustomBoard(Span<Tile> tiles, byte columns, byte rows, byte mineCount);
     }
 }

@@ -9,30 +9,32 @@ namespace MSEngine.Core
     {
         public static IBoardStateMachine Instance { get; } = new BoardStateMachine();
 
-        public virtual void EnsureValidBoardConfiguration(Board board, Turn turn)
+        public virtual void EnsureValidBoardConfiguration(Span<Tile> tiles, Turn turn)
         {
-            var distinctCoordinateCount = board.Tiles
+            var linqTiles = tiles.ToArray();
+
+            var distinctCoordinateCount = linqTiles
                 .Select(x => x.Coordinates)
                 .Distinct()
                 .Count();
-            if (board.Tiles.Length > distinctCoordinateCount)
+            if (tiles.Length > distinctCoordinateCount)
             {
                 throw new InvalidGameStateException("Multiple tiles have matching coordinates");
             }
-            if (board.Status == BoardStatus.Completed || board.Status == BoardStatus.Failed)
+            if (tiles.Status() == BoardStatus.Completed || tiles.Status() == BoardStatus.Failed)
             {
                 throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
             }
-            if (board.Tiles.All(x => x.Coordinates != turn.Coordinates))
+            if (linqTiles.All(x => x.Coordinates != turn.Coordinates))
             {
                 throw new InvalidGameStateException("Turn has coordinates that are outside the board");
             }
-            if (turn.Operation == TileOperation.Flag && board.FlagsAvailable == 0)
+            if (turn.Operation == TileOperation.Flag && tiles.FlagsAvailable() == 0)
             {
                 throw new InvalidGameStateException("No more flags available");
             }
 
-            var targetTile = board.Tiles.First(x => x.Coordinates == turn.Coordinates);
+            var targetTile = linqTiles.First(x => x.Coordinates == turn.Coordinates);
 
             if (targetTile.State == TileState.Revealed && turn.Operation != TileOperation.Chord)
             {
@@ -56,7 +58,7 @@ namespace MSEngine.Core
                 {
                     throw new InvalidGameStateException("May only chord a tile that has adjacent mines");
                 }
-                var adjacentTiles = board.Tiles.Where(x => IsAdjacentTo(x.Coordinates, targetTile.Coordinates));
+                var adjacentTiles = linqTiles.Where(x => IsAdjacentTo(x.Coordinates, targetTile.Coordinates));
                 var targetTileAdjacentFlagCount = adjacentTiles.Count(x => x.State == TileState.Flagged);
                 var targetTileAdjacentHiddenCount = adjacentTiles.Count(x => x.State == TileState.Hidden);
 
@@ -70,46 +72,69 @@ namespace MSEngine.Core
                 }
             }
         }
-        public virtual Board ComputeBoard(Board board, IEnumerable<Turn> turns) => turns.Aggregate(board, ComputeBoard);
-        public virtual Board ComputeBoard(Board board, Turn turn)
+        public virtual void ComputeBoard(Span<Tile> tiles, Span<Turn> turns)
         {
-            var targetTile = board.Tiles.First(x => x.Coordinates == turn.Coordinates);
+            foreach (var x in turns)
+            {
+                ComputeBoard(tiles, x);
+            }
+        }
+        public virtual void ComputeBoard(Span<Tile> tiles, Turn turn)
+        {
+            if (!Enum.IsDefined(typeof(TileOperation), turn.Operation))
+            {
+                throw new NotImplementedException(turn.Operation.ToString());
+            }
+
+            var linqTiles = tiles.ToArray();
+
+            var targetTile = linqTiles.First(x => x.Coordinates == turn.Coordinates);
 
             // these cases will only affect a single tile
             if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !targetTile.HasMine && targetTile.AdjacentMineCount > 0))
             {
-                var tiles = board.Tiles.Select(x => x.Coordinates == targetTile.Coordinates ? new Tile(x, turn.Operation) : x);
-                return new Board(tiles);
+                linqTiles
+                    .Select(x => x.Coordinates == targetTile.Coordinates ? new Tile(x, turn.Operation) : x)
+                    .ToArray()
+                    .CopyTo(tiles);
+                return;
             }
 
             if (turn.Operation == TileOperation.Reveal)
             {
-                return targetTile.HasMine
-                    ? GetFailedBoard(board)
-                    : GetChainReactionBoard(board, targetTile.Coordinates);
+                if (targetTile.HasMine)
+                {
+                    GetFailedBoard(tiles);
+                }
+                else
+                {
+                    GetChainReactionBoard(tiles, targetTile.Coordinates);
+                }
+                return;
             }
 
             if (turn.Operation == TileOperation.Chord)
             {
-                return GetChordBoard(board, targetTile.Coordinates);
+                GetChordBoard(tiles, targetTile.Coordinates);
+                return;
             }
-
-            throw new NotImplementedException(turn.Operation.ToString());
         }
 
-        internal static Board GetFailedBoard(Board board)
+        internal static void GetFailedBoard(Span<Tile> tiles)
         {
             // should we show false flags?
-            var tiles = board.Tiles.Select(x =>
-                !x.HasMine || x.State == TileState.Revealed || x.State == TileState.Flagged
+            tiles
+                .ToArray()
+                .Select(x => !x.HasMine || x.State == TileState.Revealed || x.State == TileState.Flagged
                     ? x
-                    : new Tile(x, TileOperation.Reveal));
-
-            return new Board(tiles);
+                    : new Tile(x, TileOperation.Reveal))
+                .ToArray()
+                .CopyTo(tiles);
         }
-        internal static Board GetChainReactionBoard(Board board, Coordinates coordinates)
+        internal static void GetChainReactionBoard(Span<Tile> tiles, Coordinates coordinates)
         {
-            var unrevealedAdjacentTiles = board.Tiles
+            var linqTiles = tiles.ToArray();
+            var unrevealedAdjacentTiles = linqTiles
 
                 // if an adjacent tile has a "false flag", it does not expand revealing
                 .Where(x => x.State == TileState.Hidden)
@@ -129,7 +154,7 @@ namespace MSEngine.Core
                     continue;
                 }
 
-                board.Tiles
+                linqTiles
                     .Where(x => x.State != TileState.Flagged)
                     .Where(x => !expandedCoordinates.Contains(x.Coordinates))
                     .Where(x => IsAdjacentTo(x.Coordinates, tile.Coordinates))
@@ -137,19 +162,25 @@ namespace MSEngine.Core
                     .ForEach(expanding.Enqueue);
             }
 
-            var tiles = board.Tiles.Select(x =>
-                x.State != TileState.Revealed && expandedCoordinates.Contains(x.Coordinates)
+            linqTiles
+                .Select(x => x.State != TileState.Revealed && expandedCoordinates.Contains(x.Coordinates)
                     ? new Tile(x, TileOperation.Reveal)
-                    : x);
-
-            return new Board(tiles);
+                    : x)
+                .ToArray()
+                .CopyTo(tiles);
         }
 
-        internal Board GetChordBoard(Board board, Coordinates coordinates) =>
-            board.Tiles
+        internal void GetChordBoard(Span<Tile> tiles, Coordinates coordinates)
+        {
+            var turns = tiles
+                .ToArray()
                 .Where(x => x.State == TileState.Hidden)
                 .Where(x => IsAdjacentTo(x.Coordinates, coordinates))
                 .Select(x => new Turn(x.Coordinates, TileOperation.Reveal))
-                .Aggregate(board, ComputeBoard);
+                .ToArray()
+                .AsSpan();
+
+            ComputeBoard(tiles, turns);
+        }
     }
 }
