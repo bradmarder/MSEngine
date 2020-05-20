@@ -10,6 +10,14 @@ namespace MSEngine.Core
         {
             Tiles = tiles.ToArray();
         }
+        internal Board(Tile[] tiles)
+        {
+            Tiles = tiles;
+        }
+        internal Board(Span<Tile> tiles)
+        {
+            Tiles = tiles.ToArray();
+        }
 
         public Tile[] Tiles { get; }
 

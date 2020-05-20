@@ -11,6 +11,12 @@ namespace MSEngine.Core
         Random,
         Hacked
     }
+    public enum Difficulty
+    {
+        Beginner,
+        Intermediate,
+        Expert
+    }
     public class Engine : IEngine
     {
         public static IEngine Instance { get; } = new Engine(Shuffler.Random);
@@ -28,10 +34,10 @@ namespace MSEngine.Core
             _shuffler = shuffler;
         }
 
-        public virtual Board GenerateBeginnerBoard() => GenerateCustomBoard(8, 8, 10);
-        public virtual Board GenerateIntermediateBoard() => GenerateCustomBoard(16, 16, 40);
-        public virtual Board GenerateExpertBoard() => GenerateCustomBoard(30, 16, 99);
-        public virtual Board GenerateCustomBoard(byte columns, byte rows, byte mineCount)
+        public virtual Board GenerateBeginnerBoard() => GenerateCustomBoard(8, 8, 10, Difficulty.Beginner);
+        public virtual Board GenerateIntermediateBoard() => GenerateCustomBoard(16, 16, 40, Difficulty.Intermediate);
+        public virtual Board GenerateExpertBoard() => GenerateCustomBoard(30, 16, 99, Difficulty.Expert);
+        public virtual Board GenerateCustomBoard(byte columns, byte rows, byte mineCount, Difficulty? difficulty = null)
         {
             if (columns == 0 || columns > 30) { throw new ArgumentOutOfRangeException(nameof(columns)); }
             if (rows == 0 || rows > 16) { throw new ArgumentOutOfRangeException(nameof(rows)); }
@@ -39,55 +45,67 @@ namespace MSEngine.Core
             if (mineCount >= tileCount) { throw new ArgumentOutOfRangeException(nameof(mineCount)); }
 
             Span<Coordinates> coordinates = stackalloc Coordinates[rows * columns];
-            var temp = columns switch
+            (difficulty switch
             {
-                8 => _beginnerCoordinates,
-                16 => _intermediateCoordinates,
-                30 => _expertCoordinates,
-                _ => GetCoordinates(rows, columns)
-            };
-            temp.CopyTo(coordinates);
+                Difficulty.Beginner => _beginnerCoordinates,
+                Difficulty.Intermediate => _intermediateCoordinates,
+                Difficulty.Expert => _expertCoordinates,
+                _ => GetCoordinates(columns, rows)
+            })
+            .CopyTo(coordinates);
 
             switch (_shuffler)
             {
                 case Shuffler.Random:
-                    Utilities.ShuffleItems(ref coordinates);
+                    coordinates.ShuffleItems();
                     break;
                 case Shuffler.Hacked:
-                    Utilities.PseudoShuffleItems(ref coordinates);
+                    coordinates.PseudoShuffleItems();
                     break;
             };
 
-            var i = 0;
-            var coordinatesToMineMap = new Dictionary<Coordinates, bool>(coordinates.Length);
-            foreach (var x in coordinates)
+            Span<bool> mineMap = stackalloc bool[coordinates.Length];
+            for (var i = 0; i < coordinates.Length; i++)
             {
-                coordinatesToMineMap.Add(x, i < mineCount);
-                i++;
+                mineMap[i] = i < mineCount;
             }
 
-            var n = 0;
-            var coordinatesToAdjacentMineCountMap = new Dictionary<Coordinates, int>(coordinates.Length);
-            foreach (var x in coordinates)
+            Span<int> amcMap = stackalloc int[coordinates.Length];
+            for (var i = 0; i < coordinates.Length; i++)
             {
-                var amc = coordinatesToMineMap.Count(y => y.Value && IsAdjacentTo(y.Key, x));
-                coordinatesToAdjacentMineCountMap.Add(x, amc);
-                n++;
+                amcMap[i] = GetAdjacentMineCount(coordinates[i], mineMap, coordinates);
             }
 
-            var tiles = coordinatesToMineMap.Select(x => new Tile(x.Key, x.Value, coordinatesToAdjacentMineCountMap[x.Key]));
+            Span<Tile> tiles = stackalloc Tile[coordinates.Length];
+            for (var i = 0; i < coordinates.Length; i++)
+            {
+                tiles[i] = new Tile(coordinates[i], mineMap[i], amcMap[i]);
+            }
             return new Board(tiles);
         }
 
-        internal static Coordinates[] GetCoordinates(byte rows, byte columns)
+        private static int GetAdjacentMineCount(Coordinates coor, Span<bool> mineMap, Span<Coordinates> coordinates)
+        {
+            var n = 0;
+            for (var i = 0; i < coordinates.Length; i++)
+            {
+                if (mineMap[i] && IsAdjacentTo(coor, coordinates[i]))
+                {
+                    n++;
+                }
+            }
+            return n;
+        }
+
+        internal static Coordinates[] GetCoordinates(byte columns, byte rows)
         {
             if (columns == 0) { throw new ArgumentOutOfRangeException(nameof(columns)); }
             if (rows == 0) { throw new ArgumentOutOfRangeException(nameof(rows)); }
 
             return Enumerable
-                .Range(0, rows)
+                .Range(0, columns)
                 .SelectMany(x => Enumerable
-                    .Range(0, columns)
+                    .Range(0, rows)
                     .Select(y => new Coordinates((byte)x, (byte)y)))
                 .ToArray();
         }

@@ -47,7 +47,7 @@ namespace MSEngine.Solver
             var columnCount = adjacentHiddenCoordinates.Count + 1;
 
             Span<sbyte> foo = stackalloc sbyte[rowCount * columnCount];
-            var matrix = new FlatMatrix<sbyte>(ref foo, columnCount);
+            var matrix = new FlatMatrix<sbyte>(foo, columnCount);
 
             for (var row = 0; row < rowCount; row++)
             {

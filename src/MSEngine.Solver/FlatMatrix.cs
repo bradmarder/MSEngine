@@ -6,7 +6,7 @@ namespace MSEngine.Solver
     {
         private readonly Span<T> _matrix;
 
-        public FlatMatrix(ref Span<T> matrix, int columnCount)
+        public FlatMatrix(Span<T> matrix, int columnCount)
         {
             if (columnCount < 1) { throw new ArgumentOutOfRangeException(nameof(columnCount)); }
             _matrix = matrix;
