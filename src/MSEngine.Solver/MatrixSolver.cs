@@ -78,7 +78,7 @@ namespace MSEngine.Solver
 
             if (revealedAMCTileCount == 0)
             {
-                turns.Clear();
+                turns = turns.Slice(0, 0);
                 return;
             }
 
@@ -98,7 +98,6 @@ namespace MSEngine.Solver
                 for (int n = 0, m = revealedCoordinates.Length; n < m; n++)
                 {
                     // if we find *Any* adjacent, we break out of the inner for loop
-
                     if (Utilities.IsAdjacentTo(hiddenCoor, revealedCoordinates[n]))
                     {
                         hasAHC = true;

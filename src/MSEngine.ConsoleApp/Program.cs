@@ -21,7 +21,7 @@ namespace MSEngine.ConsoleApp
         {
             //RunRandomDistributionTest(Engine.Instance.GenerateRandomBeginnerBoard);
             // RunSimulations(1, () => Engine.Instance.GenerateCustomBoard(4, 4, 2));
-            RunSimulations(1111);
+            RunSimulations(10000);
 
             //GetCoordinates(5, 1).ToList().ForEach(x => Console.Write(x));
         }
@@ -86,20 +86,10 @@ namespace MSEngine.ConsoleApp
                         {
                             turns = stackalloc Turn[1] { foo };
                         }
-
                         if (turns.Length == 0)
                         {
                             turns = stackalloc Turn[tiles.Length];
                             MatrixSolver.CalculateTurns(tiles, ref turns);
-                            if (turns.Length > 0)
-                            {
-                                // flagging already flagged tile...
-                                foreach (var x in turns)
-                                {
-                                    //Console.WriteLine(x);
-                                }
-                                //Console.WriteLine(GetBoardAsciiArt(tiles));
-                            }
                         }
 
                         // if the matrix solver couldn't calculate any turns, we just select a "random" hidden tile
@@ -122,6 +112,7 @@ namespace MSEngine.ConsoleApp
                             catch (Exception)
                             {
                                 Console.WriteLine("EVIL TURN = " + turn.ToString());
+                                Console.WriteLine(GetBoardAsciiArt(tiles));
                                 throw;
                             }
                         }
@@ -135,7 +126,7 @@ namespace MSEngine.ConsoleApp
                         if (turnCount == 0 && (targetTile.AdjacentMineCount > 0 || status == BoardStatus.Failed))
                         {
                             Engine.Instance.GenerateBeginnerBoard(tiles);
-                            turns.Clear();
+                            turns = stackalloc Turn[0];
                             continue;
                         }
                         turnCount++;

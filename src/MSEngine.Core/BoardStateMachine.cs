@@ -48,7 +48,7 @@ namespace MSEngine.Core
                 throw new InvalidGameStateException("No more flags available");
             }
 
-            var targetTile = linqTiles.First(x => x.Coordinates == turn.Coordinates);
+            var targetTile = linqTiles.Single(x => x.Coordinates == turn.Coordinates);
 
             if (targetTile.State == TileState.Revealed && turn.Operation != TileOperation.Chord)
             {

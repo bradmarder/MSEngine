@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 
 using MSEngine.Core;
 
@@ -9,43 +8,21 @@ namespace MSEngine.Solver
     {
         public static Turn UseStrategy(Span<Tile> tiles)
         {
-            //var tileToMineProbabilityMap = board.Tiles
-            //    .Where(x => x.State == TileState.Revealed)
-            //    .Where(x => x.AdjacentMineCount > 0)
-            //    .ToDictionary(x => x, tile =>
-            //    {
-            //        var adjacentTiles = board.Tiles
-            //            .Where(x => Utilities.IsAdjacentTo(x.Coordinates, tile.Coordinates))
-            //            .ToList();
-            //        var adjacentHiddenTileCount = adjacentTiles.Count(x => x.State == TileState.Hidden);
-            //        var adjacentFlaggedTileCount = adjacentTiles.Count(x => x.State == TileState.Flagged);
+            var maxIndex = -1;
+            var maxHash = int.MinValue;
 
-            //        return adjacentHiddenTileCount == 0
-            //            ? 0
-            //            : (tile.AdjacentMineCount - adjacentFlaggedTileCount) / adjacentHiddenTileCount;
-            //    });
+            for (int i = 0, l = tiles.Length; i < l; i++)
+            {
+                var tile = tiles[i];
+                var hash = tile.GetHashCode();
+                if (tile.State == TileState.Hidden && hash > maxHash)
+                {
+                    maxIndex = i;
+                    maxHash = hash;
+                }
+            }
 
-            //var hiddenTileCount = board.Tiles.Count(x => x.State == TileState.Hidden);
-            //var defaultMineProbability = board.FlagsAvailable / hiddenTileCount;
-
-            var hiddenTile = tiles
-                .ToArray()
-                .Where(x => x.State == TileState.Hidden)
-                .OrderBy(x => x.GetHashCode())
-                //.OrderBy(tile =>
-                //{
-                //    var adjacentTiles = board.Tiles
-                //        .Where(x => tileToMineProbabilityMap.Keys.Contains(x))
-                //        .Where(x => Utilities.IsAdjacentTo(tile.Coordinates, x.Coordinates))
-                //        .ToList();
-
-                //    return adjacentTiles.Any()
-                //        ? adjacentTiles.Max(x => tileToMineProbabilityMap[x])
-                //        : defaultMineProbability;
-                //})
-                .First();
-
-            return new Turn(hiddenTile.Coordinates, TileOperation.Reveal);
+            return new Turn(tiles[maxIndex].Coordinates, TileOperation.Reveal);
         }
     }
 }
