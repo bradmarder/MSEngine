@@ -22,7 +22,7 @@ namespace MSEngine.Core
             return complete ? BoardStatus.Completed : BoardStatus.Pending;
         }
 
-        public static byte Width(this Span<Tile> tiles)
+        public static int Width(this Span<Tile> tiles)
         {
             byte max = 0;
             for (int i = 0, l = tiles.Length; i < l; i++)
@@ -30,10 +30,10 @@ namespace MSEngine.Core
                 var x = tiles[i].Coordinates.X;
                 max = max > x ? max : x;
             }
-            return max;
+            return max + 1;
         }
 
-        public static byte Height(this Span<Tile> tiles)
+        public static int Height(this Span<Tile> tiles)
         {
             byte max = 0;
             for (int i = 0, l = tiles.Length; i < l; i++)
@@ -41,7 +41,7 @@ namespace MSEngine.Core
                 var y = tiles[i].Coordinates.Y;
                 max = max > y ? max : y;
             }
-            return max;
+            return max + 1;
         }
 
         public static int FlagsAvailable(this Span<Tile> tiles) => tiles.MineCount() - tiles.FlaggedTilesCount();

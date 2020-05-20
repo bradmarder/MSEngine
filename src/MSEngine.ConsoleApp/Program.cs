@@ -21,7 +21,7 @@ namespace MSEngine.ConsoleApp
         {
             //RunRandomDistributionTest(Engine.Instance.GenerateRandomBeginnerBoard);
             // RunSimulations(1, () => Engine.Instance.GenerateCustomBoard(4, 4, 2));
-            RunSimulations(1);
+            RunSimulations(1111);
 
             //GetCoordinates(5, 1).ToList().ForEach(x => Console.Write(x));
         }
@@ -75,28 +75,37 @@ namespace MSEngine.ConsoleApp
                 .ForAll(_ =>
                 {
                     Span<Tile> tiles = stackalloc Tile[64];
-                    Span<Turn> turns = stackalloc Turn[64];
+                    Span<Turn> turns = stackalloc Turn[0];
                     Engine.Instance.GenerateBeginnerBoard(tiles);
+
                     var turnCount = 0;
 
                     while (true)
                     {
                         if (turnCount == 0 && FirstTurnStrategy.TryUseStrategy(tiles, out var foo))
                         {
-                            turns = turns.Slice(0, 1);
-                            turns[0] = foo;
+                            turns = stackalloc Turn[1] { foo };
                         }
 
-                        if (turns.Length == 64)
+                        if (turns.Length == 0)
                         {
+                            turns = stackalloc Turn[tiles.Length];
                             MatrixSolver.CalculateTurns(tiles, ref turns);
+                            if (turns.Length > 0)
+                            {
+                                // flagging already flagged tile...
+                                foreach (var x in turns)
+                                {
+                                    //Console.WriteLine(x);
+                                }
+                                //Console.WriteLine(GetBoardAsciiArt(tiles));
+                            }
                         }
 
                         // if the matrix solver couldn't calculate any turns, we just select a "random" hidden tile
                         if (turns.Length == 0)
                         {
-                            turns = stackalloc Turn[1];
-                            turns[0] = EducatedGuessStrategy.UseStrategy(tiles);
+                            turns = stackalloc Turn[1] { EducatedGuessStrategy.UseStrategy(tiles) };
                         }
 
                         // dequeue the final (or first?) turn and slice the turns
@@ -106,21 +115,27 @@ namespace MSEngine.ConsoleApp
 
                         if (turnCount > 0)
                         {
-                            BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
+                            try
+                            {
+                                // BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
+                            }
+                            catch (Exception)
+                            {
+                                Console.WriteLine("EVIL TURN = " + turn.ToString());
+                                throw;
+                            }
                         }
                         
                         BoardStateMachine.Instance.ComputeBoard(tiles, turn);
 
                         // Get new board unless tile has no mine and zero AMC
-                        var targetTile = tiles
-                            .ToArray()
-                            .Single(x => x.Coordinates == turn.Coordinates);
+                        var targetTile = BoardStateMachine.GetTargetTile(tiles, turn.Coordinates);
 
                         var status = tiles.Status();
                         if (turnCount == 0 && (targetTile.AdjacentMineCount > 0 || status == BoardStatus.Failed))
                         {
                             Engine.Instance.GenerateBeginnerBoard(tiles);
-                            turns = stackalloc Turn[64];
+                            turns.Clear();
                             continue;
                         }
                         turnCount++;
@@ -134,9 +149,6 @@ namespace MSEngine.ConsoleApp
                         if (status == BoardStatus.Completed)
                         {
                             Interlocked.Increment(ref _wins);
-                        } else
-                        {
-                            Console.WriteLine(GetBoardAsciiArt(tiles));
                         }
 
                         lock (_lock)
@@ -145,6 +157,7 @@ namespace MSEngine.ConsoleApp
                             Console.SetCursorPosition(0, Console.CursorTop);
                             Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio}%  {watch.ElapsedMilliseconds}ms");
                         }
+
                         break;
                     }
                 });

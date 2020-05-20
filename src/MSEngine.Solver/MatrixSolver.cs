@@ -18,16 +18,22 @@ namespace MSEngine.Solver
                 {
                     n++;
                 }
+
+                // technically, you may short-circuit the for-loop here if n = 8 (the max AMC)
+                if (n == 8)
+                {
+                    break;
+                }
             }
             return n;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool HasHiddenAdjacentTiles(Span<Coordinates> coordinates, Coordinates coors)
+        private static bool HasHiddenAdjacentTiles(Span<Coordinates> hiddenCoordinates, Coordinates coordinates)
         {
-            for (int i = 0, l = coordinates.Length; i < l; i++)
+            for (int i = 0, l = hiddenCoordinates.Length; i < l; i++)
             {
-                if (Utilities.IsAdjacentTo(coordinates[i], coors))
+                if (Utilities.IsAdjacentTo(hiddenCoordinates[i], coordinates))
                 {
                     return true;
                 }
@@ -35,13 +41,13 @@ namespace MSEngine.Solver
             return false;
         }
 
-        // we overallocate to the ~maximum possible number of turns
-        // Span<Turn> turns = stackalloc Turn[tiles.Length];
-        // because we can't use distinct, ensure this turn does NOT already exist, THEN we add it.
-        // ...PROBLEM! default turns fill the span already...
-        // should we REF the span of turns and just SLICE it?? 
         public static void CalculateTurns(Span<Tile> tiles, ref Span<Turn> turns)
         {
+            if (tiles.Length != turns.Length)
+            {
+                throw new InvalidOperationException("Turns must be overallocated to the ~maximum possible");
+            }
+
             // overallocated
             Span<Coordinates> hiddenCoordinates = stackalloc Coordinates[tiles.Length];
             Span<Tile> revealedAMCTiles = stackalloc Tile[tiles.Length];

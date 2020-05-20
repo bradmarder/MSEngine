@@ -2,12 +2,26 @@
 using System.Linq;
 using System.Collections.Generic;
 using static MSEngine.Core.Utilities;
+using System.Diagnostics;
 
 namespace MSEngine.Core
 {
     public class BoardStateMachine : IBoardStateMachine
     {
         public static IBoardStateMachine Instance { get; } = new BoardStateMachine();
+
+        public static Tile GetTargetTile(Span<Tile> tiles, Coordinates coordinates)
+        {
+            for (int i = 0, l = tiles.Length; i < l; i++)
+            {
+                var tile = tiles[i];
+                if (tile.Coordinates == coordinates)
+                {
+                    return tile;
+                }
+            }
+            throw new InvalidOperationException("A turn should always match a tile");
+        }
 
         public virtual void EnsureValidBoardConfiguration(Span<Tile> tiles, Turn turn)
         {
@@ -86,17 +100,20 @@ namespace MSEngine.Core
                 throw new NotImplementedException(turn.Operation.ToString());
             }
 
-            var linqTiles = tiles.ToArray();
-
-            var targetTile = linqTiles.First(x => x.Coordinates == turn.Coordinates);
+            var targetTile = GetTargetTile(tiles, turn.Coordinates);
 
             // these cases will only affect a single tile
             if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !targetTile.HasMine && targetTile.AdjacentMineCount > 0))
             {
-                linqTiles
-                    .Select(x => x.Coordinates == targetTile.Coordinates ? new Tile(x, turn.Operation) : x)
-                    .ToArray()
-                    .CopyTo(tiles);
+
+                for (int i = 0, l = tiles.Length; i < l; i++)
+                {
+                    var tile = tiles[i];
+                    if (tile.Coordinates == targetTile.Coordinates)
+                    {
+                        tiles[i] = new Tile(tile, turn.Operation);
+                    }
+                }
                 return;
             }
 
@@ -123,17 +140,16 @@ namespace MSEngine.Core
         internal static void GetFailedBoard(Span<Tile> tiles)
         {
             // should we show false flags?
-
             for (int i = 0, l = tiles.Length; i < l; i++)
             {
                 var tile = tiles[i];
-                if (!tile.HasMine || tile.State == TileState.Revealed || tile.State == TileState.Flagged)
+                if (tile.HasMine && tile.State == TileState.Hidden)
                 {
-                    continue;
+                    tiles[i] = new Tile(tile, TileOperation.Reveal);
                 }
-                tiles[i] = new Tile(tile, TileOperation.Reveal);
             }
         }
+
         internal static void GetChainReactionBoard(Span<Tile> tiles, Coordinates coordinates)
         {
             var linqTiles = tiles.ToArray();
@@ -165,12 +181,14 @@ namespace MSEngine.Core
                     .ForEach(expanding.Enqueue);
             }
 
-            linqTiles
-                .Select(x => x.State != TileState.Revealed && expandedCoordinates.Contains(x.Coordinates)
-                    ? new Tile(x, TileOperation.Reveal)
-                    : x)
-                .ToArray()
-                .CopyTo(tiles);
+            for (int i = 0, l = tiles.Length; i < l; i++)
+            {
+                var tile = tiles[i];
+                if (tile.State != TileState.Revealed && expandedCoordinates.Contains(tile.Coordinates))
+                {
+                    tiles[i] = new Tile(tile, TileOperation.Reveal);
+                }
+            }
         }
 
         internal void GetChordBoard(Span<Tile> tiles, Coordinates coordinates)
