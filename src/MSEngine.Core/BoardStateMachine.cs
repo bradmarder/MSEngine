@@ -123,13 +123,16 @@ namespace MSEngine.Core
         internal static void GetFailedBoard(Span<Tile> tiles)
         {
             // should we show false flags?
-            tiles
-                .ToArray()
-                .Select(x => !x.HasMine || x.State == TileState.Revealed || x.State == TileState.Flagged
-                    ? x
-                    : new Tile(x, TileOperation.Reveal))
-                .ToArray()
-                .CopyTo(tiles);
+
+            for (int i = 0, l = tiles.Length; i < l; i++)
+            {
+                var tile = tiles[i];
+                if (!tile.HasMine || tile.State == TileState.Revealed || tile.State == TileState.Flagged)
+                {
+                    continue;
+                }
+                tiles[i] = new Tile(tile, TileOperation.Reveal);
+            }
         }
         internal static void GetChainReactionBoard(Span<Tile> tiles, Coordinates coordinates)
         {

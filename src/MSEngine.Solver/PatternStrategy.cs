@@ -34,16 +34,18 @@ namespace MSEngine.Solver
             return val;
         }
 
-        public static bool TryUseStrategy(Board board, out Turn turn)
+        public static bool TryUseStrategy(Span<Tile> tiles, out Turn turn)
         {
-            var revealedTilesWithAMC = board.Tiles
+            var linqTiles = tiles.ToArray();
+
+            var revealedTilesWithAMC = linqTiles
                 .Where(x => x.State == TileState.Revealed)
                 .Where(x => x.AdjacentMineCount > 0)
                 .ToList();
-            var hiddenTiles = board.Tiles
+            var hiddenTiles = linqTiles
                 .Where(x => x.State == TileState.Hidden)
                 .ToList();
-            var flaggedTiles = board.Tiles
+            var flaggedTiles = linqTiles
                 .Where(x => x.State == TileState.Flagged)
                 .ToList();
             var primaryTileToNextTilesMap = revealedTilesWithAMC.ToDictionary(

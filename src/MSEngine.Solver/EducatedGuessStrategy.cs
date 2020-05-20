@@ -7,7 +7,7 @@ namespace MSEngine.Solver
 {
     public static class EducatedGuessStrategy
     {
-        public static Turn UseStrategy(Board board)
+        public static Turn UseStrategy(Span<Tile> tiles)
         {
             //var tileToMineProbabilityMap = board.Tiles
             //    .Where(x => x.State == TileState.Revealed)
@@ -28,7 +28,8 @@ namespace MSEngine.Solver
             //var hiddenTileCount = board.Tiles.Count(x => x.State == TileState.Hidden);
             //var defaultMineProbability = board.FlagsAvailable / hiddenTileCount;
 
-            var hiddenTile = board.Tiles
+            var hiddenTile = tiles
+                .ToArray()
                 .Where(x => x.State == TileState.Hidden)
                 .OrderBy(x => x.GetHashCode())
                 //.OrderBy(tile =>

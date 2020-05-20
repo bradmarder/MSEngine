@@ -7,11 +7,13 @@ namespace MSEngine.Solver
 {
     public static class FinishStrategy
     {
-        public static bool TryUseStrategy(Board board, out Turn turn)
+        public static bool TryUseStrategy(Span<Tile> tiles, out Turn turn)
         {
-            if (board.AllMinesFlagged)
+            if (tiles.AllMinesFlagged())
             {
-                var tile = board.Tiles.First(x => x.State == TileState.Hidden);
+                var tile = tiles
+                    .ToArray()
+                    .First(x => x.State == TileState.Hidden);
                 turn = new Turn(tile.Coordinates, TileOperation.Reveal);
                 return true;
             }

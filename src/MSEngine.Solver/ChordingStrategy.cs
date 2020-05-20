@@ -8,14 +8,15 @@ namespace MSEngine.Solver
 {
     public static class ChordingStrategy
     {
-        public static bool TryUseStrategy(Board board, out Turn turn)
+        public static bool TryUseStrategy(Span<Tile> tiles, out Turn turn)
         {
-            var tile = board.Tiles
+            var linqTiles = tiles.ToArray();
+            var tile = linqTiles
                 .Where(x => x.State == TileState.Revealed)
                 .Where(x => x.AdjacentMineCount > 0)
                 .Where(x =>
                 {
-                    var adjacentTiles = board.Tiles
+                    var adjacentTiles = linqTiles
                         .Where(y => Utilities.IsAdjacentTo(x.Coordinates, y.Coordinates))
                         .ToList();
                     var adjacentHiddenTileCount = adjacentTiles.Count(y => y.State == TileState.Hidden);

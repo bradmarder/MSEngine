@@ -7,14 +7,15 @@ namespace MSEngine.Solver
 {
     public class RandomSolver
     {
-        public Turn ComputeTurn(Board board)
+        public Turn ComputeTurn(Span<Tile> tiles)
         {
-            var randomTile = board.Tiles
+            var randomTile = tiles
+                .ToArray()
                 .Where(x => x.State == TileState.Hidden)
                 .OrderBy(x => Guid.NewGuid().GetHashCode())
                 .First();
 
-            var operation = board.FlagsAvailable > 0 ? TileOperation.Flag : TileOperation.Reveal;
+            var operation = tiles.FlagsAvailable() > 0 ? TileOperation.Flag : TileOperation.Reveal;
 
             return new Turn(randomTile.Coordinates, operation);
         }

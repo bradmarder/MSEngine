@@ -1,7 +1,6 @@
 ﻿using MSEngine.Core;
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace MSEngine.Solver
@@ -74,19 +73,42 @@ namespace MSEngine.Solver
             if (revealedAMCTileCount == 0)
             {
                 turns.Clear();
-                Debug.Assert(turns.Length == 0);
                 return;
             }
 
-            var revealedCoordinates = revealedAMCTiles
-                .Select(x => x.Coordinates)
-                .ToList();
-            var adjacentHiddenCoordinates = hiddenCoordinates
-                .Where(x => revealedCoordinates.Any(y => Utilities.IsAdjacentTo(y, x)))
-                .ToList();
+            Span<Coordinates> revealedCoordinates = stackalloc Coordinates[revealedAMCTiles.Length];
+            for (int i = 0, l = revealedCoordinates.Length; i < l; i++)
+            {
+                revealedCoordinates[i] = revealedAMCTiles[i].Coordinates;
+            }
+
+            // overallocated
+            Span<Coordinates> adjacentHiddenCoordinates = stackalloc Coordinates[hiddenCoordinates.Length];
+            var ahcCount = 0;
+            for (int i = 0, l = adjacentHiddenCoordinates.Length; i < l; i++)
+            {
+                bool hasAHC = false;
+                var hiddenCoor = hiddenCoordinates[i];
+                for (int n = 0, m = revealedCoordinates.Length; n < m; n++)
+                {
+                    // if we find *Any* adjacent, we break out of the inner for loop
+
+                    if (Utilities.IsAdjacentTo(hiddenCoor, revealedCoordinates[n]))
+                    {
+                        hasAHC = true;
+                        break;
+                    }
+                }
+                if (hasAHC)
+                {
+                    adjacentHiddenCoordinates[ahcCount] = hiddenCoor;
+                    ahcCount++;
+                }
+            }
+            adjacentHiddenCoordinates = adjacentHiddenCoordinates.Slice(0, ahcCount);
 
             var rowCount = revealedAMCTiles.Length;
-            var columnCount = adjacentHiddenCoordinates.Count + 1;
+            var columnCount = adjacentHiddenCoordinates.Length + 1;
 
             Span<sbyte> foo = stackalloc sbyte[rowCount * columnCount];
             var matrix = new FlatMatrix<sbyte>(foo, columnCount);
@@ -141,7 +163,8 @@ namespace MSEngine.Solver
                         continue;
                     }
                     var coor = adjacentHiddenCoordinates[column];
-                    turns[turnCount] = final == min
+
+                    var turn = final == min
 
                         // All of the negative numbers in that row are mines and all of the positive values in that row are not mines
                         ? new Turn(coor.X, coor.Y, val > 0 ? TileOperation.Reveal : TileOperation.Flag)
@@ -149,14 +172,16 @@ namespace MSEngine.Solver
                         // All of the negative numbers in that row are not mines and all of the positive values in that row are mines.
                         : new Turn(coor.X, coor.Y, val > 0 ? TileOperation.Flag : TileOperation.Reveal);
 
-                    turnCount++;
-                    
-                    // because we can't use distinct, ensure this turn does NOT already exist, THEN we add it.
-                    // ...PROBLEM! default turns fill the span already...
+                    // prevent adding duplicate turns
+                    if (turns.Slice(0, turnCount).IndexOf(turn) == -1)
+                    {
+                        turns[turnCount] = turn;
+                        turnCount++;
+                    }
                 }
             }
 
-            // N = TURNS WE ADDED (because we overallocated)
+            // we must slice due to overallocation
             turns = turns.Slice(0, turnCount);
         }
     }

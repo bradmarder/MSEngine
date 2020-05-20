@@ -7,34 +7,34 @@ namespace MSEngine.Solver
     {
         public static ISolver Instance { get; } = new EliteSolver();
 
-        public (Turn, Strategy) ComputeTurn(Board board)
+        public (Turn, Strategy) ComputeTurn(Span<Tile> tiles)
         {
-            if (FinishStrategy.TryUseStrategy(board, out var turn))
+            if (FinishStrategy.TryUseStrategy(tiles, out var turn))
             {
                 return (turn, Strategy.Finish);
             }
 
-            if (FirstTurnStrategy.TryUseStrategy(board, out var firstTurn))
+            if (FirstTurnStrategy.TryUseStrategy(tiles, out var firstTurn))
             {
                 return (firstTurn, Strategy.FirstTurn);
             }
 
-            if (ChordingStrategy.TryUseStrategy(board, out var chordingTurn))
+            if (ChordingStrategy.TryUseStrategy(tiles, out var chordingTurn))
             {
                 return (chordingTurn, Strategy.Chording);
             }
 
-            if (MineCountStrategy.TryUseStrategy(board, out var mineCountTurn))
+            if (MineCountStrategy.TryUseStrategy(tiles, out var mineCountTurn))
             {
                 return (mineCountTurn, Strategy.MineCount);
             }
 
-            if (PatternStrategy.TryUseStrategy(board, out var patternTurn))
+            if (PatternStrategy.TryUseStrategy(tiles, out var patternTurn))
             {
                 return (patternTurn, Strategy.Pattern);
             }
 
-            var guess = EducatedGuessStrategy.UseStrategy(board);
+            var guess = EducatedGuessStrategy.UseStrategy(tiles);
             return (guess, Strategy.EducatedGuess);
         }
     }

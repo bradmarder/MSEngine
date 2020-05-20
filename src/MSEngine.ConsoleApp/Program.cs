@@ -21,47 +21,49 @@ namespace MSEngine.ConsoleApp
         {
             //RunRandomDistributionTest(Engine.Instance.GenerateRandomBeginnerBoard);
             // RunSimulations(1, () => Engine.Instance.GenerateCustomBoard(4, 4, 2));
-            RunSimulations(100000, Engine.Instance.GenerateBeginnerBoard);
+            RunSimulations(1);
+
+            //GetCoordinates(5, 1).ToList().ForEach(x => Console.Write(x));
         }
 
 
-        private static void RunRandomDistributionTest(Func<Board> boardGenerator, int maxIterationCount = int.MaxValue)
-        {
-            var iteration = 0;
-            var board = boardGenerator();
-            var expectedAverage = board.MineCount / (decimal)(board.Width * board.Height);
-            var map = board.Tiles.ToDictionary(x => x.Coordinates, _ => 0);
+        //private static void RunRandomDistributionTest(Func<Board> boardGenerator, int maxIterationCount = int.MaxValue)
+        //{
+        //    var iteration = 0;
+        //    var board = boardGenerator();
+        //    var expectedAverage = board.MineCount / (decimal)(board.Width * board.Height);
+        //    var map = board.Tiles.ToDictionary(x => x.Coordinates, _ => 0);
 
-            while (iteration < maxIterationCount)
-            {
-                iteration++;
+        //    while (iteration < maxIterationCount)
+        //    {
+        //        iteration++;
 
-                boardGenerator()
-                    .Tiles
-                    .Where(x => x.HasMine)
-                    .ToList()
-                    .ForEach(x => map[x.Coordinates]++);
+        //        boardGenerator()
+        //            .Tiles
+        //            .Where(x => x.HasMine)
+        //            .ToList()
+        //            .ForEach(x => map[x.Coordinates]++);
 
-                var means = map
-                    .Select(y => y.Value / (decimal)iteration)
-                    .ToArray();
-                var min = means.Min();
-                var max = means.Max();
-                var minDiff = Math.Abs(expectedAverage - min); //.00369639666
-                var maxDiff = Math.Abs(expectedAverage - max); //.00333032896
+        //        var means = map
+        //            .Select(y => y.Value / (decimal)iteration)
+        //            .ToArray();
+        //        var min = means.Min();
+        //        var max = means.Max();
+        //        var minDiff = Math.Abs(expectedAverage - min); //.00369639666
+        //        var maxDiff = Math.Abs(expectedAverage - max); //.00333032896
 
-                Console.SetCursorPosition(0, Console.CursorTop);
-                Console.Write($"MinDiff = {minDiff} and MaxDiff = {maxDiff}");
+        //        Console.SetCursorPosition(0, Console.CursorTop);
+        //        Console.Write($"MinDiff = {minDiff} and MaxDiff = {maxDiff}");
 
-                // beginner
-                // MinDiff = 0.0008879570668942427624236854 and MaxDiff = 0.0007066073655878684435107989
-                // MinDiff = 0.0003602253545151916915500224 and MaxDiff = 0.0004654803596709192191884712
-            }
+        //        // beginner
+        //        // MinDiff = 0.0008879570668942427624236854 and MaxDiff = 0.0007066073655878684435107989
+        //        // MinDiff = 0.0003602253545151916915500224 and MaxDiff = 0.0004654803596709192191884712
+        //    }
 
-            Console.ReadLine();
-        }
+        //    Console.ReadLine();
+        //}
 
-        private static void RunSimulations(int count, Func<Board> boardGenerator)
+        private static void RunSimulations(int count)
         {
             if (count < 1) { throw new ArgumentOutOfRangeException(nameof(count)); }
 
@@ -72,45 +74,57 @@ namespace MSEngine.ConsoleApp
                 //.WithDegreeOfParallelism(1)
                 .ForAll(_ =>
                 {
-                    var board = boardGenerator();
+                    Span<Tile> tiles = stackalloc Tile[64];
+                    Span<Turn> turns = stackalloc Turn[64];
+                    Engine.Instance.GenerateBeginnerBoard(tiles);
                     var turnCount = 0;
-                    var turns = new Queue<Turn>();
 
                     while (true)
                     {
-                        if (turnCount == 0 && FirstTurnStrategy.TryUseStrategy(board, out var foo))
+                        if (turnCount == 0 && FirstTurnStrategy.TryUseStrategy(tiles, out var foo))
                         {
-                            turns.Enqueue(foo);
+                            turns = turns.Slice(0, 1);
+                            turns[0] = foo;
                         }
 
-                        if (!turns.Any())
+                        if (turns.Length == 64)
                         {
-                            MatrixSolver
-                                .CalculateTurns(board)
-                                .ForEach(turns.Enqueue);
+                            MatrixSolver.CalculateTurns(tiles, ref turns);
                         }
 
                         // if the matrix solver couldn't calculate any turns, we just select a "random" hidden tile
-                        if (!turns.Any())
+                        if (turns.Length == 0)
                         {
-                            var guess = EducatedGuessStrategy.UseStrategy(board);
-                            turns.Enqueue(guess);
+                            turns = stackalloc Turn[1];
+                            turns[0] = EducatedGuessStrategy.UseStrategy(tiles);
                         }
 
-                        var turn = turns.Dequeue();
-                        board = BoardStateMachine.Instance.ComputeBoard(board, turn);
+                        // dequeue the final (or first?) turn and slice the turns
+                        var bar = turns.Length - 1;
+                        var turn = turns[bar];
+                        turns = turns.Slice(0, bar);
+
+                        if (turnCount > 0)
+                        {
+                            BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
+                        }
+                        
+                        BoardStateMachine.Instance.ComputeBoard(tiles, turn);
 
                         // Get new board unless tile has no mine and zero AMC
-                        var targetTile = board.Tiles.First(x => x.Coordinates == turn.Coordinates);
-                        var status = board.Status;
+                        var targetTile = tiles
+                            .ToArray()
+                            .Single(x => x.Coordinates == turn.Coordinates);
+
+                        var status = tiles.Status();
                         if (turnCount == 0 && (targetTile.AdjacentMineCount > 0 || status == BoardStatus.Failed))
                         {
-                            board = boardGenerator();
-                            turns.Clear();
+                            Engine.Instance.GenerateBeginnerBoard(tiles);
+                            turns = stackalloc Turn[64];
                             continue;
                         }
                         turnCount++;
-                        
+
                         if (status == BoardStatus.Pending)
                         {
                             continue;
@@ -120,6 +134,9 @@ namespace MSEngine.ConsoleApp
                         if (status == BoardStatus.Completed)
                         {
                             Interlocked.Increment(ref _wins);
+                        } else
+                        {
+                            Console.WriteLine(GetBoardAsciiArt(tiles));
                         }
 
                         lock (_lock)
@@ -133,19 +150,19 @@ namespace MSEngine.ConsoleApp
                 });
         }
 
-        private static string GetBoardAsciiArt(Board board)
+        private static string GetBoardAsciiArt(Span<Tile> tiles)
         {
-            var sb = new StringBuilder(board.Tiles.Count());
+            var sb = new StringBuilder(tiles.Length);
 
-            for (byte y = 0; y < board.Height; y++)
+            for (byte y = 0; y < tiles.Height(); y++)
             {
-                for (byte x = 0; x < board.Width; x++)
+                for (byte x = 0; x < tiles.Width(); x++)
                 {
-                    var tile = board.Tiles.Single(t => t.Coordinates.X == x && t.Coordinates.Y == y);
+                    var tile = tiles.ToArray().Single(t => t.Coordinates.X == x && t.Coordinates.Y == y);
                     var tileChar = GetTileChar(tile);
                     sb.Append(tileChar);
 
-                    if (x + 1 == board.Width)
+                    if (x + 1 == tiles.Width())
                     {
                         sb.AppendLine();
                     }

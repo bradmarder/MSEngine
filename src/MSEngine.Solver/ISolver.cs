@@ -5,6 +5,6 @@ namespace MSEngine.Solver
 {
     public interface ISolver
     {
-        (Turn, Strategy) ComputeTurn(Board board);
+        (Turn, Strategy) ComputeTurn(Span<Tile> tiles);
     }
 }

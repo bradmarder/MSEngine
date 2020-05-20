@@ -17,16 +17,18 @@ namespace MSEngine.Solver
                 .Reverse()
                 .ToList();
 
-        public static bool TryUseStrategy(Board board, out Turn turn)
+        public static bool TryUseStrategy(Span<Tile> tiles, out Turn turn)
         {
+            var linqTiles = tiles.ToArray();
+
             foreach (var i in _rangeFromEightToOne)
             {
-                var tile = board.Tiles
+                var tile = linqTiles
                     .Where(x => x.AdjacentMineCount == i)
                     .Where(x => x.State == TileState.Revealed)
                     .Where(x =>
                     {
-                        var adjacentTiles = board.Tiles
+                        var adjacentTiles = linqTiles
                             .Where(y => Utilities.IsAdjacentTo(x.Coordinates, y.Coordinates))
                             .ToList();
                         var flagCount = adjacentTiles.Count(y => y.State == TileState.Flagged);
@@ -36,7 +38,7 @@ namespace MSEngine.Solver
                     })
                     .Select(x => x.Coordinates)
                     .SelectMany(x =>
-                        board.Tiles
+                        linqTiles
                             .Where(y => y.State == TileState.Hidden)
                             .Where(y => Utilities.IsAdjacentTo(x, y.Coordinates)))
                     .Cast<Tile?>()
