@@ -24,20 +24,21 @@ namespace MSEngine.Benchmarks
         [Benchmark]
         public void Beginner()
         {
-            Engine.Instance.GenerateBeginnerBoard();
+            Span<Tile> tiles = stackalloc Tile[64];
+            Engine.Instance.GenerateBeginnerBoard(tiles);
         }
 
         //[Benchmark]
-        public void Intermediate()
-        {
-            Engine.Instance.GenerateIntermediateBoard();
-        }
+        //public void Intermediate()
+        //{
+        //    Engine.Instance.GenerateIntermediateBoard();
+        //}
 
-        //[Benchmark]
-        public void Expert()
-        {
-            Engine.Instance.GenerateExpertBoard();
-        }
+        ////[Benchmark]
+        //public void Expert()
+        //{
+        //    Engine.Instance.GenerateExpertBoard();
+        //}
     }
 
     [MemoryDiagnoser]

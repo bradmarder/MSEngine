@@ -78,7 +78,7 @@ namespace MSEngine.Solver
 
             if (revealedAMCTileCount == 0)
             {
-                turns = turns.Slice(0, 0);
+                turns = Span<Turn>.Empty;
                 return;
             }
 
@@ -131,6 +131,10 @@ namespace MSEngine.Solver
                         : Utilities.IsAdjacentTo(revealedCoordinates[row], adjacentHiddenCoordinates[column]) ? 1 : 0);
                 }
             }
+
+            // output view of the matrix
+            // output view of gauss matrix (ensure gaussed properly??)
+            // ensure turns make logical sense - I believe "var coor = adjacentHiddenCoordinates[column];" is returning wrong coordinates
 
             matrix.GaussEliminate();
 

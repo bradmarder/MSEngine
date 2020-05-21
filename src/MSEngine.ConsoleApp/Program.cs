@@ -74,7 +74,7 @@ namespace MSEngine.ConsoleApp
                 //.WithDegreeOfParallelism(1)
                 .ForAll(_ =>
                 {
-                    Span<Tile> tiles = stackalloc Tile[64];
+                    Span<Tile> tiles = stackalloc Tile[8 * 8];
                     Span<Turn> turns = stackalloc Turn[0];
                     Engine.Instance.GenerateBeginnerBoard(tiles);
 
@@ -107,7 +107,7 @@ namespace MSEngine.ConsoleApp
                         {
                             try
                             {
-                                // BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
+                               // BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
                             }
                             catch (Exception)
                             {
@@ -126,7 +126,7 @@ namespace MSEngine.ConsoleApp
                         if (turnCount == 0 && (targetTile.AdjacentMineCount > 0 || status == BoardStatus.Failed))
                         {
                             Engine.Instance.GenerateBeginnerBoard(tiles);
-                            turns = stackalloc Turn[0];
+                            turns = Span<Turn>.Empty;
                             continue;
                         }
                         turnCount++;
