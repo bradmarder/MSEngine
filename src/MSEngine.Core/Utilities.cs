@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
@@ -9,8 +7,6 @@ namespace MSEngine.Core
 {
     public static class Utilities
     {
-        private static readonly ConcurrentDictionary<uint, Tile> _keyToTileMap = new ConcurrentDictionary<uint, Tile>();
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsAdjacentTo(Coordinates coordinateOne, Coordinates coordinateTwo)
         {
@@ -24,39 +20,6 @@ namespace MSEngine.Core
                 && y2 > (y1 - 2)
                 && y2 < (y1 + 2)
                 && coordinateOne != coordinateTwo;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Tile GetTile(Coordinates coordinates, bool hasMine, int adjacentMineCount)
-        {
-            return GetTile(coordinates, hasMine, adjacentMineCount, TileOperation.RemoveFlag);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static Tile GetTile(in Tile tile, TileOperation operation)
-        {
-            return GetTile(tile.Coordinates, tile.HasMine, tile.AdjacentMineCount, operation);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Tile GetTile(Coordinates coordinates, bool hasMine, int adjacentMineCount, TileOperation operation)
-        {
-            var key = (hasMine ? 1 : uint.MinValue) // 1 bit
-                | (uint)operation << 1              // 7 bits (only needs 2)
-                | (uint)adjacentMineCount << 8      // 8 bits
-                | (uint)coordinates.X << 16         // 8 bits
-                | (uint)coordinates.Y << 24;        // 8 bits
-
-            if (_keyToTileMap.TryGetValue(key, out var value))
-            {
-                return value;
-            }
-
-            var tile = new Tile(coordinates, hasMine, adjacentMineCount, operation);
-
-            _keyToTileMap.TryAdd(key, tile);
-
-            return tile;
         }
 
         internal static void ShuffleItems<T>(this Span<T> items)

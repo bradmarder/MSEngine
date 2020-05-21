@@ -82,9 +82,12 @@ namespace MSEngine.ConsoleApp
 
                     while (true)
                     {
-                        if (turnCount == 0 && FirstTurnStrategy.TryUseStrategy(tiles, out var foo))
+                        if (turnCount == 0)
                         {
-                            turns = stackalloc Turn[1] { foo };
+                            turns = stackalloc Turn[1]
+                            {
+                                new Turn(3, 3, TileOperation.Reveal)
+                            };
                         }
                         if (turns.Length == 0)
                         {
@@ -95,7 +98,10 @@ namespace MSEngine.ConsoleApp
                         // if the matrix solver couldn't calculate any turns, we just select a "random" hidden tile
                         if (turns.Length == 0)
                         {
-                            turns = stackalloc Turn[1] { EducatedGuessStrategy.UseStrategy(tiles) };
+                            turns = stackalloc Turn[1]
+                            {
+                                EducatedGuessStrategy.UseStrategy(tiles)
+                            };
                         }
 
                         // dequeue the final (or first?) turn and slice the turns

@@ -33,7 +33,6 @@ namespace MSEngine.Core
             if (mineCount >= tileCount) { throw new ArgumentOutOfRangeException(nameof(mineCount)); }
             if (tiles.Length != tileCount) { throw new ArgumentOutOfRangeException(nameof(tiles)); }
 
-            Span<int> amcMap = stackalloc int[tileCount];
             Span<Coordinates> coordinates = stackalloc Coordinates[tileCount];
 
             for (byte x = 0; x < columns; x++)
@@ -55,14 +54,10 @@ namespace MSEngine.Core
             };
 
             // if the index of a tile/coordinate is less than the mineCount, it will have a mine
-
             for (var i = 0; i < tileCount; i++)
             {
-                amcMap[i] = GetAdjacentMineCount(coordinates[i], coordinates, tileCount, mineCount);
-            }
-            for (var i = 0; i < tileCount; i++)
-            {
-                tiles[i] = new Tile(coordinates[i], i < mineCount, amcMap[i]);
+                var amc = GetAdjacentMineCount(coordinates[i], coordinates, tileCount, mineCount);
+                tiles[i] = new Tile(coordinates[i], i < mineCount, amc);
             }
         }
 
