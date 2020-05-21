@@ -8,7 +8,7 @@ namespace MSEngine.Solver
     public static class MatrixSolver
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int GetAdjacentFlaggedTileCount(Span<Tile> tiles, Coordinates coordinates)
+        private static int GetAdjacentFlaggedTileCount(ReadOnlySpan<Tile> tiles, Coordinates coordinates)
         {
             var n = 0;
             for (int i = 0, l = tiles.Length; i < l; i++)
@@ -29,7 +29,7 @@ namespace MSEngine.Solver
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool HasHiddenAdjacentTiles(Span<Coordinates> hiddenCoordinates, Coordinates coordinates)
+        private static bool HasHiddenAdjacentTiles(ReadOnlySpan<Coordinates> hiddenCoordinates, Coordinates coordinates)
         {
             for (int i = 0, l = hiddenCoordinates.Length; i < l; i++)
             {

@@ -10,7 +10,7 @@ namespace MSEngine.Core
     {
         public static IBoardStateMachine Instance { get; } = new BoardStateMachine();
 
-        public static Tile GetTargetTile(Span<Tile> tiles, Coordinates coordinates)
+        public static Tile GetTargetTile(ReadOnlySpan<Tile> tiles, Coordinates coordinates)
         {
             for (int i = 0, l = tiles.Length; i < l; i++)
             {
@@ -23,7 +23,7 @@ namespace MSEngine.Core
             throw new InvalidOperationException("A turn should always match a tile");
         }
 
-        public virtual void EnsureValidBoardConfiguration(Span<Tile> tiles, Turn turn)
+        public virtual void EnsureValidBoardConfiguration(ReadOnlySpan<Tile> tiles, Turn turn)
         {
             var linqTiles = tiles.ToArray();
 
@@ -49,10 +49,9 @@ namespace MSEngine.Core
             }
 
             var targetTile = linqTiles.Single(x => x.Coordinates == turn.Coordinates);
-
-            if (targetTile.State == TileState.Revealed && turn.Operation != TileOperation.Chord)
+            if (targetTile.State == TileState.Revealed && turn.Operation != TileOperation.Chord && turn.Operation != TileOperation.Reveal)
             {
-                throw new InvalidGameStateException("Only chord operations are allowed on revealed tiles");
+                throw new InvalidGameStateException("Only chord/reveal operations are allowed on revealed tiles");
             }
             if (targetTile.State == TileState.Flagged && turn.Operation == TileOperation.Flag)
             {
@@ -86,7 +85,7 @@ namespace MSEngine.Core
                 }
             }
         }
-        public virtual void ComputeBoard(Span<Tile> tiles, Span<Turn> turns)
+        public virtual void ComputeBoard(Span<Tile> tiles, ReadOnlySpan<Turn> turns)
         {
             foreach (var x in turns)
             {
@@ -101,6 +100,14 @@ namespace MSEngine.Core
             }
 
             var targetTile = GetTargetTile(tiles, turn.Coordinates);
+
+            // If a tile is already revealed, we return instead of throwing an exception
+            // This is because the solver generates batches of turns at a time, and any turn
+            // may trigger a chain reaction and auto-reveal other tiles
+            if (targetTile.State == TileState.Revealed && turn.Operation == TileOperation.Reveal)
+            {
+                return;
+            }
 
             // these cases will only affect a single tile
             if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !targetTile.HasMine && targetTile.AdjacentMineCount > 0))

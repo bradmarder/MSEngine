@@ -61,10 +61,9 @@ namespace MSEngine.Tests
         }
 
         [Theory]
-        [InlineData(TileOperation.Reveal)]
         [InlineData(TileOperation.Flag)]
         [InlineData(TileOperation.RemoveFlag)]
-        public void Throws_exception_if_reveal_or_flag_operation_applied_on_revealed_tile(TileOperation operation)
+        public void Throws_exception_if_flag_operation_applied_on_revealed_tile(TileOperation operation)
         {
             Assert.Throws<InvalidGameStateException>(() =>
             {

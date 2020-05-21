@@ -21,9 +21,9 @@ namespace MSEngine.Core
         /// -May only chord a tile when adjacent mine count equals adjacent tile flag count
         /// -May only chord a tile that has hidden adjacent tiles
         /// </exception>
-        void EnsureValidBoardConfiguration(Span<Tile> tiles, Turn turn);
+        void EnsureValidBoardConfiguration(ReadOnlySpan<Tile> tiles, Turn turn);
         
-        void ComputeBoard(Span<Tile> tiles, Span<Turn> turns);
+        void ComputeBoard(Span<Tile> tiles, ReadOnlySpan<Turn> turns);
         void ComputeBoard(Span<Tile> tiles, Turn turn);
     }
 }
