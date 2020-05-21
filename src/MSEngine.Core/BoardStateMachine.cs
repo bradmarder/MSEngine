@@ -10,14 +10,13 @@ namespace MSEngine.Core
     {
         public static IBoardStateMachine Instance { get; } = new BoardStateMachine();
 
-        public static Tile GetTargetTile(ReadOnlySpan<Tile> tiles, Coordinates coordinates)
+        public static int GetTargetTileIndex(ReadOnlySpan<Tile> tiles, Coordinates coordinates)
         {
             for (int i = 0, l = tiles.Length; i < l; i++)
             {
-                var tile = tiles[i];
-                if (tile.Coordinates == coordinates)
+                if (tiles[i].Coordinates == coordinates)
                 {
-                    return tile;
+                    return i;
                 }
             }
             throw new InvalidOperationException("A turn should always match a tile");
@@ -94,12 +93,8 @@ namespace MSEngine.Core
         }
         public virtual void ComputeBoard(Span<Tile> tiles, Turn turn)
         {
-            if (!Enum.IsDefined(typeof(TileOperation), turn.Operation))
-            {
-                throw new NotImplementedException(turn.Operation.ToString());
-            }
-
-            var targetTile = GetTargetTile(tiles, turn.Coordinates);
+            var targetTileIndex = GetTargetTileIndex(tiles, turn.Coordinates);
+            var targetTile = tiles[targetTileIndex];
 
             // If a tile is already revealed, we return instead of throwing an exception
             // This is because the solver generates batches of turns at a time, and any turn
@@ -112,15 +107,7 @@ namespace MSEngine.Core
             // these cases will only affect a single tile
             if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !targetTile.HasMine && targetTile.AdjacentMineCount > 0))
             {
-
-                for (int i = 0, l = tiles.Length; i < l; i++)
-                {
-                    var tile = tiles[i];
-                    if (tile.Coordinates == targetTile.Coordinates)
-                    {
-                        tiles[i] = new Tile(tile, turn.Operation);
-                    }
-                }
+                tiles[targetTileIndex] = new Tile(targetTile, turn.Operation);
                 return;
             }
 

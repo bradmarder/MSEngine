@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace MSEngine.Core
 {
@@ -6,6 +7,9 @@ namespace MSEngine.Core
     {
         internal Coordinates(byte x, byte y)
         {
+            Debug.Assert(x >= 0);
+            Debug.Assert(y >= 0);
+
             X = x;
             Y = y;
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace MSEngine.Core
 {
@@ -14,7 +15,8 @@ namespace MSEngine.Core
 
         internal Tile(Coordinates coordinates, bool hasMine, int adjacentMineCount)
         {
-            if (adjacentMineCount < 0 || adjacentMineCount > 8) { throw new ArgumentOutOfRangeException(nameof(adjacentMineCount)); }
+            Debug.Assert(adjacentMineCount >= 0);
+            Debug.Assert(adjacentMineCount <= 8);
             
             Coordinates = coordinates;
             HasMine = hasMine;
@@ -24,7 +26,7 @@ namespace MSEngine.Core
 
         internal Tile(in Tile tile, TileOperation operation)
         {
-            if (!Enum.IsDefined(typeof(TileOperation), operation)) { throw new ArgumentOutOfRangeException(nameof(operation)); }
+            Debug.Assert(Enum.IsDefined(typeof(TileOperation), operation));
 
             Coordinates = tile.Coordinates;
             HasMine = tile.HasMine;
@@ -34,7 +36,9 @@ namespace MSEngine.Core
 
         internal Tile(Coordinates coordinates, bool hasMine, int adjacentMineCount, TileOperation operation)
         {
-            if (adjacentMineCount < 0 || adjacentMineCount > 8) { throw new ArgumentOutOfRangeException(nameof(adjacentMineCount)); }
+            Debug.Assert(adjacentMineCount >= 0);
+            Debug.Assert(adjacentMineCount <= 8);
+            Debug.Assert(Enum.IsDefined(typeof(TileOperation), operation));
 
             Coordinates = coordinates;
             HasMine = hasMine;

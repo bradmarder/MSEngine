@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
@@ -15,6 +14,7 @@ namespace MSEngine.Core
             var x2 = coordinateTwo.X;
             var y2 = coordinateTwo.Y;
 
+            // PERF: Prioritize filtering by x coordinate because expert boards have more columns than rows
             return x2 > (x1 - 2)
                 && x2 < (x1 + 2)
                 && y2 > (y1 - 2)

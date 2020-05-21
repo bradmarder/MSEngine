@@ -56,8 +56,9 @@ namespace MSEngine.Core
             // if the index of a tile/coordinate is less than the mineCount, it will have a mine
             for (var i = 0; i < tileCount; i++)
             {
-                var amc = GetAdjacentMineCount(coordinates, coordinates[i], tileCount, mineCount);
-                tiles[i] = new Tile(coordinates[i], i < mineCount, amc);
+                var coor = coordinates[i];
+                var amc = GetAdjacentMineCount(coordinates, coor, tileCount, mineCount);
+                tiles[i] = new Tile(coor, i < mineCount, amc);
             }
         }
 
