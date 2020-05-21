@@ -64,7 +64,7 @@ namespace MSEngine.Core
         public override string ToString() =>
             $"{nameof(Coordinates)}: {Coordinates}, {nameof(HasMine)}: {HasMine}, {nameof(State)}: {State}, {nameof(AdjacentMineCount)}: {AdjacentMineCount}";
         public override int GetHashCode() => HashCode.Combine(Coordinates, HasMine, State, AdjacentMineCount);
-        public override bool Equals(object obj) => obj is Tile x && Equals(x);
+        public override bool Equals(object? obj) => obj is Tile x && Equals(x);
         public bool Equals(Tile other) =>
             Coordinates == other.Coordinates
             && HasMine == other.HasMine

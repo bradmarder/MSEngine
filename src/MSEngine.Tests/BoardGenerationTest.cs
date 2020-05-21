@@ -17,7 +17,7 @@ namespace MSEngine.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() =>
             {
                 Span<Tile> tiles = stackalloc Tile[columns * rows];
-                Engine.PureInstance.GenerateCustomBoard(tiles, columns, rows, 0);
+                Engine.PureInstance.FillCustomBoard(tiles, columns, rows, 0);
             });
         }
 
@@ -32,7 +32,7 @@ namespace MSEngine.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() =>
             {
                 Span<Tile> tiles = stackalloc Tile[tileCount - 1];
-                Engine.PureInstance.GenerateCustomBoard(tiles, columns, rows, 0);
+                Engine.PureInstance.FillCustomBoard(tiles, columns, rows, 0);
             });
         }
 
@@ -47,7 +47,7 @@ namespace MSEngine.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() =>
             {
                 Span<Tile> tiles = stackalloc Tile[tileCount + 1];
-                Engine.PureInstance.GenerateCustomBoard(tiles, columns, rows, 0);
+                Engine.PureInstance.FillCustomBoard(tiles, columns, rows, 0);
             });
         }
 
@@ -60,7 +60,7 @@ namespace MSEngine.Tests
             byte columns = 30;
             byte rows = 16;
             Span<Tile> tiles = stackalloc Tile[columns * rows];
-            Engine.PureInstance.GenerateCustomBoard(tiles, columns, rows, expectedMineCount);
+            Engine.PureInstance.FillCustomBoard(tiles, columns, rows, expectedMineCount);
 
             Assert.Equal(expectedMineCount, tiles.MineCount());
         }
@@ -73,7 +73,7 @@ namespace MSEngine.Tests
             Assert.Throws<ArgumentOutOfRangeException>(() =>
             {
                 Span<Tile> tiles = stackalloc Tile[64];
-                Engine.PureInstance.GenerateCustomBoard(tiles, 8, 8, mineCount);
+                Engine.PureInstance.FillCustomBoard(tiles, 8, 8, mineCount);
             });
         }
     }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using static MSEngine.Core.Utilities;
 
 namespace MSEngine.Core
@@ -22,10 +23,10 @@ namespace MSEngine.Core
             _shuffler = shuffler;
         }
 
-        public virtual void GenerateBeginnerBoard(Span<Tile> tiles) => GenerateCustomBoard(tiles, 8, 8, 10);
-        public virtual void GenerateIntermediateBoard(Span<Tile> tiles) => GenerateCustomBoard(tiles, 16, 16, 40);
-        public virtual void GenerateExpertBoard(Span<Tile> tiles) => GenerateCustomBoard(tiles, 30, 16, 99);
-        public virtual void GenerateCustomBoard(Span<Tile> tiles, byte columns, byte rows, byte mineCount)
+        public virtual void FillBeginnerBoard(Span<Tile> tiles) => FillCustomBoard(tiles, 8, 8, 10);
+        public virtual void FillIntermediateBoard(Span<Tile> tiles) => FillCustomBoard(tiles, 16, 16, 40);
+        public virtual void FillExpertBoard(Span<Tile> tiles) => FillCustomBoard(tiles, 30, 16, 99);
+        public virtual void FillCustomBoard(Span<Tile> tiles, byte columns, byte rows, byte mineCount)
         {
             if (columns == 0 || columns > 30) { throw new ArgumentOutOfRangeException(nameof(columns)); }
             if (rows == 0 || rows > 16) { throw new ArgumentOutOfRangeException(nameof(rows)); }
@@ -61,9 +62,12 @@ namespace MSEngine.Core
                 tiles[i] = new Tile(coor, i < mineCount, amc);
             }
         }
-
         private static int GetAdjacentMineCount(ReadOnlySpan<Coordinates> coordinates, Coordinates coor, int tileCount, int mineCount)
         {
+            Debug.Assert(coordinates.Length == tileCount);
+            Debug.Assert(tileCount > 0);
+            Debug.Assert(mineCount > 0);
+
             var n = 0;
             for (var i = 0; i < tileCount; i++)
             {

@@ -21,11 +21,10 @@ namespace MSEngine.ConsoleApp
         {
             //RunRandomDistributionTest(Engine.Instance.GenerateRandomBeginnerBoard);
             // RunSimulations(1, () => Engine.Instance.GenerateCustomBoard(4, 4, 2));
-            RunSimulations(10000);
+            RunSimulations(100000);
 
             //GetCoordinates(5, 1).ToList().ForEach(x => Console.Write(x));
         }
-
 
         //private static void RunRandomDistributionTest(Func<Board> boardGenerator, int maxIterationCount = int.MaxValue)
         //{
@@ -76,7 +75,7 @@ namespace MSEngine.ConsoleApp
                 {
                     Span<Tile> tiles = stackalloc Tile[8 * 8];
                     Span<Turn> turns = stackalloc Turn[0];
-                    Engine.Instance.GenerateBeginnerBoard(tiles);
+                    Engine.Instance.FillBeginnerBoard(tiles);
 
                     var turnCount = 0;
 
@@ -104,34 +103,34 @@ namespace MSEngine.ConsoleApp
                             };
                         }
 
-                        // dequeue the final (or first?) turn and slice the turns
-                        var bar = turns.Length - 1;
-                        var turn = turns[bar];
-                        turns = turns.Slice(0, bar);
+                        var turn = turns[0];
+                        turns = turns.Slice(1, turns.Length - 1);
 
-                        if (turnCount > 0)
-                        {
-                            try
-                            {
-                               // BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
-                            }
-                            catch (Exception)
-                            {
-                                Console.WriteLine("EVIL TURN = " + turn.ToString());
-                                Console.WriteLine(GetBoardAsciiArt(tiles));
-                                throw;
-                            }
-                        }
+                        //if (turnCount > 0)
+                        //{
+                        //    try
+                        //    {
+                        //       BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
+                        //    }
+                        //    catch (Exception)
+                        //    {
+                        //        Console.WriteLine("EVIL TURN = " + turn.ToString());
+                        //        Console.WriteLine(GetBoardAsciiArt(tiles));
+                        //        throw;
+                        //    }
+                        //}
                         
                         BoardStateMachine.Instance.ComputeBoard(tiles, turn);
 
                         // Get new board unless tile has no mine and zero AMC
-                        var targetTile = BoardStateMachine.GetTargetTile(tiles, turn.Coordinates);
+                        var targetTileIndex = BoardStateMachine.GetTargetTileIndex(tiles, turn.Coordinates);
+                        var targetTile = tiles[targetTileIndex];
 
                         var status = tiles.Status();
                         if (turnCount == 0 && (targetTile.AdjacentMineCount > 0 || status == BoardStatus.Failed))
                         {
-                            Engine.Instance.GenerateBeginnerBoard(tiles);
+                            // tiles.Clear(); not required since every tile is always reset
+                            Engine.Instance.FillBeginnerBoard(tiles);
                             turns = Span<Turn>.Empty;
                             continue;
                         }
@@ -148,7 +147,9 @@ namespace MSEngine.ConsoleApp
                             Interlocked.Increment(ref _wins);
                         }
 
-                        lock (_lock)
+
+                        // we only update the score every 1000 games (because doing so within a lock is expensive)
+                        if (_gamesPlayedCount % 1000 == 0)
                         {
                             var winRatio = ((decimal)_wins / _gamesPlayedCount) * 100;
                             Console.SetCursorPosition(0, Console.CursorTop);

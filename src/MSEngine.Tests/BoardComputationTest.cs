@@ -11,7 +11,7 @@ namespace MSEngine.Tests
         public void Zero_mine_count_with_one_reveal_completes_board()
         {
             Span<Tile> tiles = stackalloc Tile[8 * 8];
-            Engine.PureInstance.GenerateCustomBoard(tiles, 8, 8, 0);
+            Engine.PureInstance.FillCustomBoard(tiles, 8, 8, 0);
             var turn = new Turn(0, 0, TileOperation.Reveal);
             BoardStateMachine.Instance.ComputeBoard(tiles, turn);
 
@@ -22,7 +22,7 @@ namespace MSEngine.Tests
         public void All_mines_revealed_if_game_fails()
         {
             Span<Tile> tiles = stackalloc Tile[2 * 2];
-            Engine.PureInstance.GenerateCustomBoard(tiles, 2, 2, 1);
+            Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 1);
             BoardStateMachine.GetFailedBoard(tiles);
             var allTilesRevealed = tiles.ToArray().All(x => !x.HasMine || x.State == TileState.Flagged || x.State == TileState.Revealed);
 
@@ -33,7 +33,7 @@ namespace MSEngine.Tests
         public void Flagging_tile_only_flags_single_tile()
         {
             Span<Tile> tiles = stackalloc Tile[2 * 2];
-            Engine.PureInstance.GenerateCustomBoard(tiles, 2, 2, 1);
+            Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 1);
             var board = tiles.ToArray();
             var origin = new Coordinates(0, 0);
             var turn = new Turn(origin, TileOperation.Flag);
@@ -49,7 +49,7 @@ namespace MSEngine.Tests
         public void Revealing_tile_with_no_mine_and_has_adjacent_mines_only_reveals_single_tile()
         {
             Span<Tile> tiles = stackalloc Tile[2 * 2];
-            Engine.PureInstance.GenerateCustomBoard(tiles, 2, 2, 1);
+            Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 1);
             var board = tiles.ToArray();
             var origin = new Coordinates(1, 0);
             var turn = new Turn(origin, TileOperation.Reveal);
@@ -65,7 +65,7 @@ namespace MSEngine.Tests
         public void Chording_tile_reveals_surrounding_tiles()
         {
             Span<Tile> tiles = stackalloc Tile[2 * 2];
-            Engine.PureInstance.GenerateCustomBoard(tiles, 2, 2, 1);
+            Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 1);
             Span<Turn> turns = stackalloc Turn[3]
             {
                 new Turn(0, 0, TileOperation.Flag),
@@ -84,7 +84,7 @@ namespace MSEngine.Tests
         public void Revealing_tile_without_mine_and_zero_adjacent_mines_triggers_chain_reaction()
         {
             Span<Tile> tiles = stackalloc Tile[3 * 3];
-            Engine.PureInstance.GenerateCustomBoard(tiles, 3, 3, 1);
+            Engine.PureInstance.FillCustomBoard(tiles, 3, 3, 1);
             var targetTile = tiles.ToArray().Single(x => x.Coordinates.X == 2 && x.Coordinates.Y == 2);
             var firstTurn = new Turn(2, 2, TileOperation.Reveal);
             BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
@@ -101,7 +101,7 @@ namespace MSEngine.Tests
         public void Chain_reaction_is_blocked_by_false_flag()
         {
             Span<Tile> tiles = stackalloc Tile[5 * 1];
-            Engine.PureInstance.GenerateCustomBoard(tiles, 5, 1, 0);
+            Engine.PureInstance.FillCustomBoard(tiles, 5, 1, 0);
             Span<Turn> turns = stackalloc Turn[2]
             {
                 new Turn(2, 0, TileOperation.Flag),

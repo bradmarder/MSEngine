@@ -30,7 +30,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Tile> tiles = stackalloc Tile[8 * 8];
-                Engine.PureInstance.GenerateCustomBoard(tiles, 8, 8, 0);
+                Engine.PureInstance.FillCustomBoard(tiles, 8, 8, 0);
                 var firstTurn = new Turn(0, 0, TileOperation.Reveal);
                 var secondTurn = new Turn(0, 1, operation);
                 BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
@@ -50,7 +50,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Tile> tiles = stackalloc Tile[8 * 8];
-                Engine.PureInstance.GenerateCustomBoard(tiles, 8, 8, 1);
+                Engine.PureInstance.FillCustomBoard(tiles, 8, 8, 1);
                 var firstTurn = new Turn(0, 0, TileOperation.Reveal);
                 var secondTurn = new Turn(0, 1, operation);
                 BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
@@ -68,7 +68,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Tile> tiles = stackalloc Tile[2 * 2];
-                Engine.PureInstance.GenerateCustomBoard(tiles, 2, 2, 1);
+                Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 1);
                 var firstTurn = new Turn(1, 1, TileOperation.Reveal);
                 BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
                 var secondTurn = new Turn(1, 1, operation);
@@ -82,7 +82,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Tile> tiles = stackalloc Tile[1 * 1];
-                Engine.PureInstance.GenerateCustomBoard(tiles, 1, 1, 0);
+                Engine.PureInstance.FillCustomBoard(tiles, 1, 1, 0);
                 var turn = new Turn(1, 0, TileOperation.Reveal);
 
                 BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
@@ -95,7 +95,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Tile> tiles = stackalloc Tile[1 * 1];
-                Engine.PureInstance.GenerateCustomBoard(tiles, 1, 1, 0);
+                Engine.PureInstance.FillCustomBoard(tiles, 1, 1, 0);
                 var turn = new Turn(0, 0, TileOperation.Flag);
 
                 BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
@@ -108,7 +108,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Tile> tiles = stackalloc Tile[1 * 2];
-                Engine.PureInstance.GenerateCustomBoard(tiles, 1, 2, 1);
+                Engine.PureInstance.FillCustomBoard(tiles, 1, 2, 1);
                 var turn = new Turn(0, 0, TileOperation.Flag);
                 BoardStateMachine.Instance.ComputeBoard(tiles, turn);
 
@@ -123,7 +123,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Tile> tiles = stackalloc Tile[2 * 2];
-                Engine.PureInstance.GenerateCustomBoard(tiles, 2, 2, 2);
+                Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 2);
                 var turn = new Turn(0, 0, TileOperation.RemoveFlag);
 
                 BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
@@ -136,7 +136,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Tile> tiles = stackalloc Tile[1 * 1];
-                Engine.PureInstance.GenerateCustomBoard(tiles, 1, 1, 0);
+                Engine.PureInstance.FillCustomBoard(tiles, 1, 1, 0);
                 var turn = new Turn(0, 0, TileOperation.Chord);
 
                 BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
@@ -150,7 +150,7 @@ namespace MSEngine.Tests
             {
                 var origin = new Coordinates(2, 2);
                 Span<Tile> tiles = stackalloc Tile[3 * 3];
-                Engine.PureInstance.GenerateCustomBoard(tiles, 3, 3, 1);
+                Engine.PureInstance.FillCustomBoard(tiles, 3, 3, 1);
                 var firstTurn = new Turn(origin, TileOperation.Reveal);
                 var secondTurn = new Turn(origin, TileOperation.Chord);
                 BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
@@ -170,7 +170,7 @@ namespace MSEngine.Tests
             {
                 Span<Tile> tiles = stackalloc Tile[2 * 2];
                 var origin = new Coordinates(1, 1);
-                Engine.PureInstance.GenerateCustomBoard(tiles, 2, 2, 3);
+                Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 3);
                 var firstTurn = new Turn(0, 0, TileOperation.Flag);
                 var secondTurn = new Turn(origin, TileOperation.Reveal);
                 var thirdTurn = new Turn(origin, TileOperation.Chord);

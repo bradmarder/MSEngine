@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
@@ -56,6 +57,39 @@ namespace MSEngine.Core
                 var value = items[k];
                 items[k] = items[n];
                 items[n] = value;
+            }
+        }
+
+        /// <summary>
+        /// scatter approach with mine indexes is 5x slower than scattering tiles
+        /// </summary>
+        internal static void Scatter(this Span<int> mines, int tileCount, int mineCount)
+        {
+            // Span<int> mineIndexes = stackalloc int[mineCount];
+
+            // we must fill the span with -1 because the default (0) is a valid index
+            mines.Fill(-1);
+
+            // experiment? just fill with bytes, then um, convert to INT indexes?
+            // the "do while" loop is just too slow...
+            //RandomNumberGenerator.Fill(mines);
+
+            Debug.Assert(mines.Length == mineCount);
+            Debug.Assert(tileCount > 0);
+            Debug.Assert(mineCount > 0);
+            Debug.Assert(tileCount > mineCount);
+
+            for (var i = 0; i < mineCount; i++)
+            {
+                int m;
+
+                // we use a loop to prevent duplicate indexes
+                do
+                {
+                    m = RandomNumberGenerator.GetInt32(tileCount);
+                } while (mines.IndexOf(m) != -1);
+
+                mines[i] = m;
             }
         }
     }
