@@ -146,39 +146,56 @@ namespace MSEngine.Core
 
         internal static void GetChainReactionBoard(Span<Tile> tiles, Coordinates coordinates)
         {
-            var linqTiles = tiles.ToArray();
-            var unrevealedAdjacentTiles = linqTiles
+            Span<Tile> chainTiles = stackalloc Tile[byte.MaxValue];
+            Span<Coordinates> chainCoordinates = stackalloc Coordinates[byte.MaxValue];
+            var chainCoorCount = 0;
+            var chainTileCount = 0;
+
+            for (int i = 0, l = tiles.Length; i < l; i++)
+            {
+                var tile = tiles[i];
 
                 // if an adjacent tile has a "false flag", it does not expand revealing
-                .Where(x => x.State == TileState.Hidden)
+                if (tile.State == TileState.Hidden
 
-                .Where(x => x.AdjacentMineCount == 0)
-                .Where(x => x.Coordinates == coordinates || IsAdjacentTo(x.Coordinates, coordinates));
-            var expanding = new Queue<Tile>(unrevealedAdjacentTiles);
-            var expandedCoordinates = new HashSet<Coordinates>();
+                    && tile.AdjacentMineCount == 0
+                    && (tile.Coordinates == coordinates || IsAdjacentTo(tile.Coordinates, coordinates)))
+                {
+                    chainTiles[chainTileCount] = tile;
+                    chainTileCount++;
+                }
+            }
 
-            while (expanding.Any())
+            while (chainTileCount > 0)
             {
-                var tile = expanding.Dequeue();
-                expandedCoordinates.Add(tile.Coordinates);
+                var tile = chainTiles[chainTileCount - 1];
+                chainTileCount--;
+
+                chainCoordinates[chainCoorCount] = tile.Coordinates;
+                chainCoorCount++;
 
                 if (tile.AdjacentMineCount > 0)
                 {
                     continue;
                 }
 
-                linqTiles
-                    .Where(x => x.State != TileState.Flagged)
-                    .Where(x => !expandedCoordinates.Contains(x.Coordinates))
-                    .Where(x => IsAdjacentTo(x.Coordinates, tile.Coordinates))
-                    .ToList()
-                    .ForEach(expanding.Enqueue);
+                for (int i = 0, l = tiles.Length; i < l; i++)
+                {
+                    var x = tiles[i];
+                    if (x.State != TileState.Flagged
+                        && chainCoordinates.Slice(0, chainCoorCount).IndexOf(x.Coordinates) == -1
+                        && IsAdjacentTo(x.Coordinates, tile.Coordinates))
+                    {
+                        chainTiles[chainTileCount] = x;
+                        chainTileCount++;
+                    }
+                }
             }
 
             for (int i = 0, l = tiles.Length; i < l; i++)
             {
                 var tile = tiles[i];
-                if (tile.State != TileState.Revealed && expandedCoordinates.Contains(tile.Coordinates))
+                if (tile.State != TileState.Revealed && chainCoordinates.Slice(0, chainCoorCount).IndexOf(tile.Coordinates) != -1)
                 {
                     tiles[i] = new Tile(tile, TileOperation.Reveal);
                 }
