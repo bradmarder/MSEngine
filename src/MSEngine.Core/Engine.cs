@@ -58,18 +58,16 @@ namespace MSEngine.Core
             for (var i = 0; i < tileCount; i++)
             {
                 var coor = coordinates[i];
-                var amc = GetAdjacentMineCount(coordinates, coor, tileCount, mineCount);
+                var amc = GetAdjacentMineCount(coordinates, coor, mineCount);
                 tiles[i] = new Tile(coor, i < mineCount, amc);
             }
         }
-        private static int GetAdjacentMineCount(ReadOnlySpan<Coordinates> coordinates, Coordinates coor, int tileCount, int mineCount)
+        private static int GetAdjacentMineCount(ReadOnlySpan<Coordinates> coordinates, Coordinates coor, int mineCount)
         {
-            Debug.Assert(coordinates.Length == tileCount);
-            Debug.Assert(tileCount > 0);
             Debug.Assert(mineCount > 0);
 
             var n = 0;
-            for (var i = 0; i < tileCount; i++)
+            for (int i = 0, l = coordinates.Length; i < l; i++)
             {
                 if (i < mineCount && IsAdjacentTo(coor, coordinates[i]))
                 {
