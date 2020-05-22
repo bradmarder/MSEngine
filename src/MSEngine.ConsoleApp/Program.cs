@@ -71,94 +71,82 @@ namespace MSEngine.ConsoleApp
             ParallelEnumerable
                 .Range(0, count)
                 //.WithDegreeOfParallelism(1)
-                .ForAll(_ =>
+                .ForAll(_ => ExecuteGame());
+        }
+
+        private static void ExecuteGame()
+        {
+            Span<Tile> tiles = stackalloc Tile[8 * 8];
+            Span<Turn> turns = stackalloc Turn[0];
+            Engine.Instance.FillBeginnerBoard(tiles);
+
+            var turnCount = 0;
+
+            while (true)
+            {
+                if (turnCount == 0)
                 {
-                    Span<Tile> tiles = stackalloc Tile[8 * 8];
-                    Span<Turn> turns = stackalloc Turn[0];
-                    Engine.Instance.FillBeginnerBoard(tiles);
-
-                    var turnCount = 0;
-
-                    while (true)
+                    turns = stackalloc Turn[1]
                     {
-                        if (turnCount == 0)
-                        {
-                            turns = stackalloc Turn[1]
-                            {
-                                new Turn(3, 3, TileOperation.Reveal)
-                            };
-                        }
-                        if (turns.Length == 0)
-                        {
-                            turns = stackalloc Turn[tiles.Length];
-                            MatrixSolver.CalculateTurns(tiles, ref turns);
-                        }
+                        new Turn(3, 3, TileOperation.Reveal)
+                    };
+                }
+                if (turns.Length == 0)
+                {
+                    turns = stackalloc Turn[tiles.Length];
+                    MatrixSolver.CalculateTurns(tiles, ref turns);
+                }
 
-                        // if the matrix solver couldn't calculate any turns, we just select a "random" hidden tile
-                        if (turns.Length == 0)
-                        {
-                            turns = stackalloc Turn[1]
-                            {
-                                EducatedGuessStrategy.UseStrategy(tiles)
-                            };
-                        }
+                // if the matrix solver couldn't calculate any turns, we just select a "random" hidden tile
+                if (turns.Length == 0)
+                {
+                    turns = stackalloc Turn[1]
+                    {
+                        EducatedGuessStrategy.UseStrategy(tiles)
+                    };
+                }
 
-                        var turn = turns[0];
-                        turns = turns.Slice(1, turns.Length - 1);
+                var turn = turns[0];
+                turns = turns.Slice(1, turns.Length - 1);
 
-                        //if (turnCount > 0)
-                        //{
-                        //    try
-                        //    {
-                        //       BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
-                        //    }
-                        //    catch (Exception)
-                        //    {
-                        //        Console.WriteLine("EVIL TURN = " + turn.ToString());
-                        //        Console.WriteLine(GetBoardAsciiArt(tiles));
-                        //        throw;
-                        //    }
-                        //}
-                        
-                        BoardStateMachine.Instance.ComputeBoard(tiles, turn);
+                BoardStateMachine.Instance.ComputeBoard(tiles, turn);
 
-                        // Get new board unless tile has no mine and zero AMC
-                        var targetTileIndex = BoardStateMachine.GetTargetTileIndex(tiles, turn.Coordinates);
-                        var targetTile = tiles[targetTileIndex];
+                // Get new board unless tile has no mine and zero AMC
+                var targetTileIndex = BoardStateMachine.GetTargetTileIndex(tiles, turn.Coordinates);
+                var targetTile = tiles[targetTileIndex];
 
-                        var status = tiles.Status();
-                        if (turnCount == 0 && (targetTile.AdjacentMineCount > 0 || status == BoardStatus.Failed))
-                        {
-                            // tiles.Clear(); not required since every tile is always reset
-                            Engine.Instance.FillBeginnerBoard(tiles);
-                            turns = Span<Turn>.Empty;
-                            continue;
-                        }
-                        turnCount++;
+                var status = tiles.Status();
+                if (turnCount == 0 && (targetTile.AdjacentMineCount > 0 || status == BoardStatus.Failed))
+                {
+                    // tiles.Clear(); not required since every tile is always reset
+                    Engine.Instance.FillBeginnerBoard(tiles);
+                    turns = Span<Turn>.Empty;
+                    continue;
+                }
+                turnCount++;
 
-                        if (status == BoardStatus.Pending)
-                        {
-                            continue;
-                        }
+                if (status == BoardStatus.Pending)
+                {
+                    continue;
+                }
 
-                        Interlocked.Increment(ref _gamesPlayedCount);
-                        if (status == BoardStatus.Completed)
-                        {
-                            Interlocked.Increment(ref _wins);
-                        }
+                Interlocked.Increment(ref _gamesPlayedCount);
+                if (status == BoardStatus.Completed)
+                {
+                    Interlocked.Increment(ref _wins);
+                }
 
 
-                        // we only update the score every 1000 games (because doing so within a lock is expensive)
-                        if (_gamesPlayedCount % 1000 == 0)
-                        {
-                            var winRatio = ((decimal)_wins / _gamesPlayedCount) * 100;
-                            Console.SetCursorPosition(0, Console.CursorTop);
-                            Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio}%  {watch.ElapsedMilliseconds}ms");
-                        }
+                // we only update the score every 1000 games (because doing so within a lock is expensive)
+                if (_gamesPlayedCount % 1000 == 0)
+                {
+                    var winRatio = ((decimal)_wins / _gamesPlayedCount) * 100;
+                    Console.SetCursorPosition(0, Console.CursorTop);
+                    Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio}%  {watch.ElapsedMilliseconds}ms");
+                }
 
-                        break;
-                    }
-                });
+                break;
+            }
         }
 
         private static string GetBoardAsciiArt(Span<Tile> tiles)

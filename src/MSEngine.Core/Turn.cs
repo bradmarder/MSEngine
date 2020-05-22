@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace MSEngine.Core
 {
@@ -8,7 +9,8 @@ namespace MSEngine.Core
 
         public Turn(Coordinates coordinates, TileOperation operation)
         {
-            if (!Enum.IsDefined(typeof(TileOperation), operation)) { throw new ArgumentOutOfRangeException(nameof(operation)); }
+            // Despite being a public API, we assert instead of throw because otherwise this method will allocate on the heap
+            Debug.Assert(Enum.IsDefined(typeof(TileOperation), operation));
 
             Coordinates = coordinates;
             Operation = operation;
