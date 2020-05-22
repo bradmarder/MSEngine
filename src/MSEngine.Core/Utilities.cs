@@ -23,6 +23,19 @@ namespace MSEngine.Core
                 && coordinateOne != coordinateTwo;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsNextTo(Coordinates coordinateOne, Coordinates coordinateTwo)
+        {
+            var x1 = coordinateOne.X;
+            var y1 = coordinateOne.Y;
+            var x2 = coordinateTwo.X;
+            var y2 = coordinateTwo.Y;
+
+            // PERF: Prioritize filtering by x coordinate because expert boards have more columns than rows
+            return (x1 == x2 && (y2 == (y1 + 1) || y2 == (y1 - 1)))
+                || (y1 == y2 && (x2 == (x1 + 1) || x2 == (x1 - 1)));
+        }
+
         internal static void ShuffleItems<T>(this Span<T> items)
         {
             var n = items.Length;

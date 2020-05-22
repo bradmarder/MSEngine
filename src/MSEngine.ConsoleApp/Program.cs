@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -16,12 +16,13 @@ namespace MSEngine.ConsoleApp
         private static readonly object _lock = new object();
         private static int _wins = 0;
         private static int _gamesPlayedCount = 0;
+        private static readonly Stopwatch _watch = Stopwatch.StartNew();
 
         static void Main(string[] args)
         {
             //RunRandomDistributionTest(Engine.Instance.GenerateRandomBeginnerBoard);
             // RunSimulations(1, () => Engine.Instance.GenerateCustomBoard(4, 4, 2));
-            RunSimulations(100000);
+            RunSimulations(1000000);
 
             //GetCoordinates(5, 1).ToList().ForEach(x => Console.Write(x));
         }
@@ -65,8 +66,6 @@ namespace MSEngine.ConsoleApp
         private static void RunSimulations(int count)
         {
             if (count < 1) { throw new ArgumentOutOfRangeException(nameof(count)); }
-
-            var watch = System.Diagnostics.Stopwatch.StartNew();
 
             ParallelEnumerable
                 .Range(0, count)
@@ -142,7 +141,7 @@ namespace MSEngine.ConsoleApp
                 {
                     var winRatio = ((decimal)_wins / _gamesPlayedCount) * 100;
                     Console.SetCursorPosition(0, Console.CursorTop);
-                    Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio}%  {watch.ElapsedMilliseconds}ms");
+                    Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio}%  {_watch.ElapsedMilliseconds}ms");
                 }
 
                 break;

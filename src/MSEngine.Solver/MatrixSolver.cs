@@ -41,7 +41,7 @@ namespace MSEngine.Solver
             return false;
         }
 
-        public static void CalculateTurns(Span<Tile> tiles, ref Span<Turn> turns)
+        public static void CalculateTurns(ReadOnlySpan<Tile> tiles, ref Span<Turn> turns)
         {
             if (tiles.Length != turns.Length)
             {
@@ -115,15 +115,15 @@ namespace MSEngine.Solver
             var rowCount = revealedAMCTiles.Length;
             var columnCount = adjacentHiddenCoordinates.Length + 1;
 
-            Span<sbyte> foo = stackalloc sbyte[rowCount * columnCount];
-            var matrix = new FlatMatrix<sbyte>(foo, columnCount);
+            Span<int> buffer = stackalloc int[rowCount * columnCount];
+            var matrix = new FlatMatrix<int>(buffer, columnCount);
 
             for (var row = 0; row < rowCount; row++)
             {
                 for (var column = 0; column < columnCount; column++)
                 {
                     var tile = revealedAMCTiles[row];
-                    matrix[row, column] = (sbyte)(column == columnCount - 1
+                    matrix[row, column] = (column == columnCount - 1
 
                         // augmented column has special logic
                         ? tile.AdjacentMineCount - GetAdjacentFlaggedTileCount(tiles, tile.Coordinates)
@@ -134,13 +134,12 @@ namespace MSEngine.Solver
 
             // output view of the matrix
             // output view of gauss matrix (ensure gaussed properly??)
-            // ensure turns make logical sense - I believe "var coor = adjacentHiddenCoordinates[column];" is returning wrong coordinates
 
             matrix.GaussEliminate();
 
             // exclude the augmented column
             var finalIndex = columnCount - 1;
-            Span<sbyte> vector = stackalloc sbyte[finalIndex];
+            Span<int> vector = stackalloc int[finalIndex];
             var turnCount = 0;
 
             for (var row = 0; row < rowCount; row++)

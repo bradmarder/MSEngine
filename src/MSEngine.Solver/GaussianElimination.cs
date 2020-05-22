@@ -4,7 +4,7 @@ namespace MSEngine.Solver
 {
     public static class GaussianElimination
     {
-        public static void GaussEliminate(this FlatMatrix<sbyte> matrix)
+        public static void GaussEliminate(this FlatMatrix<int> matrix)
         {
             var lead = 0;
             var rowCount = matrix.RowCount;
@@ -55,7 +55,7 @@ namespace MSEngine.Solver
                         var sub = matrix[j, lead];
                         for (var k = 0; k < columnCount; k++)
                         {
-                            matrix[j, k] -= (sbyte)(sub * matrix[r, k]);
+                            matrix[j, k] -= sub * matrix[r, k];
                         }
                     }
                 }
