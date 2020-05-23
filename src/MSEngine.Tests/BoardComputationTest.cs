@@ -23,7 +23,7 @@ namespace MSEngine.Tests
         {
             Span<Tile> tiles = stackalloc Tile[2 * 2];
             Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 1);
-            BoardStateMachine.GetFailedBoard(tiles);
+            BoardStateMachine.FailBoard(tiles);
             var allTilesRevealed = tiles.ToArray().All(x => !x.HasMine || x.State == TileState.Flagged || x.State == TileState.Revealed);
 
             Assert.True(allTilesRevealed);

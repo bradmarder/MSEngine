@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Linq;
-using static MSEngine.Core.Utilities;
 using System.Diagnostics;
 
 namespace MSEngine.Core
@@ -91,7 +89,7 @@ namespace MSEngine.Core
             // these cases will only affect a single tile
             if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !tile.HasMine && tile.AdjacentMineCount > 0))
             {
-                tiles[turn.TileIndex] = new Tile(tile, turn.Operation);
+                tiles[turn.TileIndex] = new Tile(tile.HasMine, tile.AdjacentMineCount, turn.Operation);
                 return;
             }
 
@@ -99,94 +97,96 @@ namespace MSEngine.Core
             {
                 if (tile.HasMine)
                 {
-                    GetFailedBoard(tiles);
+                    FailBoard(tiles);
                 }
                 else
                 {
-                    GetChainReactionBoard(tiles, turn.TileIndex);
+                    ChainReaction(tiles, turn.TileIndex);
                 }
                 return;
             }
 
             if (turn.Operation == TileOperation.Chord)
             {
-                GetChordBoard(tiles, turn.TileIndex);
+                Chord(tiles, turn.TileIndex);
                 return;
             }
         }
 
-        internal static void GetFailedBoard(Span<Tile> tiles)
+        internal static void FailBoard(Span<Tile> tiles)
         {
             // should we show false flags?
-            for (int i = 0, l = tiles.Length; i < l; i++)
+            foreach (ref var tile in tiles)
             {
-                var tile = tiles[i];
                 if (tile.HasMine && tile.State == TileState.Hidden)
                 {
-                    tiles[i] = new Tile(tile, TileOperation.Reveal);
+                    tile = new Tile(tile.HasMine, tile.AdjacentMineCount, TileOperation.Reveal);
                 }
             }
         }
 
-        internal static void GetChainReactionBoard(Span<Tile> tiles, int tileIndex)
+        internal static void ChainReaction(Span<Tile> tiles, int tileIndex)
         {
-            Span<Tile> chainTiles = stackalloc Tile[byte.MaxValue];
-            Span<Coordinates> chainCoordinates = stackalloc Coordinates[byte.MaxValue];
-            var chainCoorCount = 0;
-            var chainTileCount = 0;
+            Span<int> visitedIndexes = stackalloc int[tiles.Length];
+            Span<int> revealIndexes = stackalloc int[tiles.Length];
+            Span<int> adjacentIndexes = stackalloc int[8];
+
+            visitedIndexes.Fill(-1);
+            revealIndexes.Fill(-1);
+
+            var visitedIndexCount = 0;
+            var revealIndexCount = 0;
+
+            VisitTile(tiles, adjacentIndexes, visitedIndexes, revealIndexes, tileIndex, ref visitedIndexCount, ref revealIndexCount);
 
             for (int i = 0, l = tiles.Length; i < l; i++)
             {
-                var tile = tiles[i];
-
-                // if an adjacent tile has a "false flag", it does not expand revealing
-                if (tile.State == TileState.Hidden
-
-                    && tile.AdjacentMineCount == 0
-                    && (tile.Coordinates == coordinates || IsAdjacentTo(tile.Coordinates, coordinates)))
+                if (revealIndexes.IndexOf(i) != -1)
                 {
-                    chainTiles[chainTileCount] = tile;
-                    chainTileCount++;
+                    var tile = tiles[i];
+                    tiles[i] = new Tile(tile.HasMine, tile.AdjacentMineCount, TileOperation.Reveal);
                 }
             }
+        }
 
-            while (chainTileCount > 0)
+        // we recursively visit tiles
+        internal static void VisitTile(
+            Span<Tile> tiles,
+            Span<int> adjacentIndexes,
+            Span<int> visitedIndexes,
+            Span<int> revealIndexes,
+            int tileIndex,
+            ref int visitedIndexCount,
+            ref int revealIndexCount)
+        {
+            const int columnCount = 8;
+            adjacentIndexes.FillAdjacentTileIndexes(tiles.Length, tileIndex, columnCount);
+
+            visitedIndexes[visitedIndexCount] = tileIndex;
+            visitedIndexCount++;
+
+            foreach (var index in adjacentIndexes)
             {
-                var tile = chainTiles[chainTileCount - 1];
-                chainTileCount--;
+                if (index == -1) { continue; }
+                if (revealIndexes.IndexOf(index) != -1) { continue; }
 
-                chainCoordinates[chainCoorCount] = tile.Coordinates;
-                chainCoorCount++;
+                var tile = tiles[index];
 
-                if (tile.AdjacentMineCount > 0)
+                // if an adjacent tile has a "false flag", it does not expand revealing
+                if (tile.State == TileState.Hidden)
                 {
-                    continue;
-                }
+                    revealIndexes[revealIndexCount] = index;
+                    revealIndexCount++;
 
-                for (int i = 0, l = tiles.Length; i < l; i++)
-                {
-                    var x = tiles[i];
-                    if (x.State != TileState.Flagged
-                        && chainCoordinates.Slice(0, chainCoorCount).IndexOf(x.Coordinates) == -1
-                        && IsAdjacentTo(x.Coordinates, tile.Coordinates))
+                    if (tile.AdjacentMineCount == 0 && visitedIndexes.IndexOf(index) == -1)
                     {
-                        chainTiles[chainTileCount] = x;
-                        chainTileCount++;
+                        VisitTile(tiles, adjacentIndexes, visitedIndexes, revealIndexes, index, ref visitedIndexCount, ref revealIndexCount);
                     }
                 }
             }
-
-            for (int i = 0, l = tiles.Length; i < l; i++)
-            {
-                var tile = tiles[i];
-                if (tile.State != TileState.Revealed && chainCoordinates.Slice(0, chainCoorCount).IndexOf(tile.Coordinates) != -1)
-                {
-                    tiles[i] = new Tile(tile, TileOperation.Reveal);
-                }
-            }
         }
 
-        internal void GetChordBoard(Span<Tile> tiles, int tileIndex)
+        internal void Chord(Span<Tile> tiles, int tileIndex)
         {
             Debug.Assert(tileIndex >= 0);
             Debug.Assert(tileIndex < tiles.Length);

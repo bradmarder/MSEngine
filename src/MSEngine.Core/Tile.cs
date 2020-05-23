@@ -23,15 +23,6 @@ namespace MSEngine.Core
             State = TileState.Hidden;
         }
 
-        internal Tile(in Tile tile, TileOperation operation)
-        {
-            Debug.Assert(Enum.IsDefined(typeof(TileOperation), operation));
-
-            HasMine = tile.HasMine;
-            AdjacentMineCount = tile.AdjacentMineCount;
-            State = _operationToStateMap[operation];
-        }
-
         internal Tile(bool hasMine, int adjacentMineCount, TileOperation operation)
         {
             Debug.Assert(adjacentMineCount >= 0);
