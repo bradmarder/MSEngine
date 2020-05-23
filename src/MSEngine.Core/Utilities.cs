@@ -36,6 +36,61 @@ namespace MSEngine.Core
                 || (y1 == y2 && (x2 == (x1 + 1) || x2 == (x1 - 1)));
         }
 
+        // cache? 18ns or whatever is already fast...
+        public static void FillAdjacentTileIndexes(int tileCount, int index, int columnCount, Span<int> indexes)
+        {
+            Debug.Assert(tileCount > 0);
+            Debug.Assert(index >= 0);
+            Debug.Assert(index < tileCount);
+            Debug.Assert(columnCount > 0);
+            Debug.Assert(indexes.Length == 8);
+
+            var isTop = index < columnCount;
+            var isLeftSide = index % columnCount == 0;
+            var isRightSide = (index + 1) % columnCount == 0;
+            var isBottom = index >= tileCount - columnCount;
+
+            indexes.Fill(-1);
+
+            // ignore indexes 0/1/2 if isTop is true
+            // ignore indexes 0/3/5 isLeftSide is true
+            // ignore indexes 2/4/7 isRightSide is true
+            // ignore indexes 5/6/7 if isBottom is true
+
+            if (!isTop)
+            {
+                if (!isLeftSide)
+                {
+                    indexes[0] = index - columnCount - 1;
+                }
+                indexes[1] = index - columnCount;
+                if (!isRightSide)
+                {
+                    indexes[2] = index - columnCount + 1;
+                }
+            }
+            if (!isLeftSide)
+            {
+                indexes[3] = index - 1;
+            }
+            if (!isRightSide)
+            {
+                indexes[4] = index + 1;
+            }
+            if (!isBottom)
+            {
+                if (!isLeftSide)
+                {
+                    indexes[5] = index + columnCount - 1;
+                }
+                indexes[6] = index + columnCount;
+                if (!isRightSide)
+                {
+                    indexes[7] = index + columnCount + 1;
+                }
+            }
+        }
+
         internal static void ShuffleItems<T>(this Span<T> items)
         {
             var n = items.Length;
@@ -60,7 +115,7 @@ namespace MSEngine.Core
         {
             var n = items.Length;
 
-            // magic seed that produces a solvable board
+            // magic seed that produces a solvable beginner board
             var random = new Random(653635);
 
             while (n > 1)
@@ -78,7 +133,10 @@ namespace MSEngine.Core
         /// </summary>
         internal static void Scatter(this Span<int> mines, int tileCount, int mineCount)
         {
-            // Span<int> mineIndexes = stackalloc int[mineCount];
+            Debug.Assert(mines.Length == mineCount);
+            Debug.Assert(tileCount > 0);
+            Debug.Assert(mineCount >= 0);
+            Debug.Assert(tileCount > mineCount);
 
             // we must fill the span with -1 because the default (0) is a valid index
             mines.Fill(-1);
@@ -86,11 +144,7 @@ namespace MSEngine.Core
             // experiment? just fill with bytes, then um, convert to INT indexes?
             // the "do while" loop is just too slow...
             //RandomNumberGenerator.Fill(mines);
-
-            Debug.Assert(mines.Length == mineCount);
-            Debug.Assert(tileCount > 0);
-            Debug.Assert(mineCount > 0);
-            Debug.Assert(tileCount > mineCount);
+            
 
             for (var i = 0; i < mineCount; i++)
             {
@@ -100,6 +154,32 @@ namespace MSEngine.Core
                 do
                 {
                     m = RandomNumberGenerator.GetInt32(tileCount);
+                } while (mines.IndexOf(m) != -1);
+
+                mines[i] = m;
+            }
+        }
+
+        internal static void PseudoScatter(this Span<int> mines, int tileCount, int mineCount)
+        {
+            Debug.Assert(mines.Length == mineCount);
+            Debug.Assert(tileCount > 0);
+            Debug.Assert(mineCount >= 0);
+            Debug.Assert(tileCount > mineCount);
+
+            // magic seed that produces a solvable beginner board
+            var random = new Random(653635);
+
+            mines.Fill(-1);
+
+            for (var i = 0; i < mineCount; i++)
+            {
+                int m;
+
+                // we use a loop to prevent duplicate indexes
+                do
+                {
+                    m = random.Next(tileCount);
                 } while (mines.IndexOf(m) != -1);
 
                 mines[i] = m;

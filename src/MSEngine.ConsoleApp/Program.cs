@@ -20,11 +20,7 @@ namespace MSEngine.ConsoleApp
 
         static void Main(string[] args)
         {
-            //RunRandomDistributionTest(Engine.Instance.GenerateRandomBeginnerBoard);
-            // RunSimulations(1, () => Engine.Instance.GenerateCustomBoard(4, 4, 2));
             RunSimulations(1000000);
-
-            //GetCoordinates(5, 1).ToList().ForEach(x => Console.Write(x));
         }
 
         //private static void RunRandomDistributionTest(Func<Board> boardGenerator, int maxIterationCount = int.MaxValue)
