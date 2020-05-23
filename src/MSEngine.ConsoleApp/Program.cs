@@ -20,7 +20,7 @@ namespace MSEngine.ConsoleApp
 
         static void Main(string[] args)
         {
-            RunSimulations(1000000);
+            RunSimulations(100000);
         }
 
         //private static void RunRandomDistributionTest(Func<Board> boardGenerator, int maxIterationCount = int.MaxValue)

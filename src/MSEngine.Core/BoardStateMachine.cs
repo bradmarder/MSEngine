@@ -9,44 +9,22 @@ namespace MSEngine.Core
     {
         public static IBoardStateMachine Instance { get; } = new BoardStateMachine();
 
-        public static int GetTargetTileIndex(ReadOnlySpan<Tile> tiles, Coordinates coordinates)
-        {
-            for (int i = 0, l = tiles.Length; i < l; i++)
-            {
-                if (tiles[i].Coordinates == coordinates)
-                {
-                    return i;
-                }
-            }
-            throw new InvalidOperationException("A turn should always match a tile");
-        }
-
         public virtual void EnsureValidBoardConfiguration(ReadOnlySpan<Tile> tiles, Turn turn)
         {
-            var linqTiles = tiles.ToArray();
-
-            var distinctCoordinateCount = linqTiles
-                .Select(x => x.Coordinates)
-                .Distinct()
-                .Count();
-            if (tiles.Length > distinctCoordinateCount)
-            {
-                throw new InvalidGameStateException("Multiple tiles have matching coordinates");
-            }
             if (tiles.Status() == BoardStatus.Completed || tiles.Status() == BoardStatus.Failed)
             {
                 throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
             }
-            if (linqTiles.All(x => x.Coordinates != turn.Coordinates))
+            if (turn.TileIndex > tiles.Length)
             {
-                throw new InvalidGameStateException("Turn has coordinates that are outside the board");
+                throw new InvalidGameStateException("Turn has index outside the matrix");
             }
             if (turn.Operation == TileOperation.Flag && tiles.FlagsAvailable() == 0)
             {
                 throw new InvalidGameStateException("No more flags available");
             }
 
-            var targetTile = linqTiles.Single(x => x.Coordinates == turn.Coordinates);
+            var targetTile = tiles[turn.TileIndex];
             if (targetTile.State == TileState.Revealed && turn.Operation != TileOperation.Chord && turn.Operation != TileOperation.Reveal)
             {
                 throw new InvalidGameStateException("Only chord/reveal operations are allowed on revealed tiles");
@@ -69,9 +47,17 @@ namespace MSEngine.Core
                 {
                     throw new InvalidGameStateException("May only chord a tile that has adjacent mines");
                 }
-                var adjacentTiles = linqTiles.Where(x => IsAdjacentTo(x.Coordinates, targetTile.Coordinates));
-                var targetTileAdjacentFlagCount = adjacentTiles.Count(x => x.State == TileState.Flagged);
-                var targetTileAdjacentHiddenCount = adjacentTiles.Count(x => x.State == TileState.Hidden);
+
+                var targetTileAdjacentFlagCount = 0;
+                var targetTileAdjacentHiddenCount = 0;
+                Span<int> adjacentIndexes = stackalloc int[8];
+                adjacentIndexes.FillAdjacentTileIndexes(tiles.Length, turn.TileIndex, 8);
+                foreach(var i in adjacentIndexes)
+                {
+                    var tile = tiles[i];
+                    if (tile.State == TileState.Flagged) { targetTileAdjacentFlagCount++; }
+                    if (tile.State == TileState.Hidden) { targetTileAdjacentHiddenCount++; }
+                }
 
                 if (targetTile.AdjacentMineCount != targetTileAdjacentFlagCount)
                 {
@@ -92,40 +78,39 @@ namespace MSEngine.Core
         }
         public virtual void ComputeBoard(Span<Tile> tiles, Turn turn)
         {
-            var targetTileIndex = GetTargetTileIndex(tiles, turn.Coordinates);
-            var targetTile = tiles[targetTileIndex];
+            var tile = tiles[turn.TileIndex];
 
             // If a tile is already revealed, we return instead of throwing an exception
             // This is because the solver generates batches of turns at a time, and any turn
             // may trigger a chain reaction and auto-reveal other tiles
-            if (targetTile.State == TileState.Revealed && turn.Operation == TileOperation.Reveal)
+            if (tile.State == TileState.Revealed && turn.Operation == TileOperation.Reveal)
             {
                 return;
             }
 
             // these cases will only affect a single tile
-            if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !targetTile.HasMine && targetTile.AdjacentMineCount > 0))
+            if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !tile.HasMine && tile.AdjacentMineCount > 0))
             {
-                tiles[targetTileIndex] = new Tile(targetTile, turn.Operation);
+                tiles[turn.TileIndex] = new Tile(tile, turn.Operation);
                 return;
             }
 
             if (turn.Operation == TileOperation.Reveal)
             {
-                if (targetTile.HasMine)
+                if (tile.HasMine)
                 {
                     GetFailedBoard(tiles);
                 }
                 else
                 {
-                    GetChainReactionBoard(tiles, targetTile.Coordinates);
+                    GetChainReactionBoard(tiles, turn.TileIndex);
                 }
                 return;
             }
 
             if (turn.Operation == TileOperation.Chord)
             {
-                GetChordBoard(tiles, targetTile.Coordinates);
+                GetChordBoard(tiles, turn.TileIndex);
                 return;
             }
         }
@@ -143,7 +128,7 @@ namespace MSEngine.Core
             }
         }
 
-        internal static void GetChainReactionBoard(Span<Tile> tiles, Coordinates coordinates)
+        internal static void GetChainReactionBoard(Span<Tile> tiles, int tileIndex)
         {
             Span<Tile> chainTiles = stackalloc Tile[byte.MaxValue];
             Span<Coordinates> chainCoordinates = stackalloc Coordinates[byte.MaxValue];
@@ -201,15 +186,27 @@ namespace MSEngine.Core
             }
         }
 
-        internal void GetChordBoard(Span<Tile> tiles, Coordinates coordinates)
+        internal void GetChordBoard(Span<Tile> tiles, int tileIndex)
         {
-            var turns = tiles
-                .ToArray()
-                .Where(x => x.State == TileState.Hidden)
-                .Where(x => IsAdjacentTo(x.Coordinates, coordinates))
-                .Select(x => new Turn(x.Coordinates, TileOperation.Reveal))
-                .ToArray()
-                .AsSpan();
+            Debug.Assert(tileIndex >= 0);
+            Debug.Assert(tileIndex < tiles.Length);
+
+            var turnCount = 0;
+            Span<Turn> turns = stackalloc Turn[8];
+            Span<int> adjacentIndexes = stackalloc int[8];
+
+            adjacentIndexes.FillAdjacentTileIndexes(tiles.Length, tileIndex, 8);
+
+            foreach (var i in adjacentIndexes)
+            {
+                if (i == -1) { continue; }
+
+                if (tiles[i].State == TileState.Hidden)
+                {
+                    turns[turnCount] = new Turn(i, TileOperation.Reveal);
+                    turnCount++;
+                }
+            }
 
             ComputeBoard(tiles, turns);
         }

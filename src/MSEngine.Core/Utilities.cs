@@ -37,7 +37,7 @@ namespace MSEngine.Core
         }
 
         // cache? 18ns or whatever is already fast...
-        public static void FillAdjacentTileIndexes(int tileCount, int index, int columnCount, Span<int> indexes)
+        public static void FillAdjacentTileIndexes(this Span<int> indexes, int tileCount, int index, int columnCount)
         {
             Debug.Assert(tileCount > 0);
             Debug.Assert(index >= 0);
@@ -131,12 +131,10 @@ namespace MSEngine.Core
         /// <summary>
         /// scatter approach with mine indexes is 5x slower than scattering tiles
         /// </summary>
-        internal static void Scatter(this Span<int> mines, int tileCount, int mineCount)
+        internal static void Scatter(this Span<int> mines, int tileCount)
         {
-            Debug.Assert(mines.Length == mineCount);
             Debug.Assert(tileCount > 0);
-            Debug.Assert(mineCount >= 0);
-            Debug.Assert(tileCount > mineCount);
+            Debug.Assert(tileCount > mines.Length);
 
             // we must fill the span with -1 because the default (0) is a valid index
             mines.Fill(-1);
@@ -144,9 +142,8 @@ namespace MSEngine.Core
             // experiment? just fill with bytes, then um, convert to INT indexes?
             // the "do while" loop is just too slow...
             //RandomNumberGenerator.Fill(mines);
-            
 
-            for (var i = 0; i < mineCount; i++)
+            for (int i = 0, l = mines.Length; i < l; i++)
             {
                 int m;
 
@@ -160,19 +157,17 @@ namespace MSEngine.Core
             }
         }
 
-        internal static void PseudoScatter(this Span<int> mines, int tileCount, int mineCount)
+        internal static void PseudoScatter(this Span<int> mines, int tileCount)
         {
-            Debug.Assert(mines.Length == mineCount);
             Debug.Assert(tileCount > 0);
-            Debug.Assert(mineCount >= 0);
-            Debug.Assert(tileCount > mineCount);
+            Debug.Assert(tileCount > mines.Length);
 
             // magic seed that produces a solvable beginner board
             var random = new Random(653635);
 
             mines.Fill(-1);
 
-            for (var i = 0; i < mineCount; i++)
+            for (int i = 0, l = mines.Length; i < l; i++)
             {
                 int m;
 

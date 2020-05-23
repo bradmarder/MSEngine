@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Collections.Generic;
 using MSEngine.Core;
 using Xunit;
 
@@ -22,15 +21,15 @@ namespace MSEngine.Tests
         [InlineData(6, new int[] { -1, 3, 4, -1, 7, -1, -1, -1 })]
         [InlineData(7, new int[] { 3, 4, 5, 6, 8, -1, -1, -1 })]
         [InlineData(8, new int[] { 4, 5, -1, 7, -1, -1, -1, -1 })]
-        public void AdjacentTileIndexFilledCorrectly(int index, int[] expectedIndexes)
+        public void AdjacentTileIndexesFilledCorrectly(int index, Span<int> expectedIndexes)
         {
             const int columnCount = 3;
             const int tileCount = 9;
-            var actualIndexes = new int[tileCount -1];
+            Span<int> actualIndexes = stackalloc int[tileCount -1];
 
-            Utilities.FillAdjacentTileIndexes(tileCount, index, columnCount, actualIndexes);
+            actualIndexes.FillAdjacentTileIndexes(tileCount, index, columnCount);
 
-            Assert.Equal(expectedIndexes, actualIndexes);
+            Assert.True(expectedIndexes.SequenceEqual(actualIndexes));
         }
     }
 }

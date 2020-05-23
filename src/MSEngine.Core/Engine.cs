@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using static MSEngine.Core.Utilities;
 
 namespace MSEngine.Core
 {
@@ -34,42 +33,36 @@ namespace MSEngine.Core
             if (mineCount >= tileCount) { throw new ArgumentOutOfRangeException(nameof(mineCount)); }
             if (tiles.Length != tileCount) { throw new ArgumentOutOfRangeException(nameof(tiles)); }
 
-            Span<Coordinates> coordinates = stackalloc Coordinates[tileCount];
-
-            for (byte x = 0; x < columns; x++)
-            {
-                for (byte y = 0; y < rows; y++)
-                {
-                    coordinates[y * columns + x] = new Coordinates(x, y);
-                }
-            }
+            Span<int> mineIndexes = stackalloc int[mineCount];
+            Span<int> adjacentIndexes = stackalloc int[8];
 
             switch (_shuffler)
             {
                 case Shuffler.Random:
-                    coordinates.ShuffleItems();
+                    mineIndexes.Scatter(tileCount);
                     break;
                 case Shuffler.Hacked:
-                    coordinates.PseudoShuffleItems();
+                    mineIndexes.PseudoScatter(tileCount);
                     break;
             };
 
-            // if the index of a tile/coordinate is less than the mineCount, it will have a mine
             for (var i = 0; i < tileCount; i++)
             {
-                var coor = coordinates[i];
-                var amc = GetAdjacentMineCount(coordinates, coor, mineCount);
-                tiles[i] = new Tile(coor, i < mineCount, amc);
+                adjacentIndexes.FillAdjacentTileIndexes(tileCount, i, columns);
+                var amc = GetAdjacentMineCount(mineIndexes, adjacentIndexes);
+                var hasMine = mineIndexes.IndexOf(i) != -1;
+
+                tiles[i] = new Tile(hasMine, amc);
             }
         }
-        private static int GetAdjacentMineCount(ReadOnlySpan<Coordinates> coordinates, Coordinates coor, int mineCount)
+        private static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, ReadOnlySpan<int> adjacentIndexes)
         {
-            Debug.Assert(mineCount >= 0);
+            Debug.Assert(adjacentIndexes.Length == 8);
 
             var n = 0;
-            for (int i = 0, l = coordinates.Length; i < l; i++)
+            for (var i = 0; i < 8; i++)
             {
-                if (i < mineCount && IsAdjacentTo(coor, coordinates[i]))
+                if (mineIndexes.IndexOf(adjacentIndexes[0]) != -1)
                 {
                     n++;
                 }

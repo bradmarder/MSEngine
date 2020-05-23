@@ -13,12 +13,11 @@ namespace MSEngine.Core
             [TileOperation.Reveal] = TileState.Revealed
         };
 
-        internal Tile(Coordinates coordinates, bool hasMine, int adjacentMineCount)
+        internal Tile(bool hasMine, int adjacentMineCount)
         {
             Debug.Assert(adjacentMineCount >= 0);
             Debug.Assert(adjacentMineCount <= 8);
             
-            Coordinates = coordinates;
             HasMine = hasMine;
             AdjacentMineCount = (byte)adjacentMineCount;
             State = TileState.Hidden;
@@ -28,25 +27,22 @@ namespace MSEngine.Core
         {
             Debug.Assert(Enum.IsDefined(typeof(TileOperation), operation));
 
-            Coordinates = tile.Coordinates;
             HasMine = tile.HasMine;
             AdjacentMineCount = tile.AdjacentMineCount;
             State = _operationToStateMap[operation];
         }
 
-        internal Tile(Coordinates coordinates, bool hasMine, int adjacentMineCount, TileOperation operation)
+        internal Tile(bool hasMine, int adjacentMineCount, TileOperation operation)
         {
             Debug.Assert(adjacentMineCount >= 0);
             Debug.Assert(adjacentMineCount <= 8);
             Debug.Assert(Enum.IsDefined(typeof(TileOperation), operation));
 
-            Coordinates = coordinates;
             HasMine = hasMine;
             AdjacentMineCount = (byte)adjacentMineCount;
             State = _operationToStateMap[operation];
         }
 
-        public Coordinates Coordinates { get; }
         public bool HasMine { get; }
         public TileState State { get; }
 
@@ -62,12 +58,11 @@ namespace MSEngine.Core
                 : State == TileState.Revealed;
 
         public override string ToString() =>
-            $"{nameof(Coordinates)}: {Coordinates}, {nameof(HasMine)}: {HasMine}, {nameof(State)}: {State}, {nameof(AdjacentMineCount)}: {AdjacentMineCount}";
-        public override int GetHashCode() => HashCode.Combine(Coordinates, HasMine, State, AdjacentMineCount);
+            $"{nameof(HasMine)}: {HasMine}, {nameof(State)}: {State}, {nameof(AdjacentMineCount)}: {AdjacentMineCount}";
+        public override int GetHashCode() => HashCode.Combine(HasMine, State, AdjacentMineCount);
         public override bool Equals(object? obj) => obj is Tile x && Equals(x);
         public bool Equals(Tile other) =>
-            Coordinates == other.Coordinates
-            && HasMine == other.HasMine
+            HasMine == other.HasMine
             && State == other.State
             && AdjacentMineCount == other.AdjacentMineCount;
         public static bool operator ==(in Tile c1, in Tile c2) => c1.Equals(c2);
