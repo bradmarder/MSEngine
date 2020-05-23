@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace MSEngine.Solver
 {
@@ -8,7 +9,9 @@ namespace MSEngine.Solver
 
         public FlatMatrix(Span<T> matrix, int columnCount)
         {
-            if (columnCount < 1) { throw new ArgumentOutOfRangeException(nameof(columnCount)); }
+            Debug.Assert(matrix.Length > 0);
+            Debug.Assert(columnCount > 0);
+
             _matrix = matrix;
             ColumnCount = columnCount;
         }

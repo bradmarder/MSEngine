@@ -43,10 +43,8 @@ namespace MSEngine.Solver
 
         public static void CalculateTurns(ReadOnlySpan<Tile> tiles, ref Span<Turn> turns)
         {
-            if (tiles.Length != turns.Length)
-            {
-                throw new InvalidOperationException("Turns must be overallocated to the ~maximum possible");
-            }
+            Debug.Assert(tiles.Length > 0);
+            Debug.Assert(tiles.Length == turns.Length);
 
             // overallocated
             Span<Coordinates> hiddenCoordinates = stackalloc Coordinates[tiles.Length];
