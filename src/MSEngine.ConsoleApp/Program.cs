@@ -83,7 +83,7 @@ namespace MSEngine.ConsoleApp
                 {
                     turns = stackalloc Turn[1]
                     {
-                        new Turn(3, 3, TileOperation.Reveal)
+                        new Turn(24, TileOperation.Reveal)
                     };
                 }
                 if (turns.Length == 0)
