@@ -64,7 +64,7 @@ namespace MSEngine.Core
         }
         private static int GetAdjacentMineCount(ReadOnlySpan<Coordinates> coordinates, Coordinates coor, int mineCount)
         {
-            Debug.Assert(mineCount > 0);
+            Debug.Assert(mineCount >= 0);
 
             var n = 0;
             for (int i = 0, l = coordinates.Length; i < l; i++)
