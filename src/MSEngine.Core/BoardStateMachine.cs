@@ -139,6 +139,10 @@ namespace MSEngine.Core
             var visitedIndexCount = 0;
             var revealIndexCount = 0;
 
+            // TESTING
+            revealIndexes[revealIndexCount] = tileIndex;
+            revealIndexCount++;
+
             VisitTile(tiles, adjacentIndexes, visitedIndexes, revealIndexes, tileIndex, ref visitedIndexCount, ref revealIndexCount);
 
             for (int i = 0, l = tiles.Length; i < l; i++)
@@ -161,6 +165,7 @@ namespace MSEngine.Core
             ref int visitedIndexCount,
             ref int revealIndexCount)
         {
+            // Console.WriteLine("VISIT NODE = " + tileIndex);
             const int columnCount = 8;
             adjacentIndexes.FillAdjacentTileIndexes(tiles.Length, tileIndex, columnCount);
 

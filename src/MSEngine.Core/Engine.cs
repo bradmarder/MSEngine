@@ -62,7 +62,7 @@ namespace MSEngine.Core
             var n = 0;
             for (var i = 0; i < 8; i++)
             {
-                if (mineIndexes.IndexOf(adjacentIndexes[0]) != -1)
+                if (mineIndexes.IndexOf(adjacentIndexes[i]) != -1)
                 {
                     n++;
                 }

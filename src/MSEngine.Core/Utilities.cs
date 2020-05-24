@@ -7,6 +7,18 @@ namespace MSEngine.Core
 {
     public static class Utilities
     {
+        public static bool IsAdjacentTo(Span<int> buffer, int tileCount, int columnCount, int i1, int i2)
+        {
+            buffer.FillAdjacentTileIndexes(tileCount, i1, columnCount);
+
+            foreach (var i in buffer)
+            {
+                if (i == i2) { return true; }
+            }
+
+            return false;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsAdjacentTo(Coordinates coordinateOne, Coordinates coordinateTwo)
         {

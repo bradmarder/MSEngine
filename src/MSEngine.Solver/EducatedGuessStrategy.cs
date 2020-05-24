@@ -22,7 +22,7 @@ namespace MSEngine.Solver
                 }
             }
 
-            return new Turn(tiles[maxIndex].Coordinates, TileOperation.Reveal);
+            return new Turn(maxIndex, TileOperation.Reveal);
         }
     }
 }

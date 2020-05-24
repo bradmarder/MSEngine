@@ -90,6 +90,18 @@ namespace MSEngine.ConsoleApp
                 {
                     turns = stackalloc Turn[tiles.Length];
                     MatrixSolver.CalculateTurns(tiles, ref turns);
+                    //foreach (var x in turns)
+                    //{
+                    //    Console.WriteLine(x.ToString());
+                    //}
+                    //if (turns.Length == 0)
+                    //{
+                    //    Console.WriteLine("ZERO TURNS");
+                    //}
+                    //for (var i = 0; i < tiles.Length; i++)
+                    //{
+                    //    Console.WriteLine($"index is {i} " + tiles[i].ToString());
+                    //}    
                 }
 
                 // if the matrix solver couldn't calculate any turns, we just select a "random" hidden tile
@@ -107,8 +119,7 @@ namespace MSEngine.ConsoleApp
                 BoardStateMachine.Instance.ComputeBoard(tiles, turn);
 
                 // Get new board unless tile has no mine and zero AMC
-                var targetTileIndex = BoardStateMachine.GetTargetTileIndex(tiles, turn.Coordinates);
-                var targetTile = tiles[targetTileIndex];
+                var targetTile = tiles[turn.TileIndex];
 
                 var status = tiles.Status();
                 if (turnCount == 0 && (targetTile.AdjacentMineCount > 0 || status == BoardStatus.Failed))
@@ -148,18 +159,15 @@ namespace MSEngine.ConsoleApp
         {
             var sb = new StringBuilder(tiles.Length);
 
-            for (byte y = 0; y < tiles.Height(); y++)
+            for (var i = 0; i < tiles.Length; i++)
             {
-                for (byte x = 0; x < tiles.Width(); x++)
-                {
-                    var tile = tiles.ToArray().Single(t => t.Coordinates.X == x && t.Coordinates.Y == y);
-                    var tileChar = GetTileChar(tile);
-                    sb.Append(tileChar);
+                var tile = tiles[i];
+                var tileChar = GetTileChar(tile);
+                sb.Append(tileChar);
 
-                    if (x + 1 == tiles.Width())
-                    {
-                        sb.AppendLine();
-                    }
+                if (i > 0 && i % 7 == 0)
+                {
+                    sb.AppendLine();
                 }
             }
 

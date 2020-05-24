@@ -53,20 +53,20 @@ namespace MSEngine.Solver
             Debug.Assert(tiles.Length > 0);
             Debug.Assert(tiles.Length == turns.Length);
 
-            Span<int> hiddenTileIndexes = stackalloc int[tiles.Length];
+            //Span<int> hiddenTileIndexes = stackalloc int[tiles.Length];
             Span<int> revealedAMCTiles = stackalloc int[tiles.Length];
 
             #region Hidden Nodes
 
-            var hiddenTileCount = 0;
-            for (int i = 0, l = tiles.Length; i < l; i++)
-            {
-                if (tiles[i].State == TileState.Hidden)
-                {
-                    hiddenTileIndexes[hiddenTileCount] = i;
-                    hiddenTileCount++;
-                }
-            }
+            //var hiddenTileCount = 0;
+            //for (int i = 0, l = tiles.Length; i < l; i++)
+            //{
+            //    if (tiles[i].State == TileState.Hidden)
+            //    {
+            //        hiddenTileIndexes[hiddenTileCount] = i;
+            //        hiddenTileCount++;
+            //    }
+            //}
 
             #endregion
 
@@ -95,19 +95,22 @@ namespace MSEngine.Solver
 
             var ahcCount = 0;
             Span<int> foo = stackalloc int[8];
-            Span<int> adjacentHiddenNodeIndex = stackalloc int[hiddenTileCount];
+            Span<int> adjacentHiddenNodeIndex = stackalloc int[tiles.Length];
 
-            foreach (var hiddenTileIndex in hiddenTileIndexes.Slice(0, hiddenTileCount))
+            for (int i = 0, l = tiles.Length; i < l; i++)
             {
+                var tile = tiles[i];
+                if (tile.State != TileState.Hidden) { continue; }
+
                 var hasAHC = false;
-                foo.FillAdjacentTileIndexes(tiles.Length, hiddenTileIndex, 8);
+                foo.FillAdjacentTileIndexes(tiles.Length, i, 8);
 
                 foreach (var x in foo)
                 {
                     if (x == -1) { continue; }
 
-                    var tile = tiles[x];
-                    if (tile.State == TileState.Revealed && tile.AdjacentMineCount > 0 && HasHiddenAdjacentTiles(tiles, x))
+                    var adjNode = tiles[x];
+                    if (adjNode.State == TileState.Revealed && adjNode.AdjacentMineCount > 0 && HasHiddenAdjacentTiles(tiles, x))
                     {
                         hasAHC = true;
                         break;
@@ -115,7 +118,7 @@ namespace MSEngine.Solver
                 }
                 if (hasAHC)
                 {
-                    adjacentHiddenNodeIndex[ahcCount] = hiddenTileIndex;
+                    adjacentHiddenNodeIndex[ahcCount] = i;
                     ahcCount++;
                 }
             }
@@ -127,7 +130,6 @@ namespace MSEngine.Solver
             var rowCount = revealedAMCTileCount;
             var columnCount = ahcCount + 1;
 
-            Span<int> adjacentIndexes = stackalloc int[8];
             Span<int> buffer = stackalloc int[rowCount * columnCount];
             var matrix = new FlatMatrix<int>(buffer, columnCount);
 
@@ -141,9 +143,10 @@ namespace MSEngine.Solver
                     matrix[row, column] = column == columnCount - 1
 
                         // augmented column has special logic
-                        ? tile.AdjacentMineCount - GetAdjacentFlaggedTileCount(tiles, adjacentIndexes, tileIndex)
+                        ? tile.AdjacentMineCount - GetAdjacentFlaggedTileCount(tiles, foo, tileIndex)
 
-                        : Utilities.IsAdjacentTo(revealedCoordinates[row], adjacentHiddenNodeIndex[column]) ? 1 : 0;
+                        : Utilities.IsAdjacentTo(foo, tiles.Length, 8, tileIndex, adjacentHiddenNodeIndex[column]) ? 1 : 0;
+                        //: Utilities.IsAdjacentTo(revealedCoordinates[row], adjacentHiddenNodeIndex[column]) ? 1 : 0;
                 }
             }
 
