@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 
 namespace MSEngine.Core
 {
@@ -131,7 +132,6 @@ namespace MSEngine.Core
 
             Span<int> visitedIndexes = stackalloc int[tiles.Length];
             Span<int> revealIndexes = stackalloc int[tiles.Length];
-            Span<int> adjacentIndexes = stackalloc int[8];
 
             visitedIndexes.Fill(-1);
             revealIndexes.Fill(-1);
@@ -139,15 +139,11 @@ namespace MSEngine.Core
             var visitedIndexCount = 0;
             var revealIndexCount = 0;
 
-            // TESTING
-            revealIndexes[revealIndexCount] = tileIndex;
-            revealIndexCount++;
-
-            VisitTile(tiles, adjacentIndexes, visitedIndexes, revealIndexes, tileIndex, ref visitedIndexCount, ref revealIndexCount);
+            VisitTile(tiles, visitedIndexes, revealIndexes, tileIndex, ref visitedIndexCount, ref revealIndexCount);
 
             for (int i = 0, l = tiles.Length; i < l; i++)
             {
-                if (revealIndexes.IndexOf(i) != -1)
+                if (tileIndex == i || revealIndexes.IndexOf(i) != -1)
                 {
                     var tile = tiles[i];
                     tiles[i] = new Tile(tile.HasMine, tile.AdjacentMineCount, TileOperation.Reveal);
@@ -158,37 +154,35 @@ namespace MSEngine.Core
         // we recursively visit tiles
         internal static void VisitTile(
             ReadOnlySpan<Tile> tiles,
-            Span<int> adjacentIndexes,
             Span<int> visitedIndexes,
             Span<int> revealIndexes,
             int tileIndex,
             ref int visitedIndexCount,
             ref int revealIndexCount)
         {
-            // Console.WriteLine("VISIT NODE = " + tileIndex);
             const int columnCount = 8;
+            Span<int> adjacentIndexes = stackalloc int[8];
             adjacentIndexes.FillAdjacentTileIndexes(tiles.Length, tileIndex, columnCount);
 
             visitedIndexes[visitedIndexCount] = tileIndex;
             visitedIndexCount++;
 
-            foreach (var index in adjacentIndexes)
+            foreach (var i in adjacentIndexes)
             {
-                if (index == -1) { continue; }
-                if (revealIndexes.IndexOf(index) != -1) { continue; }
+                if (i == -1) { continue; }
+                if (revealIndexes.IndexOf(i) != -1) { continue; }
 
-                var tile = tiles[index];
+                var tile = tiles[i];
 
                 // if an adjacent tile has a "false flag", it does not expand revealing
-                if (tile.State == TileState.Hidden)
-                {
-                    revealIndexes[revealIndexCount] = index;
-                    revealIndexCount++;
+                if (tile.State != TileState.Hidden) { continue; }
 
-                    if (tile.AdjacentMineCount == 0 && visitedIndexes.IndexOf(index) == -1)
-                    {
-                        VisitTile(tiles, adjacentIndexes, visitedIndexes, revealIndexes, index, ref visitedIndexCount, ref revealIndexCount);
-                    }
+                revealIndexes[revealIndexCount] = i;
+                revealIndexCount++;
+
+                if (tile.AdjacentMineCount == 0 && visitedIndexes.IndexOf(i) == -1)
+                {
+                    VisitTile(tiles, visitedIndexes, revealIndexes, i, ref visitedIndexCount, ref revealIndexCount);
                 }
             }
         }
