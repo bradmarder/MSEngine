@@ -4,60 +4,60 @@ namespace MSEngine.Core
 {
     public static class BoardExtensions
     {
-        public static BoardStatus Status(this Span<Tile> tiles) => Status((ReadOnlySpan<Tile>)tiles);
-        public static int FlagsAvailable(this Span<Tile> tiles) => FlagsAvailable((ReadOnlySpan<Tile>)tiles);
-        public static int MineCount(this Span<Tile> tiles) => MineCount((ReadOnlySpan<Tile>)tiles);
-        public static int FlaggedTilesCount(this Span<Tile> tiles) => FlaggedTilesCount((ReadOnlySpan<Tile>)tiles);
-        public static bool AllMinesFlagged(this Span<Tile> tiles) => AllMinesFlagged((ReadOnlySpan<Tile>)tiles);
+        public static BoardStatus Status(this Span<Node> nodes) => Status((ReadOnlySpan<Node>)nodes);
+        public static int FlagsAvailable(this Span<Node> nodes) => FlagsAvailable((ReadOnlySpan<Node>)nodes);
+        public static int MineCount(this Span<Node> nodes) => MineCount((ReadOnlySpan<Node>)nodes);
+        public static int FlaggedNodesCount(this Span<Node> nodes) => FlaggedNodesCount((ReadOnlySpan<Node>)nodes);
+        public static bool AllMinesFlagged(this Span<Node> nodes) => AllMinesFlagged((ReadOnlySpan<Node>)nodes);
 
-        public static BoardStatus Status(this ReadOnlySpan<Tile> tiles)
+        public static BoardStatus Status(this ReadOnlySpan<Node> nodes)
         {
             var complete = true;
-            for (int i = 0, l = tiles.Length; i < l; i++)
+            for (int i = 0, l = nodes.Length; i < l; i++)
             {
-                var tile = tiles[i];
-                if (tile.HasMineExploded)
+                var node = nodes[i];
+                if (node.HasMineExploded)
                 {
                     return BoardStatus.Failed;
                 }
-                if (!tile.SatisfiesWinningCriteria)
+                if (!node.SatisfiesWinningCriteria)
                 {
                     complete = false;
                 }
             }
             return complete ? BoardStatus.Completed : BoardStatus.Pending;
         }
-        public static int FlagsAvailable(this ReadOnlySpan<Tile> tiles) => tiles.MineCount() - tiles.FlaggedTilesCount();
-        public static int MineCount(this ReadOnlySpan<Tile> tiles)
+        public static int FlagsAvailable(this ReadOnlySpan<Node> nodes) => nodes.MineCount() - nodes.FlaggedNodesCount();
+        public static int MineCount(this ReadOnlySpan<Node> nodes)
         {
             var n = 0;
-            for (int i = 0, l = tiles.Length; i < l; i++)
+            for (int i = 0, l = nodes.Length; i < l; i++)
             {
-                if (tiles[i].HasMine)
+                if (nodes[i].HasMine)
                 {
                     n++;
                 }
             }
             return n;
         }
-        public static int FlaggedTilesCount(this ReadOnlySpan<Tile> tiles)
+        public static int FlaggedNodesCount(this ReadOnlySpan<Node> nodes)
         {
             var n = 0;
-            for (int i = 0, l = tiles.Length; i < l; i++)
+            for (int i = 0, l = nodes.Length; i < l; i++)
             {
-                if (tiles[i].State == TileState.Flagged)
+                if (nodes[i].State == NodeState.Flagged)
                 {
                     n++;
                 }
             }
             return n;
         }
-        public static bool AllMinesFlagged(this ReadOnlySpan<Tile> tiles)
+        public static bool AllMinesFlagged(this ReadOnlySpan<Node> nodes)
         {
-            for (int i = 0, l = tiles.Length; i < l; i++)
+            for (int i = 0, l = nodes.Length; i < l; i++)
             {
-                var tile = tiles[i];
-                if (tile.HasMine && tile.State != TileState.Flagged)
+                var node = nodes[i];
+                if (node.HasMine && node.State != NodeState.Flagged)
                 {
                     return false;
                 }

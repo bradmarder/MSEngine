@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
 
 namespace MSEngine.Core
 {
@@ -8,130 +7,131 @@ namespace MSEngine.Core
     {
         public static IBoardStateMachine Instance { get; } = new BoardStateMachine();
 
-        public virtual void EnsureValidBoardConfiguration(ReadOnlySpan<Tile> tiles, Turn turn)
+        public virtual void EnsureValidBoardConfiguration(ReadOnlySpan<Node> nodes, Turn turn)
         {
-            if (tiles.Status() == BoardStatus.Completed || tiles.Status() == BoardStatus.Failed)
+            if (nodes.Status() == BoardStatus.Completed || nodes.Status() == BoardStatus.Failed)
             {
                 throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
             }
-            if (turn.TileIndex > tiles.Length)
+            if (turn.NodeIndex > nodes.Length)
             {
                 throw new InvalidGameStateException("Turn has index outside the matrix");
             }
-            if (turn.Operation == TileOperation.Flag && tiles.FlagsAvailable() == 0)
+            if (turn.Operation == NodeOperation.Flag && nodes.FlagsAvailable() == 0)
             {
                 throw new InvalidGameStateException("No more flags available");
             }
 
-            var targetTile = tiles[turn.TileIndex];
-            if (targetTile.State == TileState.Revealed && turn.Operation != TileOperation.Chord && turn.Operation != TileOperation.Reveal)
+            var node = nodes[turn.NodeIndex];
+            if (node.State == NodeState.Revealed && turn.Operation != NodeOperation.Chord && turn.Operation != NodeOperation.Reveal)
             {
-                throw new InvalidGameStateException("Only chord/reveal operations are allowed on revealed tiles");
+                throw new InvalidGameStateException("Only chord/reveal operations are allowed on revealed nodes");
             }
-            if (targetTile.State == TileState.Flagged && turn.Operation == TileOperation.Flag)
+            if (node.State == NodeState.Flagged && turn.Operation == NodeOperation.Flag)
             {
-                throw new InvalidGameStateException("May not flag a tile that is already flagged");
+                throw new InvalidGameStateException("May not flag a node that is already flagged");
             }
-            if (turn.Operation == TileOperation.RemoveFlag && targetTile.State != TileState.Flagged)
+            if (turn.Operation == NodeOperation.RemoveFlag && node.State != NodeState.Flagged)
             {
-                throw new InvalidGameStateException("Impossible to remove flag from un-flagged tile");
+                throw new InvalidGameStateException("Impossible to remove flag from un-flagged node");
             }
-            if (turn.Operation == TileOperation.Chord)
+            if (turn.Operation == NodeOperation.Chord)
             {
-                if (targetTile.State != TileState.Revealed)
+                if (node.State != NodeState.Revealed)
                 {
-                    throw new InvalidGameStateException("May only chord a revealed tile");
+                    throw new InvalidGameStateException("May only chord a revealed node");
                 }
-                if (targetTile.AdjacentMineCount == 0)
+                if (node.MineCount == 0)
                 {
-                    throw new InvalidGameStateException("May only chord a tile that has adjacent mines");
+                    throw new InvalidGameStateException("May only chord a node that has adjacent mines");
                 }
 
-                var targetTileAdjacentFlagCount = 0;
-                var targetTileAdjacentHiddenCount = 0;
+                var nodeAdjacentFlagCount = 0;
+                var nodeAdjacentHiddenCount = 0;
                 Span<int> adjacentIndexes = stackalloc int[8];
-                adjacentIndexes.FillAdjacentTileIndexes(tiles.Length, turn.TileIndex, 8);
-                foreach(var i in adjacentIndexes)
+                adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, turn.NodeIndex, 8);
+
+                foreach (var i in adjacentIndexes)
                 {
-                    var tile = tiles[i];
-                    if (tile.State == TileState.Flagged) { targetTileAdjacentFlagCount++; }
-                    if (tile.State == TileState.Hidden) { targetTileAdjacentHiddenCount++; }
+                    var adjacentNode = nodes[i];
+                    if (adjacentNode.State == NodeState.Flagged) { nodeAdjacentFlagCount++; }
+                    if (adjacentNode.State == NodeState.Hidden) { nodeAdjacentHiddenCount++; }
                 }
 
-                if (targetTile.AdjacentMineCount != targetTileAdjacentFlagCount)
+                if (node.MineCount != nodeAdjacentFlagCount)
                 {
-                    throw new InvalidGameStateException("May only chord a tile when adjacent mine count equals adjacent tile flag count");
+                    throw new InvalidGameStateException("May only chord a node when adjacent mine count equals adjacent node flag count");
                 }
-                if (targetTileAdjacentHiddenCount == 0)
+                if (nodeAdjacentHiddenCount == 0)
                 {
-                    throw new InvalidGameStateException("May only chord a tile that has hidden adjacent tiles");
+                    throw new InvalidGameStateException("May only chord a node that has hidden adjacent nodes");
                 }
             }
         }
-        public virtual void ComputeBoard(Span<Tile> tiles, ReadOnlySpan<Turn> turns)
+        public virtual void ComputeBoard(Span<Node> nodes, ReadOnlySpan<Turn> turns)
         {
             foreach (var x in turns)
             {
-                ComputeBoard(tiles, x);
+                ComputeBoard(nodes, x);
             }
         }
-        public virtual void ComputeBoard(Span<Tile> tiles, Turn turn)
+        public virtual void ComputeBoard(Span<Node> nodes, Turn turn)
         {
-            var tile = tiles[turn.TileIndex];
+            var node = nodes[turn.NodeIndex];
 
-            // If a tile is already revealed, we return instead of throwing an exception
+            // If a node is already revealed, we return instead of throwing an exception
             // This is because the solver generates batches of turns at a time, and any turn
-            // may trigger a chain reaction and auto-reveal other tiles
-            if (tile.State == TileState.Revealed && turn.Operation == TileOperation.Reveal)
+            // may trigger a chain reaction and auto-reveal other nodes
+            if (node.State == NodeState.Revealed && turn.Operation == NodeOperation.Reveal)
             {
                 return;
             }
 
-            // these cases will only affect a single tile
-            if (turn.Operation == TileOperation.Flag || turn.Operation == TileOperation.RemoveFlag || (turn.Operation == TileOperation.Reveal && !tile.HasMine && tile.AdjacentMineCount > 0))
+            // these cases will only affect a single node
+            if (turn.Operation == NodeOperation.Flag || turn.Operation == NodeOperation.RemoveFlag || (turn.Operation == NodeOperation.Reveal && !node.HasMine && node.MineCount > 0))
             {
-                tiles[turn.TileIndex] = new Tile(tile.HasMine, tile.AdjacentMineCount, turn.Operation);
+                nodes[turn.NodeIndex] = new Node(node.HasMine, node.MineCount, turn.Operation);
                 return;
             }
 
-            if (turn.Operation == TileOperation.Reveal)
+            if (turn.Operation == NodeOperation.Reveal)
             {
-                if (tile.HasMine)
+                if (node.HasMine)
                 {
-                    FailBoard(tiles);
+                    FailBoard(nodes);
                 }
                 else
                 {
-                    ChainReaction(tiles, turn.TileIndex);
+                    ChainReaction(nodes, turn.NodeIndex);
                 }
                 return;
             }
 
-            if (turn.Operation == TileOperation.Chord)
+            if (turn.Operation == NodeOperation.Chord)
             {
-                Chord(tiles, turn.TileIndex);
+                Chord(nodes, turn.NodeIndex);
                 return;
             }
         }
 
-        internal static void FailBoard(Span<Tile> tiles)
+        internal static void FailBoard(Span<Node> nodes)
         {
             // should we show false flags?
-            foreach (ref var tile in tiles)
+            foreach (ref var node in nodes)
             {
-                if (tile.HasMine && tile.State == TileState.Hidden)
+                if (node.HasMine && node.State == NodeState.Hidden)
                 {
-                    tile = new Tile(tile.HasMine, tile.AdjacentMineCount, TileOperation.Reveal);
+                    node = new Node(node.HasMine, node.MineCount, NodeOperation.Reveal);
                 }
             }
         }
 
-        internal static void ChainReaction(Span<Tile> tiles, int tileIndex)
+        internal static void ChainReaction(Span<Node> nodes, int nodeIndex)
         {
-            Debug.Assert(tileIndex >= 0);
+            Debug.Assert(nodeIndex >= 0);
 
-            Span<int> visitedIndexes = stackalloc int[tiles.Length];
-            Span<int> revealIndexes = stackalloc int[tiles.Length];
+            Span<int> visitedIndexes = stackalloc int[nodes.Length];
+            Span<int> revealIndexes = stackalloc int[nodes.Length];
 
             visitedIndexes.Fill(-1);
             revealIndexes.Fill(-1);
@@ -139,32 +139,36 @@ namespace MSEngine.Core
             var visitedIndexCount = 0;
             var revealIndexCount = 0;
 
-            VisitTile(tiles, visitedIndexes, revealIndexes, tileIndex, ref visitedIndexCount, ref revealIndexCount);
+            VisitNode(nodes, visitedIndexes, revealIndexes, nodeIndex, ref visitedIndexCount, ref revealIndexCount);
 
-            for (int i = 0, l = tiles.Length; i < l; i++)
+            for (int i = 0, l = nodes.Length; i < l; i++)
             {
-                if (tileIndex == i || revealIndexes.IndexOf(i) != -1)
+                if (nodeIndex == i || revealIndexes.IndexOf(i) != -1)
                 {
-                    var tile = tiles[i];
-                    tiles[i] = new Tile(tile.HasMine, tile.AdjacentMineCount, TileOperation.Reveal);
+                    var node = nodes[i];
+                    nodes[i] = new Node(node.HasMine, node.MineCount, NodeOperation.Reveal);
                 }
             }
         }
 
-        // we recursively visit tiles
-        internal static void VisitTile(
-            ReadOnlySpan<Tile> tiles,
+        // we recursively visit nodes
+        internal static void VisitNode(
+            ReadOnlySpan<Node> nodes,
             Span<int> visitedIndexes,
             Span<int> revealIndexes,
-            int tileIndex,
+            int nodeIndex,
             ref int visitedIndexCount,
             ref int revealIndexCount)
         {
+            Debug.Assert(nodeIndex >= 0);
+            Debug.Assert(visitedIndexCount >= 0);
+            Debug.Assert(revealIndexCount >= 0);
+
             const int columnCount = 8;
             Span<int> adjacentIndexes = stackalloc int[8];
-            adjacentIndexes.FillAdjacentTileIndexes(tiles.Length, tileIndex, columnCount);
+            adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
 
-            visitedIndexes[visitedIndexCount] = tileIndex;
+            visitedIndexes[visitedIndexCount] = nodeIndex;
             visitedIndexCount++;
 
             foreach (var i in adjacentIndexes)
@@ -172,44 +176,37 @@ namespace MSEngine.Core
                 if (i == -1) { continue; }
                 if (revealIndexes.IndexOf(i) != -1) { continue; }
 
-                var tile = tiles[i];
+                var node = nodes[i];
 
-                // if an adjacent tile has a "false flag", it does not expand revealing
-                if (tile.State != TileState.Hidden) { continue; }
+                // if an adjacent node has a "false flag", it does not expand revealing
+                if (node.State != NodeState.Hidden) { continue; }
 
                 revealIndexes[revealIndexCount] = i;
                 revealIndexCount++;
 
-                if (tile.AdjacentMineCount == 0 && visitedIndexes.IndexOf(i) == -1)
+                if (node.MineCount == 0 && visitedIndexes.IndexOf(i) == -1)
                 {
-                    VisitTile(tiles, visitedIndexes, revealIndexes, i, ref visitedIndexCount, ref revealIndexCount);
+                    VisitNode(nodes, visitedIndexes, revealIndexes, i, ref visitedIndexCount, ref revealIndexCount);
                 }
             }
         }
 
-        internal void Chord(Span<Tile> tiles, int tileIndex)
+        internal void Chord(Span<Node> nodes, int nodeIndex)
         {
-            Debug.Assert(tileIndex >= 0);
-            Debug.Assert(tileIndex < tiles.Length);
+            Debug.Assert(nodeIndex >= 0);
+            Debug.Assert(nodeIndex < nodes.Length);
 
-            var turnCount = 0;
-            Span<Turn> turns = stackalloc Turn[8];
             Span<int> adjacentIndexes = stackalloc int[8];
-
-            adjacentIndexes.FillAdjacentTileIndexes(tiles.Length, tileIndex, 8);
+            adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, 8);
 
             foreach (var i in adjacentIndexes)
             {
                 if (i == -1) { continue; }
+                if (nodes[i].State != NodeState.Hidden) { continue; }
 
-                if (tiles[i].State == TileState.Hidden)
-                {
-                    turns[turnCount] = new Turn(i, TileOperation.Reveal);
-                    turnCount++;
-                }
+                var turn = new Turn(i, NodeOperation.Reveal);
+                ComputeBoard(nodes, turn);
             }
-
-            ComputeBoard(tiles, turns);
         }
     }
 }

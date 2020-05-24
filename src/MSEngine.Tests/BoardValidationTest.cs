@@ -8,58 +8,58 @@ namespace MSEngine.Tests
     public class BoardValidationTest
     {
         [Theory]
-        [InlineData(TileOperation.Reveal)]
-        [InlineData(TileOperation.Flag)]
-        [InlineData(TileOperation.RemoveFlag)]
-        [InlineData(TileOperation.Chord)]
-        public void Throws_exception_if_any_operation_applied_after_game_is_completed(TileOperation operation)
+        [InlineData(NodeOperation.Reveal)]
+        [InlineData(NodeOperation.Flag)]
+        [InlineData(NodeOperation.RemoveFlag)]
+        [InlineData(NodeOperation.Chord)]
+        public void Throws_exception_if_any_operation_applied_after_game_is_completed(NodeOperation operation)
         {
             Assert.Throws<InvalidGameStateException>(() =>
             {
-                Span<Tile> tiles = stackalloc Tile[8 * 8];
-                Engine.PureInstance.FillCustomBoard(tiles, 8, 8, 0);
-                var firstTurn = new Turn(0, TileOperation.Reveal);
+                Span<Node> nodes = stackalloc Node[8 * 8];
+                Engine.PureInstance.FillCustomBoard(nodes, 8, 8, 0);
+                var firstTurn = new Turn(0, NodeOperation.Reveal);
                 var secondTurn = new Turn(1, operation);
-                BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
+                BoardStateMachine.Instance.ComputeBoard(nodes, firstTurn);
 
-                Assert.Equal(BoardStatus.Completed, tiles.Status());
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, secondTurn);
+                Assert.Equal(BoardStatus.Completed, nodes.Status());
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, secondTurn);
             });
         }
 
         [Theory]
-        [InlineData(TileOperation.Reveal)]
-        [InlineData(TileOperation.Flag)]
-        [InlineData(TileOperation.RemoveFlag)]
-        [InlineData(TileOperation.Chord)]
-        public void Throws_exception_if_any_operation_applied_after_game_is_failed(TileOperation operation)
+        [InlineData(NodeOperation.Reveal)]
+        [InlineData(NodeOperation.Flag)]
+        [InlineData(NodeOperation.RemoveFlag)]
+        [InlineData(NodeOperation.Chord)]
+        public void Throws_exception_if_any_operation_applied_after_game_is_failed(NodeOperation operation)
         {
             Assert.Throws<InvalidGameStateException>(() =>
             {
-                Span<Tile> tiles = stackalloc Tile[8 * 8];
-                Engine.PureInstance.FillCustomBoard(tiles, 8, 8, 1);
-                var firstTurn = new Turn(0, TileOperation.Reveal);
+                Span<Node> nodes = stackalloc Node[8 * 8];
+                Engine.PureInstance.FillCustomBoard(nodes, 8, 8, 1);
+                var firstTurn = new Turn(0, NodeOperation.Reveal);
                 var secondTurn = new Turn(1, operation);
-                BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
+                BoardStateMachine.Instance.ComputeBoard(nodes, firstTurn);
 
-                Assert.Equal(BoardStatus.Failed, tiles.Status());
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, secondTurn);
+                Assert.Equal(BoardStatus.Failed, nodes.Status());
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, secondTurn);
             });
         }
 
         [Theory]
-        [InlineData(TileOperation.Flag)]
-        [InlineData(TileOperation.RemoveFlag)]
-        public void Throws_exception_if_flag_operation_applied_on_revealed_tile(TileOperation operation)
+        [InlineData(NodeOperation.Flag)]
+        [InlineData(NodeOperation.RemoveFlag)]
+        public void Throws_exception_if_flag_operation_applied_on_revealed_node(NodeOperation operation)
         {
             Assert.Throws<InvalidGameStateException>(() =>
             {
-                Span<Tile> tiles = stackalloc Tile[2 * 2];
-                Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 1);
-                var firstTurn = new Turn(3, TileOperation.Reveal);
-                BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
+                Span<Node> nodes = stackalloc Node[2 * 2];
+                Engine.PureInstance.FillCustomBoard(nodes, 2, 2, 1);
+                var firstTurn = new Turn(3, NodeOperation.Reveal);
+                BoardStateMachine.Instance.ComputeBoard(nodes, firstTurn);
                 var secondTurn = new Turn(3, operation);
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, secondTurn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, secondTurn);
             });
         }
 
@@ -68,11 +68,11 @@ namespace MSEngine.Tests
         {
             Assert.Throws<InvalidGameStateException>(() =>
             {
-                Span<Tile> tiles = stackalloc Tile[1 * 1];
-                Engine.PureInstance.FillCustomBoard(tiles, 1, 1, 0);
-                var turn = new Turn(1, TileOperation.Reveal);
+                Span<Node> nodes = stackalloc Node[1 * 1];
+                Engine.PureInstance.FillCustomBoard(nodes, 1, 1, 0);
+                var turn = new Turn(1, NodeOperation.Reveal);
 
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, turn);
             });
         }
 
@@ -81,94 +81,94 @@ namespace MSEngine.Tests
         {
             Assert.Throws<InvalidGameStateException>(() =>
             {
-                Span<Tile> tiles = stackalloc Tile[1 * 1];
-                Engine.PureInstance.FillCustomBoard(tiles, 1, 1, 0);
-                var turn = new Turn(0, TileOperation.Flag);
+                Span<Node> nodes = stackalloc Node[1 * 1];
+                Engine.PureInstance.FillCustomBoard(nodes, 1, 1, 0);
+                var turn = new Turn(0, NodeOperation.Flag);
 
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, turn);
             });
         }
 
         [Fact]
-        public void Throws_exception_if_operation_is_flag_and_tile_is_already_flagged()
+        public void Throws_exception_if_operation_is_flag_and_node_is_already_flagged()
         {
             Assert.Throws<InvalidGameStateException>(() =>
             {
-                Span<Tile> tiles = stackalloc Tile[1 * 2];
-                Engine.PureInstance.FillCustomBoard(tiles, 1, 2, 1);
-                var turn = new Turn(0, TileOperation.Flag);
-                BoardStateMachine.Instance.ComputeBoard(tiles, turn);
+                Span<Node> nodes = stackalloc Node[1 * 2];
+                Engine.PureInstance.FillCustomBoard(nodes, 1, 2, 1);
+                var turn = new Turn(0, NodeOperation.Flag);
+                BoardStateMachine.Instance.ComputeBoard(nodes, turn);
 
-                Assert.Equal(BoardStatus.Pending, tiles.Status());
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
+                Assert.Equal(BoardStatus.Pending, nodes.Status());
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, turn);
             });
         }
 
         [Fact]
-        public void Throws_exception_if_operation_is_remove_flag_and_tile_is_not_flagged()
+        public void Throws_exception_if_operation_is_remove_flag_and_node_is_not_flagged()
         {
             Assert.Throws<InvalidGameStateException>(() =>
             {
-                Span<Tile> tiles = stackalloc Tile[2 * 2];
-                Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 2);
-                var turn = new Turn(0, TileOperation.RemoveFlag);
+                Span<Node> nodes = stackalloc Node[2 * 2];
+                Engine.PureInstance.FillCustomBoard(nodes, 2, 2, 2);
+                var turn = new Turn(0, NodeOperation.RemoveFlag);
 
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, turn);
             });
         }
 
         [Fact]
-        public void Throws_exception_if_chord_on_non_revealed_tile()
+        public void Throws_exception_if_chord_on_non_revealed_node()
         {
             Assert.Throws<InvalidGameStateException>(() =>
             {
-                Span<Tile> tiles = stackalloc Tile[1 * 1];
-                Engine.PureInstance.FillCustomBoard(tiles, 1, 1, 0);
-                var turn = new Turn(0, TileOperation.Chord);
+                Span<Node> nodes = stackalloc Node[1 * 1];
+                Engine.PureInstance.FillCustomBoard(nodes, 1, 1, 0);
+                var turn = new Turn(0, NodeOperation.Chord);
 
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, turn);
             });
         }
 
         [Fact]
-        public void Throws_exception_if_chord_on_revealed_tile_with_zero_adjacent_mines()
+        public void Throws_exception_if_chord_on_revealed_node_with_zero_adjacent_mines()
         {
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 var origin = new Coordinates(2, 2);
-                Span<Tile> tiles = stackalloc Tile[3 * 3];
-                Engine.PureInstance.FillCustomBoard(tiles, 3, 3, 1);
-                var firstTurn = new Turn(8, TileOperation.Reveal);
-                var secondTurn = new Turn(8, TileOperation.Chord);
-                BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
-                var targetTile = tiles[8];
+                Span<Node> nodes = stackalloc Node[3 * 3];
+                Engine.PureInstance.FillCustomBoard(nodes, 3, 3, 1);
+                var firstTurn = new Turn(8, NodeOperation.Reveal);
+                var secondTurn = new Turn(8, NodeOperation.Chord);
+                BoardStateMachine.Instance.ComputeBoard(nodes, firstTurn);
+                var node = nodes[8];
 
-                Assert.Equal(TileState.Revealed, targetTile.State);
-                Assert.Equal(0, targetTile.AdjacentMineCount);
+                Assert.Equal(NodeState.Revealed, node.State);
+                Assert.Equal(0, node.MineCount);
 
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, secondTurn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, secondTurn);
             });
         }
 
         [Fact]
-        public void Throws_exception_if_chord_on_revealed_tile_when_adjacent_mine_count_does_not_equal_adjacent_flag_count()
+        public void Throws_exception_if_chord_on_revealed_node_when_adjacent_mine_count_does_not_equal_adjacent_flag_count()
         {
             Assert.Throws<InvalidGameStateException>(() =>
             {
-                Span<Tile> tiles = stackalloc Tile[2 * 2];
-                Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 3);
-                var firstTurn = new Turn(0, TileOperation.Flag);
-                var secondTurn = new Turn(3, TileOperation.Reveal);
-                var thirdTurn = new Turn(3, TileOperation.Chord);
+                Span<Node> nodes = stackalloc Node[2 * 2];
+                Engine.PureInstance.FillCustomBoard(nodes, 2, 2, 3);
+                var firstTurn = new Turn(0, NodeOperation.Flag);
+                var secondTurn = new Turn(3, NodeOperation.Reveal);
+                var thirdTurn = new Turn(3, NodeOperation.Chord);
 
-                BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
-                BoardStateMachine.Instance.ComputeBoard(tiles, secondTurn);
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, thirdTurn);
+                BoardStateMachine.Instance.ComputeBoard(nodes, firstTurn);
+                BoardStateMachine.Instance.ComputeBoard(nodes, secondTurn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, thirdTurn);
             });
         }
 
         [Fact]
-        public void Mayonlychordatilethathashiddenadjacenttiles()
+        public void MayonlychordNodeWithHiddenadjacentNodes()
         {
             Assert.True(true);
         }

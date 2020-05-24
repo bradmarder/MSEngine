@@ -23,42 +23,6 @@ namespace MSEngine.ConsoleApp
             RunSimulations(100000);
         }
 
-        //private static void RunRandomDistributionTest(Func<Board> boardGenerator, int maxIterationCount = int.MaxValue)
-        //{
-        //    var iteration = 0;
-        //    var board = boardGenerator();
-        //    var expectedAverage = board.MineCount / (decimal)(board.Width * board.Height);
-        //    var map = board.Tiles.ToDictionary(x => x.Coordinates, _ => 0);
-
-        //    while (iteration < maxIterationCount)
-        //    {
-        //        iteration++;
-
-        //        boardGenerator()
-        //            .Tiles
-        //            .Where(x => x.HasMine)
-        //            .ToList()
-        //            .ForEach(x => map[x.Coordinates]++);
-
-        //        var means = map
-        //            .Select(y => y.Value / (decimal)iteration)
-        //            .ToArray();
-        //        var min = means.Min();
-        //        var max = means.Max();
-        //        var minDiff = Math.Abs(expectedAverage - min); //.00369639666
-        //        var maxDiff = Math.Abs(expectedAverage - max); //.00333032896
-
-        //        Console.SetCursorPosition(0, Console.CursorTop);
-        //        Console.Write($"MinDiff = {minDiff} and MaxDiff = {maxDiff}");
-
-        //        // beginner
-        //        // MinDiff = 0.0008879570668942427624236854 and MaxDiff = 0.0007066073655878684435107989
-        //        // MinDiff = 0.0003602253545151916915500224 and MaxDiff = 0.0004654803596709192191884712
-        //    }
-
-        //    Console.ReadLine();
-        //}
-
         private static void RunSimulations(int count)
         {
             if (count < 1) { throw new ArgumentOutOfRangeException(nameof(count)); }
@@ -71,9 +35,9 @@ namespace MSEngine.ConsoleApp
 
         private static void ExecuteGame()
         {
-            Span<Tile> tiles = stackalloc Tile[8 * 8];
+            Span<Node> nodes = stackalloc Node[8 * 8];
             Span<Turn> turns = stackalloc Turn[0];
-            Engine.Instance.FillBeginnerBoard(tiles);
+            Engine.Instance.FillBeginnerBoard(nodes);
 
             var turnCount = 0;
 
@@ -83,13 +47,13 @@ namespace MSEngine.ConsoleApp
                 {
                     turns = stackalloc Turn[1]
                     {
-                        new Turn(24, TileOperation.Reveal)
+                        new Turn(24, NodeOperation.Reveal)
                     };
                 }
                 if (turns.Length == 0)
                 {
-                    turns = stackalloc Turn[tiles.Length];
-                    MatrixSolver.CalculateTurns(tiles, ref turns);
+                    turns = stackalloc Turn[nodes.Length];
+                    MatrixSolver.CalculateTurns(nodes, ref turns);
                     //foreach (var x in turns)
                     //{
                     //    Console.WriteLine(x.ToString());
@@ -98,34 +62,35 @@ namespace MSEngine.ConsoleApp
                     //{
                     //    Console.WriteLine("ZERO TURNS");
                     //}
-                    //for (var i = 0; i < tiles.Length; i++)
+                    //for (var i = 0; i < nodes.Length; i++)
                     //{
-                    //    Console.WriteLine($"index is {i} " + tiles[i].ToString());
+                    //    Console.WriteLine($"index is {i} " + nodes[i].ToString());
                     //}    
                 }
 
-                // if the matrix solver couldn't calculate any turns, we just select a "random" hidden tile
+                // if the matrix solver couldn't calculate any turns, we just select a "random" hidden node
                 if (turns.Length == 0)
                 {
                     turns = stackalloc Turn[1]
                     {
-                        EducatedGuessStrategy.UseStrategy(tiles)
+                        EducatedGuessStrategy.UseStrategy(nodes)
                     };
                 }
 
                 var turn = turns[0];
                 turns = turns.Slice(1, turns.Length - 1);
+                //if (turnCount > 0)
+                //{
+                //    BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, turn);
+                //}
+                BoardStateMachine.Instance.ComputeBoard(nodes, turn);
 
-                BoardStateMachine.Instance.ComputeBoard(tiles, turn);
-
-                // Get new board unless tile has no mine and zero AMC
-                var targetTile = tiles[turn.TileIndex];
-
-                var status = tiles.Status();
-                if (turnCount == 0 && (targetTile.AdjacentMineCount > 0 || status == BoardStatus.Failed))
+                // Get new board unless node has no mine and zero AMC
+                var status = nodes.Status();
+                if (turnCount == 0 && (nodes[turn.NodeIndex].MineCount > 0 || status == BoardStatus.Failed))
                 {
-                    // tiles.Clear(); not required since every tile is always reset
-                    Engine.Instance.FillBeginnerBoard(tiles);
+                    // nodes.Clear(); not required since every node is always reset
+                    Engine.Instance.FillBeginnerBoard(nodes);
                     turns = Span<Turn>.Empty;
                     continue;
                 }
@@ -155,15 +120,15 @@ namespace MSEngine.ConsoleApp
             }
         }
 
-        private static string GetBoardAsciiArt(Span<Tile> tiles)
+        private static string GetBoardAsciiArt(Span<Node> nodes)
         {
-            var sb = new StringBuilder(tiles.Length);
+            var sb = new StringBuilder(nodes.Length);
 
-            for (var i = 0; i < tiles.Length; i++)
+            for (var i = 0; i < nodes.Length; i++)
             {
-                var tile = tiles[i];
-                var tileChar = GetTileChar(tile);
-                sb.Append(tileChar);
+                var node = nodes[i];
+                var nodeChar = GetNodeChar(node);
+                sb.Append(nodeChar);
 
                 if (i > 0 && i % 7 == 0)
                 {
@@ -175,20 +140,20 @@ namespace MSEngine.ConsoleApp
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static char GetTileChar(in Tile tile)
+        private static char GetNodeChar(in Node node)
         {
-            switch (tile)
+            switch (node)
             {
-                case var z when z.State == TileState.Hidden:
+                case var z when z.State == NodeState.Hidden:
                     return '_';
-                case var z when z.State == TileState.Flagged:
+                case var z when z.State == NodeState.Flagged:
                     return '>';
                 case var z when z.HasMine:
                     return 'x';
-                case var z when z.State == TileState.Revealed:
-                    return z.AdjacentMineCount.ToString().First();
+                case var z when z.State == NodeState.Revealed:
+                    return z.MineCount.ToString().First();
                 default:
-                    throw new NotImplementedException(tile.ToString());
+                    throw new NotImplementedException(node.ToString());
             }
         }
     }

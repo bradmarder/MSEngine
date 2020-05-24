@@ -7,9 +7,9 @@ namespace MSEngine.Core
 {
     public static class Utilities
     {
-        public static bool IsAdjacentTo(Span<int> buffer, int tileCount, int columnCount, int i1, int i2)
+        public static bool IsAdjacentTo(Span<int> buffer, int nodeCount, int columnCount, int i1, int i2)
         {
-            buffer.FillAdjacentTileIndexes(tileCount, i1, columnCount);
+            buffer.FillAdjacentNodeIndexes(nodeCount, i1, columnCount);
 
             foreach (var i in buffer)
             {
@@ -19,48 +19,19 @@ namespace MSEngine.Core
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsAdjacentTo(Coordinates coordinateOne, Coordinates coordinateTwo)
-        {
-            var x1 = coordinateOne.X;
-            var y1 = coordinateOne.Y;
-            var x2 = coordinateTwo.X;
-            var y2 = coordinateTwo.Y;
-
-            // PERF: Prioritize filtering by x coordinate because expert boards have more columns than rows
-            return x2 > (x1 - 2)
-                && x2 < (x1 + 2)
-                && y2 > (y1 - 2)
-                && y2 < (y1 + 2)
-                && coordinateOne != coordinateTwo;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsNextTo(Coordinates coordinateOne, Coordinates coordinateTwo)
-        {
-            var x1 = coordinateOne.X;
-            var y1 = coordinateOne.Y;
-            var x2 = coordinateTwo.X;
-            var y2 = coordinateTwo.Y;
-
-            // PERF: Prioritize filtering by x coordinate because expert boards have more columns than rows
-            return (x1 == x2 && (y2 == (y1 + 1) || y2 == (y1 - 1)))
-                || (y1 == y2 && (x2 == (x1 + 1) || x2 == (x1 - 1)));
-        }
-
         // cache? 18ns or whatever is already fast...
-        public static void FillAdjacentTileIndexes(this Span<int> indexes, int tileCount, int index, int columnCount)
+        public static void FillAdjacentNodeIndexes(this Span<int> indexes, int nodeCount, int index, int columnCount)
         {
-            Debug.Assert(tileCount > 0);
+            Debug.Assert(nodeCount > 0);
             Debug.Assert(index >= 0);
-            Debug.Assert(index < tileCount);
+            Debug.Assert(index < nodeCount);
             Debug.Assert(columnCount > 0);
             Debug.Assert(indexes.Length == 8);
 
             var isTop = index < columnCount;
             var isLeftSide = index % columnCount == 0;
             var isRightSide = (index + 1) % columnCount == 0;
-            var isBottom = index >= tileCount - columnCount;
+            var isBottom = index >= nodeCount - columnCount;
 
             indexes.Fill(-1);
 
@@ -141,12 +112,12 @@ namespace MSEngine.Core
         }
 
         /// <summary>
-        /// scatter approach with mine indexes is 5x slower than scattering tiles
+        /// scatter approach with mine indexes is 5x slower than scattering nodes
         /// </summary>
-        internal static void Scatter(this Span<int> mines, int tileCount)
+        internal static void Scatter(this Span<int> mines, int nodeCount)
         {
-            Debug.Assert(tileCount > 0);
-            Debug.Assert(tileCount > mines.Length);
+            Debug.Assert(nodeCount > 0);
+            Debug.Assert(nodeCount > mines.Length);
 
             // we must fill the span with -1 because the default (0) is a valid index
             mines.Fill(-1);
@@ -162,17 +133,17 @@ namespace MSEngine.Core
                 // we use a loop to prevent duplicate indexes
                 do
                 {
-                    m = RandomNumberGenerator.GetInt32(tileCount);
+                    m = RandomNumberGenerator.GetInt32(nodeCount);
                 } while (mines.IndexOf(m) != -1);
 
                 mines[i] = m;
             }
         }
 
-        internal static void PseudoScatter(this Span<int> mines, int tileCount)
+        internal static void PseudoScatter(this Span<int> mines, int nodeCount)
         {
-            Debug.Assert(tileCount > 0);
-            Debug.Assert(tileCount > mines.Length);
+            Debug.Assert(nodeCount > 0);
+            Debug.Assert(nodeCount > mines.Length);
 
             // magic seed that produces a solvable beginner board
             var random = new Random(653635);
@@ -186,7 +157,7 @@ namespace MSEngine.Core
                 // we use a loop to prevent duplicate indexes
                 do
                 {
-                    m = random.Next(tileCount);
+                    m = random.Next(nodeCount);
                 } while (mines.IndexOf(m) != -1);
 
                 mines[i] = m;

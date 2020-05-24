@@ -22,16 +22,16 @@ namespace MSEngine.Core
             _shuffler = shuffler;
         }
 
-        public virtual void FillBeginnerBoard(Span<Tile> tiles) => FillCustomBoard(tiles, 8, 8, 10);
-        public virtual void FillIntermediateBoard(Span<Tile> tiles) => FillCustomBoard(tiles, 16, 16, 40);
-        public virtual void FillExpertBoard(Span<Tile> tiles) => FillCustomBoard(tiles, 30, 16, 99);
-        public virtual void FillCustomBoard(Span<Tile> tiles, byte columns, byte rows, byte mineCount)
+        public virtual void FillBeginnerBoard(Span<Node> nodes) => FillCustomBoard(nodes, 8, 8, 10);
+        public virtual void FillIntermediateBoard(Span<Node> nodes) => FillCustomBoard(nodes, 16, 16, 40);
+        public virtual void FillExpertBoard(Span<Node> nodes) => FillCustomBoard(nodes, 30, 16, 99);
+        public virtual void FillCustomBoard(Span<Node> nodes, byte columns, byte rows, byte mineCount)
         {
             if (columns == 0 || columns > 30) { throw new ArgumentOutOfRangeException(nameof(columns)); }
             if (rows == 0 || rows > 16) { throw new ArgumentOutOfRangeException(nameof(rows)); }
-            var tileCount = columns * rows;
-            if (mineCount >= tileCount) { throw new ArgumentOutOfRangeException(nameof(mineCount)); }
-            if (tiles.Length != tileCount) { throw new ArgumentOutOfRangeException(nameof(tiles)); }
+            var nodeCount = columns * rows;
+            if (mineCount >= nodeCount) { throw new ArgumentOutOfRangeException(nameof(mineCount)); }
+            if (nodes.Length != nodeCount) { throw new ArgumentOutOfRangeException(nameof(nodes)); }
 
             Span<int> mineIndexes = stackalloc int[mineCount];
             Span<int> adjacentIndexes = stackalloc int[8];
@@ -39,20 +39,20 @@ namespace MSEngine.Core
             switch (_shuffler)
             {
                 case Shuffler.Random:
-                    mineIndexes.Scatter(tileCount);
+                    mineIndexes.Scatter(nodeCount);
                     break;
                 case Shuffler.Hacked:
-                    mineIndexes.PseudoScatter(tileCount);
+                    mineIndexes.PseudoScatter(nodeCount);
                     break;
             };
 
-            for (var i = 0; i < tileCount; i++)
+            for (var i = 0; i < nodeCount; i++)
             {
-                adjacentIndexes.FillAdjacentTileIndexes(tileCount, i, columns);
+                adjacentIndexes.FillAdjacentNodeIndexes(nodeCount, i, columns);
                 var amc = GetAdjacentMineCount(mineIndexes, adjacentIndexes);
                 var hasMine = mineIndexes.IndexOf(i) != -1;
 
-                tiles[i] = new Tile(hasMine, amc);
+                nodes[i] = new Node(hasMine, amc);
             }
         }
         private static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, ReadOnlySpan<int> adjacentIndexes)

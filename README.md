@@ -26,7 +26,7 @@ Board ComputeBoard(Board board, IEnumerable<Turn> turns) => turns.Aggregate(boar
 - This approach allows for easy debugging, **replays** and **backwards time travel**
 - Inspired by the Starcraft 2 replay engine and TAS (tool assisted speedruns)
 - Everything immutable, enforce referential transparency
-- The first turn must select a tile without a mine *and* having zero adjacent mines (this logic is the responsibility of the client, not the engine)
+- The first turn must select a node without a mine *and* having zero adjacent mines (this logic is the responsibility of the client, not the engine)
 - The `System.Collections.Immutable` library has lesser performance relative to it's mutable counterparts
 
 ### API (Instances are thread-safe)

@@ -2,7 +2,7 @@
 
 namespace MSEngine.Core
 {
-    public enum TileState
+    public enum NodeState
     {
         Hidden,
         Revealed,

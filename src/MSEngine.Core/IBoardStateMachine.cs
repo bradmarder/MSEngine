@@ -9,21 +9,21 @@ namespace MSEngine.Core
         /// Calling this method is optional - It's intended usage is only when building-testing a client
         /// </summary>
         /// <exception cref="InvalidGameStateException">
-        /// -Multiple tiles have matching coordinates
+        /// -Multiple nodes have matching coordinates
         /// -Turns are not allowed if board status is completed/failed
         /// -Turn has coordinates that are outside the board
         /// -No more flags available
-        /// -Only chord operations are allowed on revealed tiles
-        /// -May not flag a tile that is already flagged
-        /// -Impossible to remove flag from un-flagged tile
-        /// -May only chord a revealed tile
-        /// -May only chord a tile that has adjacent mines
-        /// -May only chord a tile when adjacent mine count equals adjacent tile flag count
-        /// -May only chord a tile that has hidden adjacent tiles
+        /// -Only chord operations are allowed on revealed nodes
+        /// -May not flag a node that is already flagged
+        /// -Impossible to remove flag from un-flagged node
+        /// -May only chord a revealed node
+        /// -May only chord a node that has adjacent mines
+        /// -May only chord a node when adjacent mine count equals adjacent node flag count
+        /// -May only chord a node that has hidden adjacent nodes
         /// </exception>
-        void EnsureValidBoardConfiguration(ReadOnlySpan<Tile> tiles, Turn turn);
+        void EnsureValidBoardConfiguration(ReadOnlySpan<Node> nodes, Turn turn);
         
-        void ComputeBoard(Span<Tile> tiles, ReadOnlySpan<Turn> turns);
-        void ComputeBoard(Span<Tile> tiles, Turn turn);
+        void ComputeBoard(Span<Node> nodes, ReadOnlySpan<Turn> turns);
+        void ComputeBoard(Span<Node> nodes, Turn turn);
     }
 }

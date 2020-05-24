@@ -6,23 +6,23 @@ namespace MSEngine.Solver
 {
     public static class EducatedGuessStrategy
     {
-        public static Turn UseStrategy(Span<Tile> tiles)
+        public static Turn UseStrategy(Span<Node> nodes)
         {
             var maxIndex = -1;
             var maxHash = int.MinValue;
 
-            for (int i = 0, l = tiles.Length; i < l; i++)
+            for (int i = 0, l = nodes.Length; i < l; i++)
             {
-                var tile = tiles[i];
-                var hash = tile.GetHashCode();
-                if (tile.State == TileState.Hidden && hash > maxHash)
+                var node = nodes[i];
+                var hash = node.GetHashCode();
+                if (node.State == NodeState.Hidden && hash > maxHash)
                 {
                     maxIndex = i;
                     maxHash = hash;
                 }
             }
 
-            return new Turn(maxIndex, TileOperation.Reveal);
+            return new Turn(maxIndex, NodeOperation.Reveal);
         }
     }
 }

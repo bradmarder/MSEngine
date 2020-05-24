@@ -16,8 +16,8 @@ namespace MSEngine.Tests
         {
             Assert.Throws<ArgumentOutOfRangeException>(() =>
             {
-                Span<Tile> tiles = stackalloc Tile[columns * rows];
-                Engine.PureInstance.FillCustomBoard(tiles, columns, rows, 0);
+                Span<Node> nodes = stackalloc Node[columns * rows];
+                Engine.PureInstance.FillCustomBoard(nodes, columns, rows, 0);
             });
         }
 
@@ -28,11 +28,11 @@ namespace MSEngine.Tests
         [InlineData(30, 16)]
         public void ThrowsOnInsufficientBuffer(byte columns, byte rows)
         {
-            var tileCount = columns * rows;
+            var nodeCount = columns * rows;
             Assert.Throws<ArgumentOutOfRangeException>(() =>
             {
-                Span<Tile> tiles = stackalloc Tile[tileCount - 1];
-                Engine.PureInstance.FillCustomBoard(tiles, columns, rows, 0);
+                Span<Node> nodes = stackalloc Node[nodeCount - 1];
+                Engine.PureInstance.FillCustomBoard(nodes, columns, rows, 0);
             });
         }
 
@@ -43,11 +43,11 @@ namespace MSEngine.Tests
         [InlineData(30, 16)]
         public void ThrowsOnOverallocatedBuffer(byte columns, byte rows)
         {
-            var tileCount = columns * rows;
+            var nodeCount = columns * rows;
             Assert.Throws<ArgumentOutOfRangeException>(() =>
             {
-                Span<Tile> tiles = stackalloc Tile[tileCount + 1];
-                Engine.PureInstance.FillCustomBoard(tiles, columns, rows, 0);
+                Span<Node> nodes = stackalloc Node[nodeCount + 1];
+                Engine.PureInstance.FillCustomBoard(nodes, columns, rows, 0);
             });
         }
 
@@ -59,21 +59,21 @@ namespace MSEngine.Tests
         {
             byte columns = 30;
             byte rows = 16;
-            Span<Tile> tiles = stackalloc Tile[columns * rows];
-            Engine.PureInstance.FillCustomBoard(tiles, columns, rows, expectedMineCount);
+            Span<Node> nodes = stackalloc Node[columns * rows];
+            Engine.PureInstance.FillCustomBoard(nodes, columns, rows, expectedMineCount);
 
-            Assert.Equal(expectedMineCount, tiles.MineCount());
+            Assert.Equal(expectedMineCount, nodes.MineCount());
         }
 
         [Theory]
         [InlineData(64)]
         [InlineData(65)]
-        public void Throws_if_mine_count_is_greater_than_or_equal_to_tile_count(byte mineCount)
+        public void Throws_if_mine_count_is_greater_than_or_equal_to_node_count(byte mineCount)
         {
             Assert.Throws<ArgumentOutOfRangeException>(() =>
             {
-                Span<Tile> tiles = stackalloc Tile[64];
-                Engine.PureInstance.FillCustomBoard(tiles, 8, 8, mineCount);
+                Span<Node> nodes = stackalloc Node[64];
+                Engine.PureInstance.FillCustomBoard(nodes, 8, 8, mineCount);
             });
         }
     }
