@@ -12,7 +12,7 @@ namespace MSEngine.Tests
         {
             Span<Tile> tiles = stackalloc Tile[8 * 8];
             Engine.PureInstance.FillCustomBoard(tiles, 8, 8, 0);
-            var turn = new Turn(0, 0, TileOperation.Reveal);
+            var turn = new Turn(0, TileOperation.Reveal);
             BoardStateMachine.Instance.ComputeBoard(tiles, turn);
 
             Assert.Equal(BoardStatus.Completed, tiles.Status());
@@ -35,10 +35,9 @@ namespace MSEngine.Tests
             Span<Tile> tiles = stackalloc Tile[2 * 2];
             Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 1);
             var board = tiles.ToArray();
-            var origin = new Coordinates(0, 0);
-            var turn = new Turn(origin, TileOperation.Flag);
+            var turn = new Turn(0, TileOperation.Flag);
             BoardStateMachine.Instance.ComputeBoard(tiles, turn);
-            var tile = tiles.ToArray().Single(x => x.Coordinates == origin);
+            var tile = tiles[0];
             var everyOtherTileHasNotChanged = tiles.ToArray().All(x => x.Equals(tile) || board.Contains(x));
 
             Assert.Equal(TileState.Flagged, tile.State);
@@ -52,9 +51,9 @@ namespace MSEngine.Tests
             Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 1);
             var board = tiles.ToArray();
             var origin = new Coordinates(1, 0);
-            var turn = new Turn(origin, TileOperation.Reveal);
+            var turn = new Turn(0, TileOperation.Reveal);
             BoardStateMachine.Instance.ComputeBoard(tiles, turn);
-            var tile = tiles.ToArray().Single(x => x.Coordinates == origin);
+            var tile = tiles[0];
             var everyOtherTileHasNotChanged = tiles.ToArray().All(x => x.Equals(tile) || board.Contains(x));
 
             Assert.Equal(TileState.Revealed, tile.State);
@@ -68,9 +67,9 @@ namespace MSEngine.Tests
             Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 1);
             Span<Turn> turns = stackalloc Turn[3]
             {
-                new Turn(0, 0, TileOperation.Flag),
-                new Turn(1, 1, TileOperation.Reveal),
-                new Turn(1, 1, TileOperation.Chord)
+                new Turn(0, TileOperation.Flag),
+                new Turn(3, TileOperation.Reveal),
+                new Turn(3, TileOperation.Chord)
             };
             BoardStateMachine.Instance.ComputeBoard(tiles, turns);
 
@@ -85,16 +84,19 @@ namespace MSEngine.Tests
         {
             Span<Tile> tiles = stackalloc Tile[3 * 3];
             Engine.PureInstance.FillCustomBoard(tiles, 3, 3, 1);
-            var targetTile = tiles.ToArray().Single(x => x.Coordinates.X == 2 && x.Coordinates.Y == 2);
-            var firstTurn = new Turn(2, 2, TileOperation.Reveal);
+            var targetTile = tiles[8];
+            var firstTurn = new Turn(8, TileOperation.Reveal);
             BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
-            var mineTile = tiles.ToArray().Single(x => x.Coordinates.X == 0 && x.Coordinates.Y == 0);
-            var everyTileOtherThanMineTile = tiles.ToArray().Where(x => x.Coordinates != mineTile.Coordinates);
 
             Assert.False(targetTile.HasMine);
             Assert.Equal(0, targetTile.AdjacentMineCount);
-            Assert.True(mineTile.HasMine);
-            Assert.True(everyTileOtherThanMineTile.All(x => x.State == TileState.Revealed));
+            Assert.True(tiles[0].HasMine);
+
+            for (var i = 0; i < tiles.Length; i++)
+            {
+                if (i == 0) { continue; }
+                Assert.Equal(TileState.Revealed, tiles[i].State);
+            }
         }
 
         [Fact]
@@ -104,24 +106,21 @@ namespace MSEngine.Tests
             Engine.PureInstance.FillCustomBoard(tiles, 5, 1, 0);
             Span<Turn> turns = stackalloc Turn[2]
             {
-                new Turn(2, 0, TileOperation.Flag),
-                new Turn(4, 0, TileOperation.Reveal)
+                new Turn(2, TileOperation.Flag),
+                new Turn(4, TileOperation.Reveal)
             };
             BoardStateMachine.Instance.ComputeBoard(tiles, turns);
-            var firstTwoTilesAreHidden = tiles
-                .ToArray()
-                .Where(x => x.Coordinates.X < 2)
-                .All(x => x.State == TileState.Hidden);
-            var lastTwoTilesAreRevealed = tiles
-                .ToArray()
-                .Where(x => x.Coordinates.X > 2)
-                .All(x => x.State == TileState.Revealed);
-            var middleTile = tiles.ToArray().Single(x => x.Coordinates.X == 2);
 
-            Assert.Equal(TileState.Flagged, middleTile.State);
+            for (var i = 0; i < tiles.Length; i++)
+            {
+                var nodeState = tiles[i].State;
+                var expectedState = i == 2 ? TileState.Flagged
+                    : i < 2 ? TileState.Hidden
+                    : TileState.Revealed;
+
+                Assert.Equal(expectedState, nodeState);
+            }
             Assert.Equal(BoardStatus.Pending, tiles.Status());
-            Assert.True(firstTwoTilesAreHidden);
-            Assert.True(lastTwoTilesAreRevealed);
         }
     }
 }

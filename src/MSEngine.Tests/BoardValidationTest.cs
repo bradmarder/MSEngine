@@ -7,19 +7,6 @@ namespace MSEngine.Tests
 {
     public class BoardValidationTest
     {
-        [Fact]
-        public void Throws_if_board_has_duplicate_coordinates()
-        {
-            var dupeCoordinates = new Coordinates(0, 0);
-            var tile = new Tile(dupeCoordinates, false, 0);
-
-            Assert.Throws<InvalidGameStateException>(() =>
-            {
-                Span<Tile> tiles = stackalloc Tile[2] { tile, tile };
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, new Turn());
-            });
-        }
-
         [Theory]
         [InlineData(TileOperation.Reveal)]
         [InlineData(TileOperation.Flag)]
@@ -31,8 +18,8 @@ namespace MSEngine.Tests
             {
                 Span<Tile> tiles = stackalloc Tile[8 * 8];
                 Engine.PureInstance.FillCustomBoard(tiles, 8, 8, 0);
-                var firstTurn = new Turn(0, 0, TileOperation.Reveal);
-                var secondTurn = new Turn(0, 1, operation);
+                var firstTurn = new Turn(0, TileOperation.Reveal);
+                var secondTurn = new Turn(1, operation);
                 BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
 
                 Assert.Equal(BoardStatus.Completed, tiles.Status());
@@ -51,8 +38,8 @@ namespace MSEngine.Tests
             {
                 Span<Tile> tiles = stackalloc Tile[8 * 8];
                 Engine.PureInstance.FillCustomBoard(tiles, 8, 8, 1);
-                var firstTurn = new Turn(0, 0, TileOperation.Reveal);
-                var secondTurn = new Turn(0, 1, operation);
+                var firstTurn = new Turn(0, TileOperation.Reveal);
+                var secondTurn = new Turn(1, operation);
                 BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
 
                 Assert.Equal(BoardStatus.Failed, tiles.Status());
@@ -69,9 +56,9 @@ namespace MSEngine.Tests
             {
                 Span<Tile> tiles = stackalloc Tile[2 * 2];
                 Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 1);
-                var firstTurn = new Turn(1, 1, TileOperation.Reveal);
+                var firstTurn = new Turn(3, TileOperation.Reveal);
                 BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
-                var secondTurn = new Turn(1, 1, operation);
+                var secondTurn = new Turn(3, operation);
                 BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, secondTurn);
             });
         }
@@ -83,7 +70,7 @@ namespace MSEngine.Tests
             {
                 Span<Tile> tiles = stackalloc Tile[1 * 1];
                 Engine.PureInstance.FillCustomBoard(tiles, 1, 1, 0);
-                var turn = new Turn(1, 0, TileOperation.Reveal);
+                var turn = new Turn(1, TileOperation.Reveal);
 
                 BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
             });
@@ -96,7 +83,7 @@ namespace MSEngine.Tests
             {
                 Span<Tile> tiles = stackalloc Tile[1 * 1];
                 Engine.PureInstance.FillCustomBoard(tiles, 1, 1, 0);
-                var turn = new Turn(0, 0, TileOperation.Flag);
+                var turn = new Turn(0, TileOperation.Flag);
 
                 BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
             });
@@ -109,7 +96,7 @@ namespace MSEngine.Tests
             {
                 Span<Tile> tiles = stackalloc Tile[1 * 2];
                 Engine.PureInstance.FillCustomBoard(tiles, 1, 2, 1);
-                var turn = new Turn(0, 0, TileOperation.Flag);
+                var turn = new Turn(0, TileOperation.Flag);
                 BoardStateMachine.Instance.ComputeBoard(tiles, turn);
 
                 Assert.Equal(BoardStatus.Pending, tiles.Status());
@@ -124,7 +111,7 @@ namespace MSEngine.Tests
             {
                 Span<Tile> tiles = stackalloc Tile[2 * 2];
                 Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 2);
-                var turn = new Turn(0, 0, TileOperation.RemoveFlag);
+                var turn = new Turn(0, TileOperation.RemoveFlag);
 
                 BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
             });
@@ -137,7 +124,7 @@ namespace MSEngine.Tests
             {
                 Span<Tile> tiles = stackalloc Tile[1 * 1];
                 Engine.PureInstance.FillCustomBoard(tiles, 1, 1, 0);
-                var turn = new Turn(0, 0, TileOperation.Chord);
+                var turn = new Turn(0, TileOperation.Chord);
 
                 BoardStateMachine.Instance.EnsureValidBoardConfiguration(tiles, turn);
             });
@@ -151,10 +138,10 @@ namespace MSEngine.Tests
                 var origin = new Coordinates(2, 2);
                 Span<Tile> tiles = stackalloc Tile[3 * 3];
                 Engine.PureInstance.FillCustomBoard(tiles, 3, 3, 1);
-                var firstTurn = new Turn(origin, TileOperation.Reveal);
-                var secondTurn = new Turn(origin, TileOperation.Chord);
+                var firstTurn = new Turn(8, TileOperation.Reveal);
+                var secondTurn = new Turn(8, TileOperation.Chord);
                 BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
-                var targetTile = tiles.ToArray().Single(x => x.Coordinates == origin);
+                var targetTile = tiles[8];
 
                 Assert.Equal(TileState.Revealed, targetTile.State);
                 Assert.Equal(0, targetTile.AdjacentMineCount);
@@ -169,11 +156,10 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Tile> tiles = stackalloc Tile[2 * 2];
-                var origin = new Coordinates(1, 1);
                 Engine.PureInstance.FillCustomBoard(tiles, 2, 2, 3);
-                var firstTurn = new Turn(0, 0, TileOperation.Flag);
-                var secondTurn = new Turn(origin, TileOperation.Reveal);
-                var thirdTurn = new Turn(origin, TileOperation.Chord);
+                var firstTurn = new Turn(0, TileOperation.Flag);
+                var secondTurn = new Turn(3, TileOperation.Reveal);
+                var thirdTurn = new Turn(3, TileOperation.Chord);
 
                 BoardStateMachine.Instance.ComputeBoard(tiles, firstTurn);
                 BoardStateMachine.Instance.ComputeBoard(tiles, secondTurn);
