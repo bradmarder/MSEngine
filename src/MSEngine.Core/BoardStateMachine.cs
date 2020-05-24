@@ -90,7 +90,7 @@ namespace MSEngine.Core
             // these cases will only affect a single node
             if (turn.Operation == NodeOperation.Flag || turn.Operation == NodeOperation.RemoveFlag || (turn.Operation == NodeOperation.Reveal && !node.HasMine && node.MineCount > 0))
             {
-                nodes[turn.NodeIndex] = new Node(node.HasMine, node.MineCount, turn.Operation);
+                
                 return;
             }
 
@@ -102,6 +102,7 @@ namespace MSEngine.Core
                 }
                 else
                 {
+                    nodes[turn.NodeIndex] = new Node(node.HasMine, node.MineCount, NodeOperation.Reveal);
                     ChainReaction(nodes, turn.NodeIndex);
                 }
                 return;
@@ -130,63 +131,41 @@ namespace MSEngine.Core
         {
             Debug.Assert(nodeIndex >= 0);
 
-            Span<int> visitedIndexes = stackalloc int[nodes.Length];
-            Span<int> revealIndexes = stackalloc int[nodes.Length];
-
-            visitedIndexes.Fill(-1);
-            revealIndexes.Fill(-1);
-
             var visitedIndexCount = 0;
-            var revealIndexCount = 0;
+            Span<int> visitedIndexes = stackalloc int[nodes.Length]; //  subtract nodes.MineCount() ?
+            visitedIndexes.Fill(-1);
 
-            VisitNode(nodes, visitedIndexes, revealIndexes, nodeIndex, ref visitedIndexCount, ref revealIndexCount);
-
-            for (int i = 0, l = nodes.Length; i < l; i++)
-            {
-                if (nodeIndex == i || revealIndexes.IndexOf(i) != -1)
-                {
-                    var node = nodes[i];
-                    nodes[i] = new Node(node.HasMine, node.MineCount, NodeOperation.Reveal);
-                }
-            }
+            VisitNode(nodes, nodeIndex, visitedIndexes, ref visitedIndexCount);
         }
 
-        // we recursively visit nodes
-        internal static void VisitNode(
-            ReadOnlySpan<Node> nodes,
-            Span<int> visitedIndexes,
-            Span<int> revealIndexes,
-            int nodeIndex,
-            ref int visitedIndexCount,
-            ref int revealIndexCount)
+        // we recursively visit and reveal/expand nodes
+        internal static void VisitNode(Span<Node> nodes, int nodeIndex, Span<int> visitedIndexes, ref int visitedIndexCount)
         {
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(visitedIndexCount >= 0);
-            Debug.Assert(revealIndexCount >= 0);
 
             const int columnCount = 8;
-            Span<int> adjacentIndexes = stackalloc int[8];
-            adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
 
             visitedIndexes[visitedIndexCount] = nodeIndex;
             visitedIndexCount++;
 
+            Span<int> adjacentIndexes = stackalloc int[8];
+            adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
+
             foreach (var i in adjacentIndexes)
             {
                 if (i == -1) { continue; }
-                if (revealIndexes.IndexOf(i) != -1) { continue; }
 
                 var node = nodes[i];
 
                 // if an adjacent node has a "false flag", it does not expand revealing
                 if (node.State != NodeState.Hidden) { continue; }
 
-                revealIndexes[revealIndexCount] = i;
-                revealIndexCount++;
+                nodes[i] = new Node(node.HasMine, node.MineCount, NodeOperation.Reveal);
 
                 if (node.MineCount == 0 && visitedIndexes.IndexOf(i) == -1)
                 {
-                    VisitNode(nodes, visitedIndexes, revealIndexes, i, ref visitedIndexCount, ref revealIndexCount);
+                    VisitNode(nodes, i, visitedIndexes, ref visitedIndexCount);
                 }
             }
         }
