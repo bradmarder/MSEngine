@@ -13,9 +13,10 @@ namespace MSEngine.Solver
 
             for (int i = 0, l = nodes.Length; i < l; i++)
             {
-                var node = nodes[i];
-                var hash = node.GetHashCode();
-                if (node.State == NodeState.Hidden && hash > maxHash)
+                if (nodes[i].State != NodeState.Hidden) { continue; }
+
+                var hash = i.GetHashCode();
+                if (hash > maxHash)
                 {
                     maxIndex = i;
                     maxHash = hash;
