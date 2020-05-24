@@ -53,9 +53,10 @@ namespace MSEngine.Solver
             Debug.Assert(tiles.Length > 0);
             Debug.Assert(tiles.Length == turns.Length);
 
-            // overallocated
             Span<int> hiddenTileIndexes = stackalloc int[tiles.Length];
             Span<int> revealedAMCTiles = stackalloc int[tiles.Length];
+
+            #region Hidden Nodes
 
             var hiddenTileCount = 0;
             for (int i = 0, l = tiles.Length; i < l; i++)
@@ -66,7 +67,10 @@ namespace MSEngine.Solver
                     hiddenTileCount++;
                 }
             }
-            hiddenTileIndexes = hiddenTileIndexes.Slice(0, hiddenTileCount);
+
+            #endregion
+
+            #region Revealed Nodes with AMC > 0
 
             var revealedAMCTileCount = 0;
             for (int i = 0, l = tiles.Length; i < l; i++)
@@ -78,7 +82,8 @@ namespace MSEngine.Solver
                     revealedAMCTileCount++;
                 }
             }
-            revealedAMCTiles = revealedAMCTiles.Slice(0, revealedAMCTileCount);
+
+            #endregion
 
             if (revealedAMCTileCount == 0)
             {
@@ -86,17 +91,23 @@ namespace MSEngine.Solver
                 return;
             }
 
-            // overallocated
-            Span<int> adjacentHiddenCoordinates = stackalloc int[hiddenTileIndexes.Length];
+            #region Adjacent Hidden Node Indexes
+
             var ahcCount = 0;
-            for (int i = 0, l = adjacentHiddenCoordinates.Length; i < l; i++)
+            Span<int> foo = stackalloc int[8];
+            Span<int> adjacentHiddenNodeIndex = stackalloc int[hiddenTileCount];
+
+            foreach (var hiddenTileIndex in hiddenTileIndexes.Slice(0, hiddenTileCount))
             {
-                bool hasAHC = false;
-                var hiddenCoor = hiddenTileIndexes[i];
-                for (int n = 0, m = revealedAMCTiles.Length; n < m; n++)
+                var hasAHC = false;
+                foo.FillAdjacentTileIndexes(tiles.Length, hiddenTileIndex, 8);
+
+                foreach (var x in foo)
                 {
-                    // if we find *Any* adjacent, we break out of the inner for loop
-                    if (Utilities.IsAdjacentTo(hiddenCoor, revealedAMCTiles[n]))
+                    if (x == -1) { continue; }
+
+                    var tile = tiles[x];
+                    if (tile.State == TileState.Revealed && tile.AdjacentMineCount > 0 && HasHiddenAdjacentTiles(tiles, x))
                     {
                         hasAHC = true;
                         break;
@@ -104,14 +115,17 @@ namespace MSEngine.Solver
                 }
                 if (hasAHC)
                 {
-                    adjacentHiddenCoordinates[ahcCount] = hiddenCoor;
+                    adjacentHiddenNodeIndex[ahcCount] = hiddenTileIndex;
                     ahcCount++;
                 }
             }
-            adjacentHiddenCoordinates = adjacentHiddenCoordinates.Slice(0, ahcCount);
 
-            var rowCount = revealedAMCTiles.Length;
-            var columnCount = adjacentHiddenCoordinates.Length + 1;
+            #endregion
+
+            #region Raw Matrix Generation
+
+            var rowCount = revealedAMCTileCount;
+            var columnCount = ahcCount + 1;
 
             Span<int> adjacentIndexes = stackalloc int[8];
             Span<int> buffer = stackalloc int[rowCount * columnCount];
@@ -124,19 +138,23 @@ namespace MSEngine.Solver
                     var tileIndex = revealedAMCTiles[row];
                     var tile = tiles[tileIndex];
 
-                    matrix[row, column] = (column == columnCount - 1
+                    matrix[row, column] = column == columnCount - 1
 
                         // augmented column has special logic
                         ? tile.AdjacentMineCount - GetAdjacentFlaggedTileCount(tiles, adjacentIndexes, tileIndex)
 
-                        : Utilities.IsAdjacentTo(revealedCoordinates[row], adjacentHiddenCoordinates[column]) ? 1 : 0);
+                        : Utilities.IsAdjacentTo(revealedCoordinates[row], adjacentHiddenNodeIndex[column]) ? 1 : 0;
                 }
             }
+
+            #endregion
 
             // output view of the matrix
             // output view of gauss matrix (ensure gaussed properly??)
 
             matrix.GaussEliminate();
+
+            #region Guass Matrix Processing
 
             // exclude the augmented column
             var finalIndex = columnCount - 1;
@@ -171,7 +189,7 @@ namespace MSEngine.Solver
                     {
                         continue;
                     }
-                    var index = adjacentHiddenCoordinates[column];
+                    var index = adjacentHiddenNodeIndex[column];
 
                     var turn = final == min
 
@@ -189,6 +207,8 @@ namespace MSEngine.Solver
                     }
                 }
             }
+
+            #endregion
 
             // we must slice due to overallocation
             turns = turns.Slice(0, turnCount);

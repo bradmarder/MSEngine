@@ -127,6 +127,8 @@ namespace MSEngine.Core
 
         internal static void ChainReaction(Span<Tile> tiles, int tileIndex)
         {
+            Debug.Assert(tileIndex >= 0);
+
             Span<int> visitedIndexes = stackalloc int[tiles.Length];
             Span<int> revealIndexes = stackalloc int[tiles.Length];
             Span<int> adjacentIndexes = stackalloc int[8];
@@ -151,7 +153,7 @@ namespace MSEngine.Core
 
         // we recursively visit tiles
         internal static void VisitTile(
-            Span<Tile> tiles,
+            ReadOnlySpan<Tile> tiles,
             Span<int> adjacentIndexes,
             Span<int> visitedIndexes,
             Span<int> revealIndexes,
