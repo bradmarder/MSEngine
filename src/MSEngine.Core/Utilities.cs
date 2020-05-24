@@ -74,43 +74,6 @@ namespace MSEngine.Core
             }
         }
 
-        internal static void ShuffleItems<T>(this Span<T> items)
-        {
-            var n = items.Length;
-
-            while (n > 1)
-            {
-                n--;
-                var k = RandomNumberGenerator.GetInt32(n + 1);
-                var value = items[k];
-                items[k] = items[n];
-                items[n] = value;
-            }
-        }
-
-        /// <summary>
-        /// Intended for testing/benchmarking a deterministic board that requires zero guesses to solve
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="list"></param>
-        /// <returns></returns>
-        internal static void PseudoShuffleItems<T>(this Span<T> items)
-        {
-            var n = items.Length;
-
-            // magic seed that produces a solvable beginner board
-            var random = new Random(653635);
-
-            while (n > 1)
-            {
-                n--;
-                var k = random.Next(n + 1);
-                var value = items[k];
-                items[k] = items[n];
-                items[n] = value;
-            }
-        }
-
         /// <summary>
         /// scatter approach with mine indexes is 5x slower than scattering nodes
         /// </summary>
