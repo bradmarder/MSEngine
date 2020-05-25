@@ -11,7 +11,7 @@ namespace MSEngine.Tests
         public void Zero_mine_count_with_one_reveal_completes_board()
         {
             Span<Node> nodes = stackalloc Node[8 * 8];
-            Engine.PureInstance.FillCustomBoard(nodes, 8, 8, 0);
+            Engine.Instance.FillCustomBoard(nodes, 8, 8, 0);
             var turn = new Turn(0, NodeOperation.Reveal);
             BoardStateMachine.Instance.ComputeBoard(nodes, turn);
 
@@ -22,7 +22,7 @@ namespace MSEngine.Tests
         public void All_mines_revealed_if_game_fails()
         {
             Span<Node> nodes = stackalloc Node[2 * 2];
-            Engine.PureInstance.FillCustomBoard(nodes, 2, 2, 1);
+            Engine.Instance.FillCustomBoard(nodes, 2, 2, 1);
             BoardStateMachine.FailBoard(nodes);
             var allNodesRevealed = nodes.ToArray().All(x => !x.HasMine || x.State == NodeState.Flagged || x.State == NodeState.Revealed);
 
@@ -33,7 +33,7 @@ namespace MSEngine.Tests
         public void Flagging_node_only_flags_single_node()
         {
             Span<Node> nodes = stackalloc Node[2 * 2];
-            Engine.PureInstance.FillCustomBoard(nodes, 2, 2, 1);
+            Engine.Instance.FillCustomBoard(nodes, 2, 2, 1);
             var board = nodes.ToArray();
             var turn = new Turn(0, NodeOperation.Flag);
             BoardStateMachine.Instance.ComputeBoard(nodes, turn);
@@ -48,7 +48,7 @@ namespace MSEngine.Tests
         public void Revealing_node_with_no_mine_and_has_adjacent_mines_only_reveals_single_node()
         {
             Span<Node> nodes = stackalloc Node[2 * 2];
-            Engine.PureInstance.FillCustomBoard(nodes, 2, 2, 1);
+            Engine.Instance.FillCustomBoard(nodes, 2, 2, 1);
             var board = nodes.ToArray();
             var turn = new Turn(0, NodeOperation.Reveal);
             BoardStateMachine.Instance.ComputeBoard(nodes, turn);
@@ -63,7 +63,7 @@ namespace MSEngine.Tests
         public void Chording_node_reveals_surrounding_nodes()
         {
             Span<Node> nodes = stackalloc Node[2 * 2];
-            Engine.PureInstance.FillCustomBoard(nodes, 2, 2, 1);
+            Engine.Instance.FillCustomBoard(nodes, 2, 2, 1);
             Span<Turn> turns = stackalloc Turn[3]
             {
                 new Turn(0, NodeOperation.Flag),
@@ -82,7 +82,7 @@ namespace MSEngine.Tests
         public void Revealing_node_without_mine_and_zero_adjacent_mines_triggers_chain_reaction()
         {
             Span<Node> nodes = stackalloc Node[3 * 3];
-            Engine.PureInstance.FillCustomBoard(nodes, 3, 3, 1);
+            Engine.Instance.FillCustomBoard(nodes, 3, 3, 1);
             var node = nodes[8];
             var firstTurn = new Turn(8, NodeOperation.Reveal);
             BoardStateMachine.Instance.ComputeBoard(nodes, firstTurn);
@@ -102,7 +102,7 @@ namespace MSEngine.Tests
         public void Chain_reaction_is_blocked_by_false_flag()
         {
             Span<Node> nodes = stackalloc Node[5 * 1];
-            Engine.PureInstance.FillCustomBoard(nodes, 5, 1, 0);
+            Engine.Instance.FillCustomBoard(nodes, 5, 1, 0);
             Span<Turn> turns = stackalloc Turn[2]
             {
                 new Turn(2, NodeOperation.Flag),
