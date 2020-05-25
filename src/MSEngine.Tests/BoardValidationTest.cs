@@ -135,7 +135,6 @@ namespace MSEngine.Tests
         {
             Assert.Throws<InvalidGameStateException>(() =>
             {
-                var origin = new Coordinates(2, 2);
                 Span<Node> nodes = stackalloc Node[3 * 3];
                 Engine.PureInstance.FillCustomBoard(nodes, 3, 3, 1);
                 var firstTurn = new Turn(8, NodeOperation.Reveal);
@@ -172,5 +171,11 @@ namespace MSEngine.Tests
         {
             Assert.True(true);
         }
+
+        // We visit nodes regardless of whether they have already been revealed.
+        // Realistically, this never happens. However, there is a case with
+        // abusing flags which could lead to this case
+        // TODO: add test
+        // ring of flags used to create a ring of revealed nodes
     }
 }

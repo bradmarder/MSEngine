@@ -36,15 +36,7 @@ namespace MSEngine.Core
             Span<int> mineIndexes = stackalloc int[mineCount];
             Span<int> adjacentIndexes = stackalloc int[8];
 
-            switch (_shuffler)
-            {
-                case Shuffler.Random:
-                    mineIndexes.Scatter(nodeCount);
-                    break;
-                case Shuffler.Hacked:
-                    mineIndexes.PseudoScatter(nodeCount);
-                    break;
-            };
+            mineIndexes.Scatter(nodeCount);
 
             for (var i = 0; i < nodeCount; i++)
             {

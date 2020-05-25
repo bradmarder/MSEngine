@@ -74,9 +74,6 @@ namespace MSEngine.Core
             }
         }
 
-        /// <summary>
-        /// scatter approach with mine indexes is 5x slower than scattering nodes
-        /// </summary>
         internal static void Scatter(this Span<int> mines, int nodeCount)
         {
             Debug.Assert(nodeCount > 0);

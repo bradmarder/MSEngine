@@ -87,10 +87,10 @@ namespace MSEngine.Core
                 return;
             }
 
-            // these cases will only affect a single node
+            // these cases will only affect the singular node
             if (turn.Operation == NodeOperation.Flag || turn.Operation == NodeOperation.RemoveFlag || (turn.Operation == NodeOperation.Reveal && !node.HasMine && node.MineCount > 0))
             {
-                
+                nodes[turn.NodeIndex] = new Node(node.HasMine, node.MineCount, turn.Operation);
                 return;
             }
 
@@ -138,7 +138,7 @@ namespace MSEngine.Core
             VisitNode(nodes, nodeIndex, visitedIndexes, ref visitedIndexCount);
         }
 
-        // we recursively visit and reveal/expand nodes
+        // Recursively visits and reveals nodes
         internal static void VisitNode(Span<Node> nodes, int nodeIndex, Span<int> visitedIndexes, ref int visitedIndexCount)
         {
             Debug.Assert(nodeIndex >= 0);
@@ -158,10 +158,13 @@ namespace MSEngine.Core
 
                 var node = nodes[i];
 
-                // if an adjacent node has a "false flag", it does not expand revealing
-                if (node.State != NodeState.Hidden) { continue; }
-
-                nodes[i] = new Node(node.HasMine, node.MineCount, NodeOperation.Reveal);
+                // if the node has a "false flag", we do not reveal or visit it
+                if (node.State == NodeState.Flagged) { continue; }
+ 
+                if (node.State == NodeState.Hidden)
+                {
+                    nodes[i] = new Node(node.HasMine, node.MineCount, NodeOperation.Reveal);
+                }
 
                 if (node.MineCount == 0 && visitedIndexes.IndexOf(i) == -1)
                 {

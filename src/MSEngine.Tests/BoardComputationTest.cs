@@ -50,7 +50,6 @@ namespace MSEngine.Tests
             Span<Node> nodes = stackalloc Node[2 * 2];
             Engine.PureInstance.FillCustomBoard(nodes, 2, 2, 1);
             var board = nodes.ToArray();
-            var origin = new Coordinates(1, 0);
             var turn = new Turn(0, NodeOperation.Reveal);
             BoardStateMachine.Instance.ComputeBoard(nodes, turn);
             var node = nodes[0];
