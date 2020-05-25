@@ -29,14 +29,14 @@ namespace MSEngine.Solver
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool HasHiddenAdjacentNodes(ReadOnlySpan<Node> nodes, int nodeIndex)
+        private static bool HasHiddenAdjacentNodes(ReadOnlySpan<Node> nodes, Span<int> buffer, int nodeIndex)
         {
             Debug.Assert(nodeIndex >= 0);
+            Debug.Assert(buffer.Length == 8);
 
-            Span<int> nodeIndexes = stackalloc int[8];
-            nodeIndexes.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, 8);
+            buffer.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, 8);
 
-            foreach (var x in nodeIndexes)
+            foreach (var x in buffer)
             {
                 if (x == -1) { continue; }
                 if (nodes[x].State == NodeState.Hidden)
@@ -53,6 +53,7 @@ namespace MSEngine.Solver
             Debug.Assert(nodes.Length > 0);
             Debug.Assert(nodes.Length == turns.Length);
 
+            Span<int> buffer = stackalloc int[8];
             Span<int> revealedAMCNodes = stackalloc int[nodes.Length];
 
             #region Revealed Nodes with AMC > 0
@@ -61,14 +62,12 @@ namespace MSEngine.Solver
             for (int i = 0, l = nodes.Length; i < l; i++)
             {
                 var node = nodes[i];
-                if (node.State == NodeState.Revealed && node.MineCount > 0 && HasHiddenAdjacentNodes(nodes, i))
+                if (node.State == NodeState.Revealed && node.MineCount > 0 && HasHiddenAdjacentNodes(nodes, buffer, i))
                 {
                     revealedAMCNodes[revealedAMCNodeCount] = i;
                     revealedAMCNodeCount++;
                 }
             }
-
-            #endregion
 
             if (revealedAMCNodeCount == 0)
             {
@@ -76,10 +75,15 @@ namespace MSEngine.Solver
                 return;
             }
 
+            #endregion
+
             #region Adjacent Hidden Node Indexes
 
             var ahcCount = 0;
-            Span<int> foo = stackalloc int[8];
+
+            // we allocate an inner buffer on the stack here because we must avoid mutating the original buffer while iterating over it
+            Span<int> innerBuffer = stackalloc int[8];
+
             Span<int> adjacentHiddenNodeIndex = stackalloc int[nodes.Length];
 
             for (int i = 0, l = nodes.Length; i < l; i++)
@@ -88,14 +92,14 @@ namespace MSEngine.Solver
                 if (node.State != NodeState.Hidden) { continue; }
 
                 var hasAHC = false;
-                foo.FillAdjacentNodeIndexes(nodes.Length, i, 8);
+                buffer.FillAdjacentNodeIndexes(nodes.Length, i, 8);
 
-                foreach (var x in foo)
+                foreach (var x in buffer)
                 {
                     if (x == -1) { continue; }
 
                     var adjNode = nodes[x];
-                    if (adjNode.State == NodeState.Revealed && adjNode.MineCount > 0 && HasHiddenAdjacentNodes(nodes, x))
+                    if (adjNode.State == NodeState.Revealed && adjNode.MineCount > 0 && HasHiddenAdjacentNodes(nodes, innerBuffer, x))
                     {
                         hasAHC = true;
                         break;
@@ -115,8 +119,8 @@ namespace MSEngine.Solver
             var rowCount = revealedAMCNodeCount;
             var columnCount = ahcCount + 1;
 
-            Span<int> buffer = stackalloc int[rowCount * columnCount];
-            var matrix = new FlatMatrix<int>(buffer, columnCount);
+            Span<int> nodeBuffer = stackalloc int[rowCount * columnCount];
+            var matrix = new FlatMatrix<int>(nodeBuffer, columnCount);
 
             for (var row = 0; row < rowCount; row++)
             {
@@ -128,16 +132,13 @@ namespace MSEngine.Solver
                     matrix[row, column] = column == columnCount - 1
 
                         // augmented column has special logic
-                        ? node.MineCount - GetAdjacentFlaggedNodeCount(nodes, foo, nodeIndex)
+                        ? node.MineCount - GetAdjacentFlaggedNodeCount(nodes, buffer, nodeIndex)
 
-                        : Utilities.IsAdjacentTo(foo, nodes.Length, 8, nodeIndex, adjacentHiddenNodeIndex[column]) ? 1 : 0;
+                        : Utilities.IsAdjacentTo(buffer, nodes.Length, 8, nodeIndex, adjacentHiddenNodeIndex[column]) ? 1 : 0;
                 }
             }
 
             #endregion
-
-            // output view of the matrix
-            // output view of gauss matrix (ensure gaussed properly??)
 
             matrix.GaussEliminate();
 
@@ -197,7 +198,7 @@ namespace MSEngine.Solver
 
             #endregion
 
-            // we must slice due to overallocation
+            // we must slice due to overallocating the buffer
             turns = turns.Slice(0, turnCount);
         }
     }
