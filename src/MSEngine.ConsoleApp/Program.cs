@@ -47,25 +47,13 @@ namespace MSEngine.ConsoleApp
                 {
                     turns = stackalloc Turn[1]
                     {
-                        new Turn(24, NodeOperation.Reveal)
+                        new Turn(27, NodeOperation.Reveal)
                     };
                 }
                 if (turns.Length == 0)
                 {
                     turns = stackalloc Turn[nodes.Length];
                     MatrixSolver.CalculateTurns(nodes, ref turns);
-                    //foreach (var x in turns)
-                    //{
-                    //    Console.WriteLine(x.ToString());
-                    //}
-                    //if (turns.Length == 0)
-                    //{
-                    //    Console.WriteLine("ZERO TURNS");
-                    //}
-                    //for (var i = 0; i < nodes.Length; i++)
-                    //{
-                    //    Console.WriteLine($"index is {i} " + nodes[i].ToString());
-                    //}    
                 }
 
                 // if the matrix solver couldn't calculate any turns, we just select a "random" hidden node
@@ -120,7 +108,7 @@ namespace MSEngine.ConsoleApp
             }
         }
 
-        private static string GetBoardAsciiArt(Span<Node> nodes)
+        private static string GetBoardAsciiArt(ReadOnlySpan<Node> nodes)
         {
             var sb = new StringBuilder(nodes.Length);
 
@@ -130,7 +118,7 @@ namespace MSEngine.ConsoleApp
                 var nodeChar = GetNodeChar(node);
                 sb.Append(nodeChar);
 
-                if (i > 0 && i % 7 == 0)
+                if (i == 7 || i == 15 || i == 23 || i == 31 || i == 39 || i == 47 || i == 55)
                 {
                     sb.AppendLine();
                 }

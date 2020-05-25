@@ -21,7 +21,7 @@ namespace MSEngine.Tests
         [InlineData(6, new int[] { -1, 3, 4, -1, 7, -1, -1, -1 })]
         [InlineData(7, new int[] { 3, 4, 5, 6, 8, -1, -1, -1 })]
         [InlineData(8, new int[] { 4, 5, -1, 7, -1, -1, -1, -1 })]
-        public void AdjacentNodeIndexesFilledCorrectly(int index, Span<int> expectedIndexes)
+        public void AdjacentNodeIndexesFilledCorrectly(int index, int[] expectedIndexes)
         {
             const int columnCount = 3;
             const int nodeCount = 9;
@@ -29,7 +29,7 @@ namespace MSEngine.Tests
 
             actualIndexes.FillAdjacentNodeIndexes(nodeCount, index, columnCount);
 
-            Assert.True(expectedIndexes.SequenceEqual(actualIndexes));
+            Assert.Equal(expectedIndexes, actualIndexes.ToArray());
         }
     }
 }
