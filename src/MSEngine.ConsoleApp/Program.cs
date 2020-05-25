@@ -39,54 +39,48 @@ namespace MSEngine.ConsoleApp
             const int columnCount = 30;
 
             Span<Node> nodes = stackalloc Node[nodeCount];
-            Span<Turn> turns = stackalloc Turn[0];
+            Span<Turn> turns = stackalloc Turn[nodeCount];
             Engine.Instance.FillExpertBoard(nodes);
 
-            var turnCount = 0;
+            var iteration = 0;
 
             while (true)
             {
-                if (turnCount == 0)
+                if (iteration == 0)
                 {
-                    turns = stackalloc Turn[1]
+                    var bar = new Turn(27, NodeOperation.Reveal);
+
+                    // Technically, we don't need to compute the board here, since we can just
+                    // inspect the node directly. We do this to maintain strict separation of clients
+                    BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, bar);
+
+                    var node = nodes[bar.NodeIndex];
+                    if (node.HasMine || node.MineCount > 0)
                     {
-                        new Turn(27, NodeOperation.Reveal)
-                    };
+                        Engine.Instance.FillExpertBoard(nodes);
+                        continue;
+                    }
                 }
-                if (turns.Length == 0)
+                else
                 {
-                    turns = stackalloc Turn[nodes.Length];
-                    MatrixSolver.CalculateTurns(nodes, ref turns, columnCount);
-                }
-
-                // if the matrix solver couldn't calculate any turns, we just select a "random" hidden node
-                if (turns.Length == 0)
-                {
-                    turns = stackalloc Turn[1]
+                    var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, columnCount);
+                    foreach (var x in turns.Slice(0, turnCount))
                     {
-                        EducatedGuessStrategy.UseStrategy(nodes)
-                    };
+                        //BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, columnCount, x);
+                        BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, x);
+                    }
+
+                    // if the matrix solver couldn't calculate any turns, we just select a "random" hidden node
+                    if (turnCount == 0)
+                    {
+                        var a = EducatedGuessStrategy.UseStrategy(nodes);
+                        BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, a);
+                    }
                 }
 
-                var turn = turns[0];
-                turns = turns.Slice(1, turns.Length - 1);
-                //if (turnCount > 0)
-                //{
-                //    BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, columnCount, turn);
-                //}
-                BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, turn);
+                iteration++;
 
-                // Get new board unless node has no mine and zero AMC
                 var status = nodes.Status();
-                if (turnCount == 0 && (nodes[turn.NodeIndex].MineCount > 0 || status == BoardStatus.Failed))
-                {
-                    // nodes.Clear(); not required since every node is always reset
-                    Engine.Instance.FillExpertBoard(nodes);
-                    turns = Span<Turn>.Empty;
-                    continue;
-                }
-                turnCount++;
-
                 if (status == BoardStatus.Pending)
                 {
                     continue;
@@ -97,7 +91,6 @@ namespace MSEngine.ConsoleApp
                 {
                     Interlocked.Increment(ref _wins);
                 }
-
 
                 // we only update the score every 1000 games (because doing so within a lock is expensive)
                 if (_gamesPlayedCount % 1000 == 0)

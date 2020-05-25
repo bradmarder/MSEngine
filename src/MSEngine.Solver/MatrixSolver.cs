@@ -6,7 +6,7 @@ namespace MSEngine.Solver
 {
     public static class MatrixSolver
     {
-        public static void CalculateTurns(ReadOnlySpan<Node> nodes, ref Span<Turn> turns, int columnCount)
+        public static int CalculateTurns(ReadOnlySpan<Node> nodes, ref Span<Turn> turns, int columnCount)
         {
             Debug.Assert(nodes.Length > 0);
             Debug.Assert(nodes.Length == turns.Length);
@@ -29,8 +29,7 @@ namespace MSEngine.Solver
 
             if (revealedAMCNodeCount == 0)
             {
-                turns = Span<Turn>.Empty;
-                return;
+                return 0;
             }
 
             #endregion
@@ -156,8 +155,8 @@ namespace MSEngine.Solver
 
             #endregion
 
-            // we must slice due to overallocating the buffer
-            turns = turns.Slice(0, turnCount);
+            // we must return the turncount so the caller knows how much to slice from turns
+            return turnCount;
         }
     }
 }
