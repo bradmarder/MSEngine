@@ -3,46 +3,46 @@ using System.Diagnostics;
 
 namespace MSEngine.Core
 {
-    internal enum Shuffler
-    {
-        None,
-        Random,
-        Hacked
-    }
     public class Engine : IEngine
     {
-        public static IEngine Instance { get; } = new Engine(Shuffler.Random);
-        public static IEngine PureInstance { get; } = new Engine(Shuffler.None);
-        public static IEngine HackedInstance { get; } = new Engine(Shuffler.Hacked);
+        public static IEngine Instance { get; } = new Engine();
 
-        private readonly Shuffler _shuffler;
-
-        private Engine(Shuffler shuffler)
+        public virtual void FillBeginnerBoard(Span<Node> nodes)
         {
-            _shuffler = shuffler;
+            Span<int> mines = stackalloc int[10];
+            mines.Scatter(nodes.Length);
+
+            FillCustomBoard(nodes, mines, 8, 8);
         }
-
-        public virtual void FillBeginnerBoard(Span<Node> nodes) => FillCustomBoard(nodes, 8, 8, 10);
-        public virtual void FillIntermediateBoard(Span<Node> nodes) => FillCustomBoard(nodes, 16, 16, 40);
-        public virtual void FillExpertBoard(Span<Node> nodes) => FillCustomBoard(nodes, 30, 16, 99);
-        public virtual void FillCustomBoard(Span<Node> nodes, byte columns, byte rows, byte mineCount)
+        public virtual void FillIntermediateBoard(Span<Node> nodes)
         {
-            if (columns == 0 || columns > 30) { throw new ArgumentOutOfRangeException(nameof(columns)); }
-            if (rows == 0 || rows > 16) { throw new ArgumentOutOfRangeException(nameof(rows)); }
+            Span<int> mines = stackalloc int[40];
+            mines.Scatter(nodes.Length);
+
+            FillCustomBoard(nodes, mines, 16, 16);
+        }
+        public virtual void FillExpertBoard(Span<Node> nodes)
+        {
+            Span<int> mines = stackalloc int[99];
+            mines.Scatter(nodes.Length);
+
+            FillCustomBoard(nodes, mines, 30, 16);
+        }
+        public virtual void FillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns, byte rows)
+        {
+            if (columns == 0) { throw new ArgumentOutOfRangeException(nameof(columns)); }
+            if (rows == 0) { throw new ArgumentOutOfRangeException(nameof(rows)); }
             var nodeCount = columns * rows;
-            if (mineCount >= nodeCount) { throw new ArgumentOutOfRangeException(nameof(mineCount)); }
+            if (mines.Length >= nodeCount) { throw new ArgumentOutOfRangeException(nameof(mines)); }
             if (nodes.Length != nodeCount) { throw new ArgumentOutOfRangeException(nameof(nodes)); }
 
-            Span<int> mineIndexes = stackalloc int[mineCount];
-            Span<int> adjacentIndexes = stackalloc int[8];
-
-            mineIndexes.Scatter(nodeCount);
+            Span<int> buffer = stackalloc int[8];
 
             for (var i = 0; i < nodeCount; i++)
             {
-                adjacentIndexes.FillAdjacentNodeIndexes(nodeCount, i, columns);
-                var amc = GetAdjacentMineCount(mineIndexes, adjacentIndexes);
-                var hasMine = mineIndexes.IndexOf(i) != -1;
+                buffer.FillAdjacentNodeIndexes(nodeCount, i, columns);
+                var amc = GetAdjacentMineCount(mines, buffer);
+                var hasMine = mines.IndexOf(i) != -1;
 
                 nodes[i] = new Node(hasMine, amc);
             }

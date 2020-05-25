@@ -25,7 +25,6 @@ namespace MSEngine.Core
         /// <param name="nodes">Preallocated Nodes</param>
         /// <param name="columns">Max value of 30</param>
         /// <param name="rows">Max value of 16</param>
-        /// <param name="mineCount">Must be less than node count (columns * height)</param>
-        void FillCustomBoard(Span<Node> nodes, byte columns, byte rows, byte mineCount);
+        void FillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns, byte rows);
     }
 }
