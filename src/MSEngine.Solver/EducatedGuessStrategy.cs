@@ -1,5 +1,6 @@
 ﻿using System;
-
+using System.Diagnostics;
+using System.Security.Cryptography;
 using MSEngine.Core;
 
 namespace MSEngine.Solver
@@ -8,22 +9,15 @@ namespace MSEngine.Solver
     {
         public static Turn UseStrategy(Span<Node> nodes)
         {
-            var maxIndex = -1;
-            var maxHash = int.MinValue;
+            Debug.Assert(nodes.Length > 0);
 
-            for (int i = 0, l = nodes.Length; i < l; i++)
+            int i;
+            do
             {
-                if (nodes[i].State != NodeState.Hidden) { continue; }
+                i = RandomNumberGenerator.GetInt32(nodes.Length);
+            } while (nodes[i].State != NodeState.Hidden);
 
-                var hash = i.GetHashCode();
-                if (hash > maxHash)
-                {
-                    maxIndex = i;
-                    maxHash = hash;
-                }
-            }
-
-            return new Turn(maxIndex, NodeOperation.Reveal);
+            return new Turn(i, NodeOperation.Reveal);
         }
     }
 }
