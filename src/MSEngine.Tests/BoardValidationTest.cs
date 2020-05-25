@@ -37,7 +37,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Node> nodes = stackalloc Node[8 * 8];
-                Span<int> mines = stackalloc int[1] { 0 };
+                Span<int> mines = stackalloc int[] { 0 };
                 Engine.Instance.FillCustomBoard(nodes, mines, 8, 8);
                 var firstTurn = new Turn(0, NodeOperation.Reveal);
                 var secondTurn = new Turn(1, operation);
@@ -56,7 +56,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Node> nodes = stackalloc Node[2 * 2];
-                Span<int> mines = stackalloc int[1] { 0 };
+                Span<int> mines = stackalloc int[] { 0 };
                 Engine.Instance.FillCustomBoard(nodes, mines, 2, 2);
                 var firstTurn = new Turn(3, NodeOperation.Reveal);
                 BoardStateMachine.Instance.ComputeBoard(nodes, 2, firstTurn);
@@ -97,7 +97,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Node> nodes = stackalloc Node[1 * 2];
-                Span<int> mines = stackalloc int[1] { 0 };
+                Span<int> mines = stackalloc int[] { 0 };
                 Engine.Instance.FillCustomBoard(nodes, mines, 1, 2);
                 var turn = new Turn(0, NodeOperation.Flag);
                 BoardStateMachine.Instance.ComputeBoard(nodes, 1, turn);
@@ -113,7 +113,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Node> nodes = stackalloc Node[2 * 2];
-                Span<int> mines = stackalloc int[2] { 0, 1 };
+                Span<int> mines = stackalloc int[] { 0, 1 };
                 Engine.Instance.FillCustomBoard(nodes, mines, 2, 2);
                 var turn = new Turn(0, NodeOperation.RemoveFlag);
 
@@ -140,7 +140,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Node> nodes = stackalloc Node[3 * 3];
-                Span<int> mines = stackalloc int[1] { 0 };
+                Span<int> mines = stackalloc int[] { 0 };
                 Engine.Instance.FillCustomBoard(nodes, mines, 3, 3);
                 var firstTurn = new Turn(8, NodeOperation.Reveal);
                 var secondTurn = new Turn(8, NodeOperation.Chord);
