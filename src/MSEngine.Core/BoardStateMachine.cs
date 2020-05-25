@@ -7,13 +7,13 @@ namespace MSEngine.Core
     {
         public static IBoardStateMachine Instance { get; } = new BoardStateMachine();
 
-        public virtual void EnsureValidBoardConfiguration(ReadOnlySpan<Node> nodes, Turn turn)
+        public virtual void EnsureValidBoardConfiguration(ReadOnlySpan<Node> nodes, int columnCount, Turn turn)
         {
             if (nodes.Status() == BoardStatus.Completed || nodes.Status() == BoardStatus.Failed)
             {
                 throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
             }
-            if (turn.NodeIndex > nodes.Length)
+            if (turn.NodeIndex >= nodes.Length)
             {
                 throw new InvalidGameStateException("Turn has index outside the matrix");
             }
@@ -49,10 +49,12 @@ namespace MSEngine.Core
                 var nodeAdjacentFlagCount = 0;
                 var nodeAdjacentHiddenCount = 0;
                 Span<int> adjacentIndexes = stackalloc int[8];
-                adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, turn.NodeIndex, 8);
+                adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, turn.NodeIndex, columnCount);
 
                 foreach (var i in adjacentIndexes)
                 {
+                    if (i == -1) { continue; }
+
                     var adjacentNode = nodes[i];
                     if (adjacentNode.State == NodeState.Flagged) { nodeAdjacentFlagCount++; }
                     if (adjacentNode.State == NodeState.Hidden) { nodeAdjacentHiddenCount++; }
@@ -68,14 +70,7 @@ namespace MSEngine.Core
                 }
             }
         }
-        public virtual void ComputeBoard(Span<Node> nodes, ReadOnlySpan<Turn> turns)
-        {
-            foreach (var x in turns)
-            {
-                ComputeBoard(nodes, x);
-            }
-        }
-        public virtual void ComputeBoard(Span<Node> nodes, Turn turn)
+        public virtual void ComputeBoard(Span<Node> nodes, int columnCount, Turn turn)
         {
             var node = nodes[turn.NodeIndex];
 
@@ -103,14 +98,14 @@ namespace MSEngine.Core
                 else
                 {
                     nodes[turn.NodeIndex] = new Node(node.HasMine, node.MineCount, NodeOperation.Reveal);
-                    ChainReaction(nodes, turn.NodeIndex);
+                    ChainReaction(nodes, turn.NodeIndex, columnCount);
                 }
                 return;
             }
 
             if (turn.Operation == NodeOperation.Chord)
             {
-                Chord(nodes, turn.NodeIndex);
+                Chord(nodes, turn.NodeIndex, columnCount);
                 return;
             }
         }
@@ -127,7 +122,7 @@ namespace MSEngine.Core
             }
         }
 
-        internal static void ChainReaction(Span<Node> nodes, int nodeIndex)
+        internal static void ChainReaction(Span<Node> nodes, int nodeIndex, int columnCount)
         {
             Debug.Assert(nodeIndex >= 0);
 
@@ -135,16 +130,14 @@ namespace MSEngine.Core
             Span<int> visitedIndexes = stackalloc int[nodes.Length]; //  subtract nodes.MineCount() ?
             visitedIndexes.Fill(-1);
 
-            VisitNode(nodes, nodeIndex, visitedIndexes, ref visitedIndexCount);
+            VisitNode(nodes, nodeIndex, columnCount, visitedIndexes, ref visitedIndexCount);
         }
 
         // Recursively visits and reveals nodes
-        internal static void VisitNode(Span<Node> nodes, int nodeIndex, Span<int> visitedIndexes, ref int visitedIndexCount)
+        internal static void VisitNode(Span<Node> nodes, int nodeIndex, int columnCount, Span<int> visitedIndexes, ref int visitedIndexCount)
         {
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(visitedIndexCount >= 0);
-
-            const int columnCount = 8;
 
             visitedIndexes[visitedIndexCount] = nodeIndex;
             visitedIndexCount++;
@@ -168,18 +161,18 @@ namespace MSEngine.Core
 
                 if (node.MineCount == 0 && visitedIndexes.IndexOf(i) == -1)
                 {
-                    VisitNode(nodes, i, visitedIndexes, ref visitedIndexCount);
+                    VisitNode(nodes, i, columnCount, visitedIndexes, ref visitedIndexCount);
                 }
             }
         }
 
-        internal void Chord(Span<Node> nodes, int nodeIndex)
+        internal void Chord(Span<Node> nodes, int nodeIndex, int columnCount)
         {
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeIndex < nodes.Length);
 
             Span<int> adjacentIndexes = stackalloc int[8];
-            adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, 8);
+            adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
 
             foreach (var i in adjacentIndexes)
             {
@@ -187,7 +180,7 @@ namespace MSEngine.Core
                 if (nodes[i].State != NodeState.Hidden) { continue; }
 
                 var turn = new Turn(i, NodeOperation.Reveal);
-                ComputeBoard(nodes, turn);
+                ComputeBoard(nodes, columnCount, turn);
             }
         }
     }

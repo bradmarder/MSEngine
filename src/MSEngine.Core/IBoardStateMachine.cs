@@ -21,9 +21,8 @@ namespace MSEngine.Core
         /// -May only chord a node when adjacent mine count equals adjacent node flag count
         /// -May only chord a node that has hidden adjacent nodes
         /// </exception>
-        void EnsureValidBoardConfiguration(ReadOnlySpan<Node> nodes, Turn turn);
+        void EnsureValidBoardConfiguration(ReadOnlySpan<Node> nodes, int columnCount, Turn turn);
         
-        void ComputeBoard(Span<Node> nodes, ReadOnlySpan<Turn> turns);
-        void ComputeBoard(Span<Node> nodes, Turn turn);
+        void ComputeBoard(Span<Node> nodes, int columnCount, Turn turn);
     }
 }

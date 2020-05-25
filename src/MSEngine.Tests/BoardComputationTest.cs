@@ -13,7 +13,7 @@ namespace MSEngine.Tests
             Span<Node> nodes = stackalloc Node[8 * 8];
             Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 8, 8);
             var turn = new Turn(0, NodeOperation.Reveal);
-            BoardStateMachine.Instance.ComputeBoard(nodes, turn);
+            BoardStateMachine.Instance.ComputeBoard(nodes, 8, turn);
 
             Assert.Equal(BoardStatus.Completed, nodes.Status());
         }
@@ -26,7 +26,7 @@ namespace MSEngine.Tests
 
             Engine.Instance.FillCustomBoard(nodes, mines, 2, 2);
             var turn = new Turn(0, NodeOperation.Reveal);
-            BoardStateMachine.Instance.ComputeBoard(nodes, turn);
+            BoardStateMachine.Instance.ComputeBoard(nodes, 2, turn);
             var allNodesRevealed = nodes.ToArray().All(x => !x.HasMine || x.State == NodeState.Flagged || x.State == NodeState.Revealed);
 
             Assert.True(allNodesRevealed);
@@ -40,7 +40,7 @@ namespace MSEngine.Tests
             Engine.Instance.FillCustomBoard(nodes, mines, 2, 2);
             var board = nodes.ToArray();
             var turn = new Turn(0, NodeOperation.Flag);
-            BoardStateMachine.Instance.ComputeBoard(nodes, turn);
+            BoardStateMachine.Instance.ComputeBoard(nodes, 2, turn);
             var node = nodes[0];
             var everyOtherNodeHasNotChanged = nodes.ToArray().All(x => x.Equals(node) || board.Contains(x));
 
@@ -56,7 +56,7 @@ namespace MSEngine.Tests
             Engine.Instance.FillCustomBoard(nodes, mines, 2, 2);
             var board = nodes.ToArray();
             var turn = new Turn(0, NodeOperation.Reveal);
-            BoardStateMachine.Instance.ComputeBoard(nodes, turn);
+            BoardStateMachine.Instance.ComputeBoard(nodes, 2, turn);
             var node = nodes[0];
             var everyOtherNodeHasNotChanged = nodes.ToArray().All(x => x.Equals(node) || board.Contains(x));
 
@@ -76,7 +76,10 @@ namespace MSEngine.Tests
                 new Turn(3, NodeOperation.Reveal),
                 new Turn(3, NodeOperation.Chord)
             };
-            BoardStateMachine.Instance.ComputeBoard(nodes, turns);
+            foreach (var x in turns)
+            {
+                BoardStateMachine.Instance.ComputeBoard(nodes, 2, x);
+            }
 
             // 0,0 has the only mine, so we flag it
             // revealing 1,1 shows a 1
@@ -92,7 +95,7 @@ namespace MSEngine.Tests
             Engine.Instance.FillCustomBoard(nodes, mines, 3, 3);
             var node = nodes[8];
             var firstTurn = new Turn(8, NodeOperation.Reveal);
-            BoardStateMachine.Instance.ComputeBoard(nodes, firstTurn);
+            BoardStateMachine.Instance.ComputeBoard(nodes, 3, firstTurn);
 
             Assert.False(node.HasMine);
             Assert.Equal(0, node.MineCount);
@@ -110,12 +113,8 @@ namespace MSEngine.Tests
         {
             Span<Node> nodes = stackalloc Node[5 * 1];
             Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 5, 1);
-            Span<Turn> turns = stackalloc Turn[2]
-            {
-                new Turn(2, NodeOperation.Flag),
-                new Turn(4, NodeOperation.Reveal)
-            };
-            BoardStateMachine.Instance.ComputeBoard(nodes, turns);
+            BoardStateMachine.Instance.ComputeBoard(nodes, 5, new Turn(2, NodeOperation.Flag));
+            BoardStateMachine.Instance.ComputeBoard(nodes, 5, new Turn(4, NodeOperation.Reveal));
 
             for (var i = 0; i < nodes.Length; i++)
             {

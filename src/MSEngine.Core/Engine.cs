@@ -47,7 +47,7 @@ namespace MSEngine.Core
                 nodes[i] = new Node(hasMine, amc);
             }
         }
-        private static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, ReadOnlySpan<int> adjacentIndexes)
+        internal static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, ReadOnlySpan<int> adjacentIndexes)
         {
             Debug.Assert(adjacentIndexes.Length == 8);
 

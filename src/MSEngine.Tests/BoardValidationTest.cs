@@ -20,10 +20,10 @@ namespace MSEngine.Tests
                 Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 8, 8);
                 var firstTurn = new Turn(0, NodeOperation.Reveal);
                 var secondTurn = new Turn(1, operation);
-                BoardStateMachine.Instance.ComputeBoard(nodes, firstTurn);
+                BoardStateMachine.Instance.ComputeBoard(nodes, 8, firstTurn);
 
                 Assert.Equal(BoardStatus.Completed, nodes.Status());
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, secondTurn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, 8, secondTurn);
             });
         }
 
@@ -41,10 +41,10 @@ namespace MSEngine.Tests
                 Engine.Instance.FillCustomBoard(nodes, mines, 8, 8);
                 var firstTurn = new Turn(0, NodeOperation.Reveal);
                 var secondTurn = new Turn(1, operation);
-                BoardStateMachine.Instance.ComputeBoard(nodes, firstTurn);
+                BoardStateMachine.Instance.ComputeBoard(nodes, 8, firstTurn);
 
                 Assert.Equal(BoardStatus.Failed, nodes.Status());
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, secondTurn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, 8, secondTurn);
             });
         }
 
@@ -59,9 +59,9 @@ namespace MSEngine.Tests
                 Span<int> mines = stackalloc int[1] { 0 };
                 Engine.Instance.FillCustomBoard(nodes, mines, 2, 2);
                 var firstTurn = new Turn(3, NodeOperation.Reveal);
-                BoardStateMachine.Instance.ComputeBoard(nodes, firstTurn);
+                BoardStateMachine.Instance.ComputeBoard(nodes, 2, firstTurn);
                 var secondTurn = new Turn(3, operation);
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, secondTurn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, 2, secondTurn);
             });
         }
 
@@ -74,7 +74,7 @@ namespace MSEngine.Tests
                 Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 1, 1);
                 var turn = new Turn(1, NodeOperation.Reveal);
 
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, turn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, 1, turn);
             });
         }
 
@@ -87,7 +87,7 @@ namespace MSEngine.Tests
                 Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 1, 1);
                 var turn = new Turn(0, NodeOperation.Flag);
 
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, turn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, 1, turn);
             });
         }
 
@@ -100,10 +100,10 @@ namespace MSEngine.Tests
                 Span<int> mines = stackalloc int[1] { 0 };
                 Engine.Instance.FillCustomBoard(nodes, mines, 1, 2);
                 var turn = new Turn(0, NodeOperation.Flag);
-                BoardStateMachine.Instance.ComputeBoard(nodes, turn);
+                BoardStateMachine.Instance.ComputeBoard(nodes, 1, turn);
 
                 Assert.Equal(BoardStatus.Pending, nodes.Status());
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, turn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, 1, turn);
             });
         }
 
@@ -117,7 +117,7 @@ namespace MSEngine.Tests
                 Engine.Instance.FillCustomBoard(nodes, mines, 2, 2);
                 var turn = new Turn(0, NodeOperation.RemoveFlag);
 
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, turn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, 2, turn);
             });
         }
 
@@ -130,7 +130,7 @@ namespace MSEngine.Tests
                 Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 1, 1);
                 var turn = new Turn(0, NodeOperation.Chord);
 
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, turn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, 1, turn);
             });
         }
 
@@ -144,13 +144,13 @@ namespace MSEngine.Tests
                 Engine.Instance.FillCustomBoard(nodes, mines, 3, 3);
                 var firstTurn = new Turn(8, NodeOperation.Reveal);
                 var secondTurn = new Turn(8, NodeOperation.Chord);
-                BoardStateMachine.Instance.ComputeBoard(nodes, firstTurn);
+                BoardStateMachine.Instance.ComputeBoard(nodes, 3, firstTurn);
                 var node = nodes[8];
 
                 Assert.Equal(NodeState.Revealed, node.State);
                 Assert.Equal(0, node.MineCount);
 
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, secondTurn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, 3, secondTurn);
             });
         }
 
@@ -160,15 +160,15 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Node> nodes = stackalloc Node[2 * 2];
-                Span<int> mines = stackalloc int[3] { 0, 1, 2 };
+                ReadOnlySpan<int> mines = stackalloc int[] { 0, 1, 2 };
                 Engine.Instance.FillCustomBoard(nodes, mines, 2, 2);
                 var firstTurn = new Turn(0, NodeOperation.Flag);
                 var secondTurn = new Turn(3, NodeOperation.Reveal);
                 var thirdTurn = new Turn(3, NodeOperation.Chord);
 
-                BoardStateMachine.Instance.ComputeBoard(nodes, firstTurn);
-                BoardStateMachine.Instance.ComputeBoard(nodes, secondTurn);
-                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, thirdTurn);
+                BoardStateMachine.Instance.ComputeBoard(nodes, 2, firstTurn);
+                BoardStateMachine.Instance.ComputeBoard(nodes, 2, secondTurn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, 2, thirdTurn);
             });
         }
 

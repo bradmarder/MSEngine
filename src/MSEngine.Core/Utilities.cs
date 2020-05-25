@@ -100,28 +100,45 @@ namespace MSEngine.Core
             }
         }
 
-        internal static void PseudoScatter(this Span<int> mines, int nodeCount)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetAdjacentFlaggedNodeCount(ReadOnlySpan<Node> nodes, Span<int> adjacentIndexes, int nodeIndex, int columnCount)
         {
-            Debug.Assert(nodeCount > 0);
-            Debug.Assert(nodeCount > mines.Length);
+            Debug.Assert(adjacentIndexes.Length == 8);
+            Debug.Assert(nodeIndex >= 0);
 
-            // magic seed that produces a solvable beginner board
-            var random = new Random(653635);
+            adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
 
-            mines.Fill(-1);
-
-            for (int i = 0, l = mines.Length; i < l; i++)
+            var n = 0;
+            foreach (var i in adjacentIndexes)
             {
-                int m;
+                if (i == -1) { continue; }
 
-                // we use a loop to prevent duplicate indexes
-                do
+                if (nodes[i].State == NodeState.Flagged)
                 {
-                    m = random.Next(nodeCount);
-                } while (mines.IndexOf(m) != -1);
-
-                mines[i] = m;
+                    n++;
+                }
             }
+            return n;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool HasHiddenAdjacentNodes(ReadOnlySpan<Node> nodes, Span<int> buffer, int nodeIndex, int columnCount)
+        {
+            Debug.Assert(nodeIndex >= 0);
+            Debug.Assert(buffer.Length == 8);
+
+            buffer.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
+
+            foreach (var x in buffer)
+            {
+                if (x == -1) { continue; }
+                if (nodes[x].State == NodeState.Hidden)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

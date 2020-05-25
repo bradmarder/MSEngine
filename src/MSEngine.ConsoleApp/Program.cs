@@ -35,9 +35,12 @@ namespace MSEngine.ConsoleApp
 
         private static void ExecuteGame()
         {
-            Span<Node> nodes = stackalloc Node[8 * 8];
+            const int nodeCount = 30 * 16;
+            const int columnCount = 30;
+
+            Span<Node> nodes = stackalloc Node[nodeCount];
             Span<Turn> turns = stackalloc Turn[0];
-            Engine.Instance.FillBeginnerBoard(nodes);
+            Engine.Instance.FillExpertBoard(nodes);
 
             var turnCount = 0;
 
@@ -53,7 +56,7 @@ namespace MSEngine.ConsoleApp
                 if (turns.Length == 0)
                 {
                     turns = stackalloc Turn[nodes.Length];
-                    MatrixSolver.CalculateTurns(nodes, ref turns);
+                    MatrixSolver.CalculateTurns(nodes, ref turns, columnCount);
                 }
 
                 // if the matrix solver couldn't calculate any turns, we just select a "random" hidden node
@@ -69,16 +72,16 @@ namespace MSEngine.ConsoleApp
                 turns = turns.Slice(1, turns.Length - 1);
                 //if (turnCount > 0)
                 //{
-                //    BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, turn);
+                //    BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, columnCount, turn);
                 //}
-                BoardStateMachine.Instance.ComputeBoard(nodes, turn);
+                BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, turn);
 
                 // Get new board unless node has no mine and zero AMC
                 var status = nodes.Status();
                 if (turnCount == 0 && (nodes[turn.NodeIndex].MineCount > 0 || status == BoardStatus.Failed))
                 {
                     // nodes.Clear(); not required since every node is always reset
-                    Engine.Instance.FillBeginnerBoard(nodes);
+                    Engine.Instance.FillExpertBoard(nodes);
                     turns = Span<Turn>.Empty;
                     continue;
                 }
