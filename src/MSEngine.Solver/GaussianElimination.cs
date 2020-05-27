@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace MSEngine.Solver
 {
     public static class GaussianElimination
     {
-        public static sbyte[,] GaussEliminate(this sbyte[,] matrix)
+        public static float[,] GaussEliminate(this float[,] matrix)
         {
             var lead = 0;
             var rowCount = matrix.GetLength(0);
@@ -56,7 +55,7 @@ namespace MSEngine.Solver
                         var sub = matrix[j, lead];
                         for (var k = 0; k < columnCount; k++)
                         {
-                            matrix[j, k] -= (sbyte)(sub * matrix[r, k]);
+                            matrix[j, k] -= sub * matrix[r, k];
                         }
                     }
                 }

@@ -68,14 +68,14 @@ namespace MSEngine.Solver
 
             var rowCount = list.Count;
             var columnCount = adjacentHiddenCoordinates.Count + 1;
-            var matrix = new sbyte[rowCount, columnCount];
+            var matrix = new float[rowCount, columnCount];
 
             for (var row = 0; row < rowCount; row++)
             {
                 for (var column = 0; column < columnCount; column++)
                 {
                     var tile = list[row];
-                    matrix[row, column] = (sbyte)(column == columnCount - 1
+                    matrix[row, column] = (float)(column == columnCount - 1
 
                         // augmented column has special logic
                         ? tile.AdjacentMineCount - GetAdjacentFlaggedTileCount(board, tile.Coordinates)
