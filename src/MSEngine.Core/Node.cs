@@ -13,6 +13,12 @@ namespace MSEngine.Core
             [NodeOperation.Reveal] = NodeState.Revealed
         };
 
+        public Node(bool hasMine, int mineCount, NodeOperation op)
+        {
+            HasMine = hasMine;
+            MineCount = (byte)mineCount;
+            State = _operationToStateMap[op];
+        }
         internal Node(bool hasMine, int mineCount)
         {
             Debug.Assert(mineCount >= 0);
@@ -23,24 +29,9 @@ namespace MSEngine.Core
             State = NodeState.Hidden;
         }
 
-        internal Node(bool hasMine, int mineCount, NodeOperation operation)
-        {
-            Debug.Assert(mineCount >= 0);
-            Debug.Assert(mineCount <= 8);
-            Debug.Assert(Enum.IsDefined(typeof(NodeOperation), operation));
-
-            HasMine = hasMine;
-            MineCount = (byte)mineCount;
-            State = _operationToStateMap[operation];
-        }
-
         public bool HasMine { get; }
-        public NodeState State { get; }
-
-        /// <summary>
-        /// Range from 0 to 8
-        /// </summary>
         public byte MineCount { get; }
+        public NodeState State { get; }
 
         public bool HasMineExploded => HasMine && State == NodeState.Revealed;
         public bool SatisfiesWinningCriteria =>
@@ -56,7 +47,7 @@ namespace MSEngine.Core
             HasMine == other.HasMine
             && State == other.State
             && MineCount == other.MineCount;
-        public static bool operator ==(in Node c1, in Node c2) => c1.Equals(c2);
-        public static bool operator !=(in Node c1, in Node c2) => !(c1 == c2);
+        public static bool operator ==(Node c1, Node c2) => c1.Equals(c2);
+        public static bool operator !=(Node c1, Node c2) => !(c1 == c2);
     }
 }

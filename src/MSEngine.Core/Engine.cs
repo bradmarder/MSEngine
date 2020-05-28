@@ -32,24 +32,24 @@ namespace MSEngine.Core
         {
             if (columns == 0) { throw new ArgumentOutOfRangeException(nameof(columns)); }
             if (rows == 0) { throw new ArgumentOutOfRangeException(nameof(rows)); }
-            var nodeCount = columns * rows;
-            if (mines.Length >= nodeCount) { throw new ArgumentOutOfRangeException(nameof(mines)); }
-            if (nodes.Length != nodeCount) { throw new ArgumentOutOfRangeException(nameof(nodes)); }
+            if (mines.Length >= nodes.Length) { throw new ArgumentOutOfRangeException(nameof(mines)); }
+            if (nodes.Length != (columns * rows)) { throw new ArgumentOutOfRangeException(nameof(nodes)); }
 
             Span<int> buffer = stackalloc int[8];
 
-            for (var i = 0; i < nodeCount; i++)
+            for (var i = 0; i < nodes.Length; i++)
             {
-                buffer.FillAdjacentNodeIndexes(nodeCount, i, columns);
-                var amc = GetAdjacentMineCount(mines, buffer);
                 var hasMine = mines.IndexOf(i) != -1;
-
+                var amc = GetAdjacentMineCount(mines, buffer, i, nodes.Length, columns);
+                
                 nodes[i] = new Node(hasMine, amc);
             }
         }
-        internal static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, ReadOnlySpan<int> adjacentIndexes)
+        internal static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> adjacentIndexes, int nodeIndex, int nodeCount, int columns)
         {
             Debug.Assert(adjacentIndexes.Length == 8);
+
+            adjacentIndexes.FillAdjacentNodeIndexes(nodeCount, nodeIndex, columns);
 
             var n = 0;
             for (var i = 0; i < 8; i++)

@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
-
 using MSEngine.Core;
 using MSEngine.Solver;
 
@@ -35,12 +33,14 @@ namespace MSEngine.ConsoleApp
 
         private static void ExecuteGame()
         {
-            const int nodeCount = 30 * 16;
-            const int columnCount = 30;
+            const int nodeCount = 8 * 8;
+            const int columnCount = 8;
+            const int firstTurnNodeIndex = nodeCount / 2;
+            //const int nodeCount = 30 * 16;
+            //const int columnCount = 30;
 
             Span<Node> nodes = stackalloc Node[nodeCount];
             Span<Turn> turns = stackalloc Turn[nodeCount];
-            Engine.Instance.FillExpertBoard(nodes);
 
             var iteration = 0;
 
@@ -48,38 +48,36 @@ namespace MSEngine.ConsoleApp
             {
                 if (iteration == 0)
                 {
-                    var bar = new Turn(27, NodeOperation.Reveal);
+                    Engine.Instance.FillBeginnerBoard(nodes);
+                    var turn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
 
-                    // Technically, we don't need to compute the board here, since we can just
+                    // Technically, computing the board *before* the check is redundant here, since we can just
                     // inspect the node directly. We do this to maintain strict separation of clients
-                    BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, bar);
+                    // We could place this ComputeBoard method after the node inspection for perf
+                    BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, turn);
 
-                    var node = nodes[bar.NodeIndex];
+                    var node = nodes[turn.NodeIndex];
+                    Debug.Assert(node.State == NodeState.Revealed);
                     if (node.HasMine || node.MineCount > 0)
                     {
-                        Engine.Instance.FillExpertBoard(nodes);
                         continue;
                     }
                 }
                 else
                 {
                     var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, columnCount);
-                    foreach (var x in turns.Slice(0, turnCount))
+                    foreach (var turn in turns.Slice(0, turnCount))
                     {
-                        //BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, columnCount, x);
-                        BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, x);
+                        BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, turn);
                     }
-
-                    // if the matrix solver couldn't calculate any turns, we just select a "random" hidden node
                     if (turnCount == 0)
                     {
-                        var a = EducatedGuessStrategy.UseStrategy(nodes);
-                        BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, a);
+                        var turn = NodeStrategies.RevealFirstHiddenNode(nodes);
+                        BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, turn);
                     }
                 }
-
                 iteration++;
-
+                
                 var status = nodes.Status();
                 if (status == BoardStatus.Pending)
                 {
@@ -104,7 +102,7 @@ namespace MSEngine.ConsoleApp
             }
         }
 
-        private static string GetBoardAsciiArt(ReadOnlySpan<Node> nodes)
+        private static string GetBoardAsciiArt(ReadOnlySpan<Node> nodes, int columnCount)
         {
             var sb = new StringBuilder(nodes.Length);
 
@@ -114,9 +112,10 @@ namespace MSEngine.ConsoleApp
                 var nodeChar = GetNodeChar(node);
                 sb.Append(nodeChar);
 
-                if (i == 7 || i == 15 || i == 23 || i == 31 || i == 39 || i == 47 || i == 55)
+                if (i % columnCount == 1) 
                 {
                     sb.AppendLine();
+                    throw new NotImplementedException();
                 }
             }
 
@@ -124,14 +123,18 @@ namespace MSEngine.ConsoleApp
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static char GetNodeChar(in Node node)
+        private static char GetNodeChar(Node node)
         {
             switch (node)
             {
                 case var z when z.State == NodeState.Hidden:
                     return '_';
+                case var z when !z.HasMine && z.State == NodeState.Flagged:
+                    return '!';
                 case var z when z.State == NodeState.Flagged:
                     return '>';
+                case var z when z.HasMine && z.State == NodeState.Revealed:
+                    return '*';
                 case var z when z.HasMine:
                     return 'x';
                 case var z when z.State == NodeState.Revealed:

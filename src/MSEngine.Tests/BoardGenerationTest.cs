@@ -73,5 +73,28 @@ namespace MSEngine.Tests
                 Engine.Instance.FillCustomBoard(nodes, mines, 8, 8);
             });
         }
+
+        [Fact]
+        public void ScatteringMinesProducesZeroDuplicates()
+        {
+            Span<int> mines = stackalloc int[10];
+            mines.Scatter(11);
+            var distinctCount = mines.ToArray().Distinct().Count();
+
+            Assert.Equal(10, distinctCount);
+        }
+
+        [Fact]
+        public void ScatteringMinesProducesValidIndexes()
+        {
+            Span<int> mines = stackalloc int[10];
+            mines.Scatter(10);
+
+            foreach (var x in mines)
+            {
+                Assert.True(x > -1);
+                Assert.True(x < 10);
+            }
+        }
     }
 }

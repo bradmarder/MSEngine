@@ -4,7 +4,7 @@ namespace MSEngine.Solver
 {
     public static class GaussianElimination
     {
-        public static void GaussEliminate(this FlatMatrix<int> matrix)
+        public static void GaussEliminate(this FlatMatrix<float> matrix)
         {
             var lead = 0;
             var rowCount = matrix.RowCount;

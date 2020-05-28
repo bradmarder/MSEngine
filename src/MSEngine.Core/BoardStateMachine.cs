@@ -93,7 +93,7 @@ namespace MSEngine.Core
             {
                 if (node.HasMine)
                 {
-                    FailBoard(nodes);
+                    RevealHiddenMines(nodes);
                 }
                 else
                 {
@@ -110,14 +110,14 @@ namespace MSEngine.Core
             }
         }
 
-        internal static void FailBoard(Span<Node> nodes)
+        internal static void RevealHiddenMines(Span<Node> nodes)
         {
             // should we show false flags?
             foreach (ref var node in nodes)
             {
                 if (node.HasMine && node.State == NodeState.Hidden)
                 {
-                    node = new Node(node.HasMine, node.MineCount, NodeOperation.Reveal);
+                    node = new Node(true, node.MineCount, NodeOperation.Reveal);
                 }
             }
         }
@@ -142,21 +142,20 @@ namespace MSEngine.Core
             visitedIndexes[visitedIndexCount] = nodeIndex;
             visitedIndexCount++;
 
-            Span<int> adjacentIndexes = stackalloc int[8];
-            adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
+            Span<int> buffer = stackalloc int[8];
+            buffer.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
 
-            foreach (var i in adjacentIndexes)
+            foreach (var i in buffer)
             {
                 if (i == -1) { continue; }
 
                 var node = nodes[i];
 
-                // if the node has a "false flag", we do not reveal or visit it
                 if (node.State == NodeState.Flagged) { continue; }
  
                 if (node.State == NodeState.Hidden)
                 {
-                    nodes[i] = new Node(node.HasMine, node.MineCount, NodeOperation.Reveal);
+                    nodes[i] = new Node(false, node.MineCount, NodeOperation.Reveal);
                 }
 
                 if (node.MineCount == 0 && visitedIndexes.IndexOf(i) == -1)
@@ -170,11 +169,12 @@ namespace MSEngine.Core
         {
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeIndex < nodes.Length);
+            Debug.Assert(columnCount > 0);
 
-            Span<int> adjacentIndexes = stackalloc int[8];
-            adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
+            Span<int> buffer = stackalloc int[8];
+            buffer.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
 
-            foreach (var i in adjacentIndexes)
+            foreach (var i in buffer)
             {
                 if (i == -1) { continue; }
                 if (nodes[i].State != NodeState.Hidden) { continue; }

@@ -19,6 +19,30 @@ namespace MSEngine.Benchmarks
     [MemoryDiagnoser]
     public class BoardGenTests
     {
+        [Benchmark]
+        public void LenTestSlow()
+        {
+            var n = 0;
+            Span<int> mobs = stackalloc int[480];
+            for (var i = 0; i < mobs.Length; i++)
+            {
+                n++;
+            }
+            if (n > 480) { throw new Exception(); }
+        }
+
+        [Benchmark]
+        public void LenTestFast()
+        {
+            var n = 0;
+            Span<int> mobs = stackalloc int[480];
+            for (int i = 0, l = mobs.Length; i < l; i++)
+            {
+                n++;
+            }
+            if (n > 480) { throw new Exception(); }
+        }
+
         // 18.17 ns
         //[Benchmark]
         //public void Bar()
@@ -27,8 +51,8 @@ namespace MSEngine.Benchmarks
         //    foo.FillAdjacentNodeIndexes(64, 9, 3);
         //}
 
-        [Benchmark]
-        public void Exec() => ExecuteGame();
+        //[Benchmark]
+        //public void Exec() => ExecuteGame();
 
         private static void RunSimulations(int count)
         {
@@ -39,70 +63,7 @@ namespace MSEngine.Benchmarks
             ParallelEnumerable
                 .Range(0, count)
                 //.WithDegreeOfParallelism(1)
-                .ForAll(_ => ExecuteGame());
-        }
-
-        private static void ExecuteGame()
-        {
-            const int nodeCount = 64;
-            const int columnCount = 8;
-
-            Span<Node> nodes = stackalloc Node[nodeCount];
-            Span<Turn> turns = stackalloc Turn[0];
-            Engine.Instance.FillBeginnerBoard(nodes);
-
-            var turnCount = 0;
-
-            while (true)
-            {
-                if (turnCount == 0)
-                {
-                    turns = stackalloc Turn[1]
-                    {
-                        new Turn(27, NodeOperation.Reveal)
-                    };
-                }
-                if (turns.Length == 0)
-                {
-                    turns = stackalloc Turn[nodes.Length];
-                    MatrixSolver.CalculateTurns(nodes, ref turns);
-                }
-
-                // if the matrix solver couldn't calculate any turns, we just select a "random" hidden node
-                if (turns.Length == 0)
-                {
-                    turns = stackalloc Turn[1]
-                    {
-                        EducatedGuessStrategy.UseStrategy(nodes)
-                    };
-                }
-
-                var turn = turns[0];
-                turns = turns.Slice(1, turns.Length - 1);
-                //if (turnCount > 0)
-                //{
-                //    BoardStateMachine.Instance.EnsureValidBoardConfiguration(nodes, turn);
-                //}
-                BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, turn);
-
-                // Get new board unless node has no mine and zero AMC
-                var status = nodes.Status();
-                if (turnCount == 0 && (nodes[turn.NodeIndex].MineCount > 0 || status == BoardStatus.Failed))
-                {
-                    // nodes.Clear(); not required since every node is always reset
-                    Engine.Instance.FillBeginnerBoard(nodes);
-                    turns = Span<Turn>.Empty;
-                    continue;
-                }
-                turnCount++;
-
-                if (status == BoardStatus.Pending)
-                {
-                    continue;
-                }
-
-                break;
-            }
+                .ForAll(_ => { });
         }
     }
 }

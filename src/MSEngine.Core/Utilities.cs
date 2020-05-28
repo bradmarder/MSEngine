@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
@@ -9,6 +10,11 @@ namespace MSEngine.Core
     {
         public static bool IsAdjacentTo(Span<int> buffer, int nodeCount, int columnCount, int i1, int i2)
         {
+            Debug.Assert(buffer.Length == 8);
+            Debug.Assert(nodeCount > 0);
+            Debug.Assert(i1 >= 0);
+            Debug.Assert(i2 >= 0);
+
             buffer.FillAdjacentNodeIndexes(nodeCount, i1, columnCount);
 
             foreach (var i in buffer)
@@ -42,14 +48,15 @@ namespace MSEngine.Core
 
             if (!isTop)
             {
+                var val = index - columnCount;
                 if (!isLeftSide)
                 {
-                    indexes[0] = index - columnCount - 1;
+                    indexes[0] = val - 1;
                 }
-                indexes[1] = index - columnCount;
+                indexes[1] = val;
                 if (!isRightSide)
                 {
-                    indexes[2] = index - columnCount + 1;
+                    indexes[2] = val + 1;
                 }
             }
             if (!isLeftSide)
@@ -62,22 +69,23 @@ namespace MSEngine.Core
             }
             if (!isBottom)
             {
+                var val = index + columnCount;
                 if (!isLeftSide)
                 {
-                    indexes[5] = index + columnCount - 1;
+                    indexes[5] = val - 1;
                 }
-                indexes[6] = index + columnCount;
+                indexes[6] = val;
                 if (!isRightSide)
                 {
-                    indexes[7] = index + columnCount + 1;
+                    indexes[7] = val + 1;
                 }
             }
         }
 
-        internal static void Scatter(this Span<int> mines, int nodeCount)
+        public static void Scatter(this Span<int> mines, int nodeCount)
         {
             Debug.Assert(nodeCount > 0);
-            Debug.Assert(nodeCount > mines.Length);
+            Debug.Assert(nodeCount >= mines.Length);
 
             // we must fill the span with -1 because the default (0) is a valid index
             mines.Fill(-1);
@@ -86,7 +94,7 @@ namespace MSEngine.Core
             // the "do while" loop is just too slow...
             //RandomNumberGenerator.Fill(mines);
 
-            for (int i = 0, l = mines.Length; i < l; i++)
+            for (var i = 0; i < mines.Length; i++)
             {
                 int m;
 
@@ -101,15 +109,16 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetAdjacentFlaggedNodeCount(ReadOnlySpan<Node> nodes, Span<int> adjacentIndexes, int nodeIndex, int columnCount)
+        public static int GetAdjacentFlaggedNodeCount(ReadOnlySpan<Node> nodes, Span<int> buffer, int nodeIndex, int columnCount)
         {
-            Debug.Assert(adjacentIndexes.Length == 8);
+            Debug.Assert(nodes.Length > nodeIndex);
+            Debug.Assert(buffer.Length == 8);
             Debug.Assert(nodeIndex >= 0);
 
-            adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
+            buffer.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
 
             var n = 0;
-            foreach (var i in adjacentIndexes)
+            foreach (var i in buffer)
             {
                 if (i == -1) { continue; }
 
@@ -124,6 +133,7 @@ namespace MSEngine.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HasHiddenAdjacentNodes(ReadOnlySpan<Node> nodes, Span<int> buffer, int nodeIndex, int columnCount)
         {
+            Debug.Assert(nodes.Length > nodeIndex);
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(buffer.Length == 8);
 

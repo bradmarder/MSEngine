@@ -17,7 +17,7 @@ namespace MSEngine.Solver
             #region Revealed Nodes with AMC > 0
 
             var revealedAMCNodeCount = 0;
-            for (int i = 0, l = nodes.Length; i < l; i++)
+            for (var i = 0; i < nodes.Length; i++)
             {
                 var node = nodes[i];
                 if (node.State == NodeState.Revealed && node.MineCount > 0 && Utilities.HasHiddenAdjacentNodes(nodes, buffer, i, columnCount))
@@ -37,13 +37,9 @@ namespace MSEngine.Solver
             #region Adjacent Hidden Node Indexes
 
             var ahcCount = 0;
-
-            // we allocate an inner buffer on the stack here because we must avoid mutating the original buffer while iterating over it
-            Span<int> innerBuffer = stackalloc int[8];
-
             Span<int> adjacentHiddenNodeIndex = stackalloc int[nodes.Length];
 
-            for (int i = 0, l = nodes.Length; i < l; i++)
+            for (var i = 0; i < nodes.Length; i++)
             {
                 var node = nodes[i];
                 if (node.State != NodeState.Hidden) { continue; }
@@ -56,7 +52,7 @@ namespace MSEngine.Solver
                     if (x == -1) { continue; }
 
                     var adjNode = nodes[x];
-                    if (adjNode.State == NodeState.Revealed && adjNode.MineCount > 0 && Utilities.HasHiddenAdjacentNodes(nodes, innerBuffer, x, columnCount))
+                    if (adjNode.State == NodeState.Revealed && adjNode.MineCount > 0)
                     {
                         hasAHC = true;
                         break;
@@ -76,8 +72,8 @@ namespace MSEngine.Solver
             var rows = revealedAMCNodeCount;
             var columns = ahcCount + 1;
 
-            Span<int> nodeBuffer = stackalloc int[rows * columns];
-            var matrix = new FlatMatrix<int>(nodeBuffer, columns);
+            Span<float> nodeBuffer = stackalloc float[rows * columns];
+            var matrix = new FlatMatrix<float>(nodeBuffer, columns);
 
             for (var row = 0; row < rows; row++)
             {
@@ -85,13 +81,52 @@ namespace MSEngine.Solver
                 {
                     var nodeIndex = revealedAMCNodes[row];
                     var node = nodes[nodeIndex];
-
-                    matrix[row, column] = column == columns - 1
-
-                        // augmented column has special logic
+                    var isAugmentedColumn = column == columns - 1;
+                    var val = isAugmentedColumn
                         ? node.MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodes, buffer, nodeIndex, columnCount)
-
                         : Utilities.IsAdjacentTo(buffer, nodes.Length, columnCount, nodeIndex, adjacentHiddenNodeIndex[column]) ? 1 : 0;
+
+                    matrix[row, column] = val;
+
+                    // if the augment column is zero, then all the 1's in the row are not mines
+                    if (isAugmentedColumn && val == 0)
+                    {
+                        var tc = 0;
+                        for (var c = 0; c < columns - 1; c++)
+                        {
+                            if (matrix[row, c] == 1)
+                            {
+                                var ni = adjacentHiddenNodeIndex[c];
+                                turns[tc] = new Turn(ni, NodeOperation.Reveal);
+                                tc++;
+                            }
+                        }
+                        return tc;
+                    }
+
+                    // if the sum of the row equals the augmented column, then all the 1's in the row are mines
+                    if (isAugmentedColumn)
+                    {
+                        float sum = 0;
+                        for (var y = 0; y < columns - 1; y++)
+                        {
+                            sum += matrix[row, y];
+                        }
+                        if (sum == val)
+                        {
+                            var ta = 0;
+                            for (var c = 0; c < columns - 1; c++)
+                            {
+                                if (matrix[row, c] == 1)
+                                {
+                                    var ni = adjacentHiddenNodeIndex[c];
+                                    turns[ta] = new Turn(ni, NodeOperation.Flag);
+                                    ta++;
+                                }
+                            }
+                            return ta;
+                        }
+                    }
                 }
             }
 
@@ -101,33 +136,32 @@ namespace MSEngine.Solver
 
             #region Guass Matrix Processing
 
-            // exclude the augmented column
-            var finalIndex = columns - 1;
-            Span<int> vector = stackalloc int[finalIndex];
+            var augmentIndex = columns - 1;
+            Span<float> vector = stackalloc float[augmentIndex];
             var turnCount = 0;
 
             for (var row = 0; row < rows; row++)
             {
-                for (var column = 0; column < finalIndex; column++)
+                for (var column = 0; column < augmentIndex; column++)
                 {
                     vector[column] = matrix[row, column];
                 }
                 
-                var final = matrix[row, finalIndex];
-                var min = 0;
-                var max = 0;
+                var augmentColumn = matrix[row, augmentIndex];
+                float min = 0;
+                float max = 0;
                 foreach (var x in vector)
                 {
                     max += x > 0 ? x : 0;
                     min += x < 0 ? x : 0;
                 }
 
-                if (final != min && final != max)
+                if (augmentColumn != min && augmentColumn != max)
                 {
                     continue;
                 }
 
-                for (var column = 0; column < finalIndex; column++)
+                for (var column = 0; column < augmentIndex; column++)
                 {
                     var val = vector[column];
                     if (val == 0)
@@ -136,12 +170,8 @@ namespace MSEngine.Solver
                     }
                     var index = adjacentHiddenNodeIndex[column];
 
-                    var turn = final == min
-
-                        // All of the negative numbers in that row are mines and all of the positive values in that row are not mines
+                    var turn = augmentColumn == min
                         ? new Turn(index, val > 0 ? NodeOperation.Reveal : NodeOperation.Flag)
-
-                        // All of the negative numbers in that row are not mines and all of the positive values in that row are mines.
                         : new Turn(index, val > 0 ? NodeOperation.Flag : NodeOperation.Reveal);
 
                     // prevent adding duplicate turns
@@ -157,6 +187,22 @@ namespace MSEngine.Solver
 
             // we must return the turncount so the caller knows how much to slice from turns
             return turnCount;
+        }
+
+        static void Log(ReadOnlySpan<Node> nodes)
+        {
+            for (var i = 0; i < nodes.Length; i++)
+            {
+                var node = nodes[i];
+                var op = node.State switch
+                {
+                    NodeState.Flagged => "NodeOperation.Flag",
+                    NodeState.Hidden => "NodeOperation.RemoveFlag",
+                    NodeState.Revealed => "NodeOperation.Reveal",
+                    _ => ""
+                };
+                Console.WriteLine($"new Node({(node.HasMine ? "true" : "false")}, {node.MineCount}, {op}),");
+            }
         }
     }
 }
