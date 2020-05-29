@@ -143,7 +143,8 @@ namespace MSEngine.Tests
                 new Node(false, 0, NodeOperation.RemoveFlag),
                 new Node(false, 0, NodeOperation.RemoveFlag),
                 new Node(false, 0, NodeOperation.RemoveFlag)
-            };            Span<Turn> turns = stackalloc Turn[nodes.Length];
+            };
+            Span<Turn> turns = stackalloc Turn[nodes.Length];
 
             var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 8);
 
