@@ -77,7 +77,7 @@ namespace MSEngine.Solver
             var columns = ahcCount + 1;
 
             Span<float> nodeBuffer = stackalloc float[rows * columns];
-            var matrix = new FlatMatrix<float>(nodeBuffer, columns);
+            var matrix = new Matrix<float>(nodeBuffer, columns);
 
             for (var row = 0; row < rows; row++)
             {

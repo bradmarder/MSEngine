@@ -157,7 +157,7 @@ namespace MSEngine.Tests
         }
 
         /// <summary>
-        /// The reason we need float instead of sbyte/int for <see cref="FlatMatrix{T}"/>
+        /// The reason we need float instead of sbyte/int for <see cref="Matrix{T}"/>
         /// </summary>
         [Fact]
         public void CalculatesTurnsWhenGaussianEliminationProducesNonIntegers()

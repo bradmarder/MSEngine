@@ -3,11 +3,11 @@ using System.Diagnostics;
 
 namespace MSEngine.Solver
 {
-    public readonly ref struct FlatMatrix<T> where T : struct
+    public readonly ref struct Matrix<T> where T : struct
     {
         private readonly Span<T> _matrix;
 
-        public FlatMatrix(Span<T> matrix, int columnCount)
+        public Matrix(Span<T> matrix, int columnCount)
         {
             Debug.Assert(matrix.Length > 0);
             Debug.Assert(columnCount > 0);
