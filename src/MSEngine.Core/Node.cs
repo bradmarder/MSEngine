@@ -15,9 +15,19 @@ namespace MSEngine.Core
 
         public Node(bool hasMine, int mineCount, NodeOperation op)
         {
+            Debug.Assert(Enum.IsDefined(typeof(NodeOperation), op));
+
             HasMine = hasMine;
             MineCount = (byte)mineCount;
             State = _operationToStateMap[op];
+        }
+        public Node(bool hasMine, int mineCount, NodeState state)
+        {
+            Debug.Assert(Enum.IsDefined(typeof(NodeState), state));
+
+            HasMine = hasMine;
+            MineCount = (byte)mineCount;
+            State = state;
         }
         internal Node(bool hasMine, int mineCount)
         {
