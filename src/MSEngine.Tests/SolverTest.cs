@@ -54,6 +54,9 @@ namespace MSEngine.Tests
             var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 5);
 
             Assert.Equal(3, turnCount);
+            Assert.Equal(new Turn(3, NodeOperation.Reveal), turns[0]);
+            Assert.Equal(new Turn(8, NodeOperation.Reveal), turns[1]);
+            Assert.Equal(new Turn(13, NodeOperation.Reveal), turns[2]);
         }
 
         /// <summary>
