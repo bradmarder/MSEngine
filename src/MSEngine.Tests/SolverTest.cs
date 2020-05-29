@@ -17,7 +17,7 @@ namespace MSEngine.Tests
         [Fact]
         public void CalculatesTurnsForZeroAugmentColumnPriorToGaussianElimination()
         {
-            Span<Node> nodes = stackalloc Node[]
+            ReadOnlySpan<Node> nodes = stackalloc Node[]
             {
                 new Node(false, 0, NodeOperation.Reveal),
                 new Node(false, 1, NodeOperation.Reveal),
@@ -51,7 +51,7 @@ namespace MSEngine.Tests
             };
             Span<Turn> turns = stackalloc Turn[nodes.Length];
 
-            var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 5);
+            var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 5, false);
 
             Assert.Equal(3, turnCount);
             Assert.Equal(new Turn(3, NodeOperation.Reveal), turns[0]);
@@ -72,7 +72,7 @@ namespace MSEngine.Tests
         [Fact]
         public void CalculatesTurnsForVectorSumEqualsAugmentColumnPriorToGaussianElimination()
         {
-            Span<Node> nodes = stackalloc Node[]
+            ReadOnlySpan<Node> nodes = stackalloc Node[]
             {
                 new Node(false, 0, NodeOperation.Reveal),
                 new Node(false, 0, NodeOperation.Reveal),
@@ -149,7 +149,7 @@ namespace MSEngine.Tests
             };
             Span<Turn> turns = stackalloc Turn[nodes.Length];
 
-            var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 8);
+            var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 8, false);
 
             Assert.Equal(2, turnCount);
             Assert.Equal(new Turn(46, NodeOperation.Flag), turns[0]);
@@ -157,12 +157,12 @@ namespace MSEngine.Tests
         }
 
         /// <summary>
-        /// The reason we need float instead of sbyte for <see cref="FlatMatrix{T}"/>
+        /// The reason we need float instead of sbyte/int for <see cref="FlatMatrix{T}"/>
         /// </summary>
         [Fact]
         public void CalculatesTurnsWhenGaussianEliminationProducesNonIntegers()
         {
-            Span<Node> nodes = stackalloc Node[]
+            ReadOnlySpan<Node> nodes = stackalloc Node[]
             {
                 new Node(false, 1, NodeOperation.Reveal),
                 new Node(false, 1, NodeOperation.Reveal),
@@ -231,7 +231,7 @@ namespace MSEngine.Tests
             };
             Span<Turn> turns = stackalloc Turn[nodes.Length];
 
-            var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 8);
+            var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 8, false);
 
             Assert.Equal(2, turnCount);
 
@@ -240,6 +240,91 @@ namespace MSEngine.Tests
 
             Assert.Equal(new Turn(29, NodeOperation.Reveal), turns[0]);
             Assert.Equal(new Turn(61, NodeOperation.Reveal), turns[1]);
+        }
+
+        /// <summary>
+        /// The intent of this test is to demonstrate that we must factor in all hidden nodes in
+        /// the matrix in order to calculate any turns
+        /// </summary>
+        [Fact]
+        public void CalculatesTurnsWhenFactoringAllHiddenNodes()
+        {
+            ReadOnlySpan<Node> nodes = stackalloc Node[]
+            {
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 0, NodeOperation.Reveal),
+                new Node(false, 0, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(true, 0, NodeOperation.Flag),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 0, NodeOperation.Reveal),
+                new Node(true, 0, NodeOperation.Flag),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 0, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(true, 0, NodeOperation.Flag),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(true, 0, NodeOperation.Flag),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 0, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 3, NodeOperation.Reveal),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(false, 3, NodeOperation.Reveal),
+                new Node(true, 0, NodeOperation.Flag),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 0, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(true, 0, NodeOperation.Flag),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(true, 1, NodeOperation.Flag),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 0, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.RemoveFlag),
+                new Node(true, 1, NodeOperation.RemoveFlag),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(true, 1, NodeOperation.Flag),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(false, 0, NodeOperation.Reveal),
+                new Node(false, 1, NodeOperation.RemoveFlag),
+                new Node(false, 1, NodeOperation.RemoveFlag),
+                new Node(false, 1, NodeOperation.Reveal),
+                new Node(false, 0, NodeOperation.Reveal),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(true, 1, NodeOperation.Flag),
+                new Node(false, 2, NodeOperation.Reveal),
+                new Node(false, 0, NodeOperation.Reveal),
+            };
+            Span<Turn> turns = stackalloc Turn[nodes.Length];
+
+            var partialHiddenNodeTurnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 8, false);
+            var fullHiddenNodeTurnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 8, true);
+
+            Assert.Equal(0, partialHiddenNodeTurnCount);
+            Assert.Equal(2, fullHiddenNodeTurnCount);
+            Assert.Equal(new Turn(56, NodeOperation.Reveal), turns[0]);
+            Assert.Equal(new Turn(57, NodeOperation.Reveal), turns[1]);
         }
     }
 }

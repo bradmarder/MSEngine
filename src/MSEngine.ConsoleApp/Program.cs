@@ -35,9 +35,9 @@ namespace MSEngine.ConsoleApp
         {
             const int nodeCount = 8 * 8;
             const int columnCount = 8;
-            const int firstTurnNodeIndex = nodeCount / 2;
             //const int nodeCount = 30 * 16;
             //const int columnCount = 30;
+            const int firstTurnNodeIndex = nodeCount / 2;
 
             Span<Node> nodes = stackalloc Node[nodeCount];
             Span<Turn> turns = stackalloc Turn[nodeCount];
@@ -65,7 +65,11 @@ namespace MSEngine.ConsoleApp
                 }
                 else
                 {
-                    var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, columnCount);
+                    var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, columnCount, false);
+                    if (turnCount == 0)
+                    {
+                        turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, columnCount, true);
+                    }
                     foreach (var turn in turns.Slice(0, turnCount))
                     {
                         BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, turn);

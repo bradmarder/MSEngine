@@ -22,9 +22,18 @@ namespace MSEngine.Core
         /// <summary>
         /// Generates a random minesweeper board.
         /// </summary>
-        /// <param name="nodes">Preallocated Nodes</param>
-        /// <param name="columns">Max value of 30</param>
-        /// <param name="rows">Max value of 16</param>
+        /// <param name="nodes"></param>
+        /// <param name="mineCount"></param>
+        /// <param name="columns"></param>
+        /// <param name="rows"></param>
+        void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns, byte rows);
+
+        /// <summary>
+        /// Generates a random minesweeper board.
+        /// </summary>
+        /// <param name="nodes"></param>
+        /// <param name="columns"></param>
+        /// <param name="rows"></param>
         void FillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns, byte rows);
     }
 }

@@ -27,9 +27,12 @@ namespace MSEngine.Tests
             Engine.Instance.FillCustomBoard(nodes, mines, 2, 2);
             var turn = new Turn(0, NodeOperation.Reveal);
             BoardStateMachine.Instance.ComputeBoard(nodes, 2, turn);
-            var allNodesRevealed = nodes.ToArray().All(x => !x.HasMine || x.State == NodeState.Flagged || x.State == NodeState.Revealed);
 
-            Assert.True(allNodesRevealed);
+            Assert.Equal(BoardStatus.Failed, nodes.Status());
+            foreach (var node in nodes)
+            {
+                Assert.True(!node.HasMine || node.State == NodeState.Revealed);
+            }
         }
 
         [Fact]
@@ -90,12 +93,13 @@ namespace MSEngine.Tests
         [Fact]
         public void Revealing_node_without_mine_and_zero_adjacent_mines_triggers_chain_reaction()
         {
+            var mineIndex = 0;
             Span<Node> nodes = stackalloc Node[3 * 3];
-            Span<int> mines = stackalloc int[] { 0 };
+            Span<int> mines = stackalloc int[] { mineIndex };
             Engine.Instance.FillCustomBoard(nodes, mines, 3, 3);
             var node = nodes[8];
-            var firstTurn = new Turn(8, NodeOperation.Reveal);
-            BoardStateMachine.Instance.ComputeBoard(nodes, 3, firstTurn);
+            var turn = new Turn(8, NodeOperation.Reveal);
+            BoardStateMachine.Instance.ComputeBoard(nodes, 3, turn);
 
             Assert.False(node.HasMine);
             Assert.Equal(0, node.MineCount);
@@ -103,7 +107,7 @@ namespace MSEngine.Tests
 
             for (var i = 0; i < nodes.Length; i++)
             {
-                if (i == 0) { continue; }
+                if (i == mineIndex) { continue; }
                 Assert.Equal(NodeState.Revealed, nodes[i].State);
             }
         }

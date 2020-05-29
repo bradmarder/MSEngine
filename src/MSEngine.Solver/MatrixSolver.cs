@@ -6,7 +6,7 @@ namespace MSEngine.Solver
 {
     public static class MatrixSolver
     {
-        public static int CalculateTurns(ReadOnlySpan<Node> nodes, ref Span<Turn> turns, int columnCount)
+        public static int CalculateTurns(ReadOnlySpan<Node> nodes, ref Span<Turn> turns, int columnCount, bool useAllHiddenNodes)
         {
             Debug.Assert(nodes.Length > 0);
             Debug.Assert(nodes.Length == turns.Length);
@@ -45,20 +45,24 @@ namespace MSEngine.Solver
                 if (node.State != NodeState.Hidden) { continue; }
 
                 var hasAHC = false;
-                buffer.FillAdjacentNodeIndexes(nodes.Length, i, columnCount);
-
-                foreach (var x in buffer)
+                if (!useAllHiddenNodes)
                 {
-                    if (x == -1) { continue; }
+                    buffer.FillAdjacentNodeIndexes(nodes.Length, i, columnCount);
 
-                    var adjNode = nodes[x];
-                    if (adjNode.State == NodeState.Revealed && adjNode.MineCount > 0)
+                    foreach (var x in buffer)
                     {
-                        hasAHC = true;
-                        break;
+                        if (x == -1) { continue; }
+
+                        var adjNode = nodes[x];
+                        if (adjNode.State == NodeState.Revealed && adjNode.MineCount > 0)
+                        {
+                            hasAHC = true;
+                            break;
+                        }
                     }
                 }
-                if (hasAHC)
+                
+                if (useAllHiddenNodes || hasAHC)
                 {
                     adjacentHiddenNodeIndex[ahcCount] = i;
                     ahcCount++;
@@ -69,7 +73,7 @@ namespace MSEngine.Solver
 
             #region Raw Matrix Generation
 
-            var rows = revealedAMCNodeCount;
+            var rows = revealedAMCNodeCount + (useAllHiddenNodes ? 1 : 0);
             var columns = ahcCount + 1;
 
             Span<float> nodeBuffer = stackalloc float[rows * columns];
@@ -77,6 +81,19 @@ namespace MSEngine.Solver
 
             for (var row = 0; row < rows; row++)
             {
+                // loop over all the columns in the last row and set them to 1
+                // set the augment column equal to # of mines remaining
+                var isLastRow = row == rows - 1;
+                if (useAllHiddenNodes && isLastRow)
+                {
+                    for (var i = 0; i < matrix.ColumnCount; i++)
+                    {
+                        var isAugmentedColumn = i == matrix.ColumnCount - 1;
+                        matrix[matrix.RowCount - 1, i] = isAugmentedColumn ? nodes.FlagsAvailable() : 1;
+                    }
+                    break;
+                }
+
                 for (var column = 0; column < columns; column++)
                 {
                     var nodeIndex = revealedAMCNodes[row];
@@ -136,11 +153,11 @@ namespace MSEngine.Solver
 
             #region Guass Matrix Processing
 
-            var augmentIndex = columns - 1;
+            var augmentIndex = matrix.ColumnCount - 1;
             Span<float> vector = stackalloc float[augmentIndex];
             var turnCount = 0;
 
-            for (var row = 0; row < rows; row++)
+            for (var row = 0; row < matrix.RowCount; row++)
             {
                 for (var column = 0; column < augmentIndex; column++)
                 {
@@ -187,22 +204,6 @@ namespace MSEngine.Solver
 
             // we must return the turncount so the caller knows how much to slice from turns
             return turnCount;
-        }
-
-        static void Log(ReadOnlySpan<Node> nodes)
-        {
-            for (var i = 0; i < nodes.Length; i++)
-            {
-                var node = nodes[i];
-                var op = node.State switch
-                {
-                    NodeState.Flagged => "NodeOperation.Flag",
-                    NodeState.Hidden => "NodeOperation.RemoveFlag",
-                    NodeState.Revealed => "NodeOperation.Reveal",
-                    _ => ""
-                };
-                Console.WriteLine($"new Node({(node.HasMine ? "true" : "false")}, {node.MineCount}, {op}),");
-            }
         }
     }
 }

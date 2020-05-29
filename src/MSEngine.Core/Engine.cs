@@ -7,33 +7,22 @@ namespace MSEngine.Core
     {
         public static IEngine Instance { get; } = new Engine();
 
-        public virtual void FillBeginnerBoard(Span<Node> nodes)
+        public virtual void FillBeginnerBoard(Span<Node> nodes) => FillCustomBoard(nodes, 10, 8, 8);
+        public virtual void FillIntermediateBoard(Span<Node> nodes) => FillCustomBoard(nodes, 40, 16, 16);
+        public virtual void FillExpertBoard(Span<Node> nodes) => FillCustomBoard(nodes, 99, 30, 16);
+        public virtual void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns, byte rows)
         {
-            Span<int> mines = stackalloc int[10];
+            Span<int> mines = stackalloc int[mineCount];
             mines.Scatter(nodes.Length);
 
-            FillCustomBoard(nodes, mines, 8, 8);
-        }
-        public virtual void FillIntermediateBoard(Span<Node> nodes)
-        {
-            Span<int> mines = stackalloc int[40];
-            mines.Scatter(nodes.Length);
-
-            FillCustomBoard(nodes, mines, 16, 16);
-        }
-        public virtual void FillExpertBoard(Span<Node> nodes)
-        {
-            Span<int> mines = stackalloc int[99];
-            mines.Scatter(nodes.Length);
-
-            FillCustomBoard(nodes, mines, 30, 16);
+            FillCustomBoard(nodes, mines, columns, rows);
         }
         public virtual void FillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns, byte rows)
         {
-            if (columns == 0) { throw new ArgumentOutOfRangeException(nameof(columns)); }
-            if (rows == 0) { throw new ArgumentOutOfRangeException(nameof(rows)); }
-            if (mines.Length >= nodes.Length) { throw new ArgumentOutOfRangeException(nameof(mines)); }
-            if (nodes.Length != (columns * rows)) { throw new ArgumentOutOfRangeException(nameof(nodes)); }
+            Debug.Assert(columns > 0);
+            Debug.Assert(rows > 0);
+            Debug.Assert(nodes.Length > mines.Length);
+            Debug.Assert(nodes.Length == columns * rows);
 
             Span<int> buffer = stackalloc int[8];
 

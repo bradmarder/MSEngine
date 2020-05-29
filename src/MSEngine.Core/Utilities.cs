@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
@@ -149,6 +148,24 @@ namespace MSEngine.Core
             }
 
             return false;
+        }
+
+        public static string Log(ReadOnlySpan<Node> nodes)
+        {
+            var sb = new System.Text.StringBuilder();
+            for (var i = 0; i < nodes.Length; i++)
+            {
+                var node = nodes[i];
+                var op = node.State switch
+                {
+                    NodeState.Flagged => "NodeOperation.Flag",
+                    NodeState.Hidden => "NodeOperation.RemoveFlag",
+                    NodeState.Revealed => "NodeOperation.Reveal",
+                    _ => ""
+                };
+                sb.AppendLine($"new Node({node.HasMine.ToString().ToLower()}, {node.MineCount}, {op}),");
+            }
+            return sb.ToString();
         }
     }
 }
