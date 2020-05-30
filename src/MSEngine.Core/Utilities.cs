@@ -93,7 +93,7 @@ namespace MSEngine.Core
             // the "do while" loop is just too slow...
             //RandomNumberGenerator.Fill(mines);
 
-            for (var i = 0; i < mines.Length; i++)
+            foreach (ref var x in mines)
             {
                 int m;
 
@@ -103,7 +103,7 @@ namespace MSEngine.Core
                     m = RandomNumberGenerator.GetInt32(nodeCount);
                 } while (mines.IndexOf(m) != -1);
 
-                mines[i] = m;
+                x = m;
             }
         }
 
