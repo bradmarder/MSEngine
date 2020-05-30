@@ -1,25 +1,25 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace MSEngine.Solver
+namespace MSEngine.Core
 {
     public readonly ref struct Matrix<T> where T : struct
     {
-        private readonly Span<T> _matrix;
-
-        public Matrix(Span<T> matrix, int columnCount)
+        public Matrix(Span<T> nodes, int columnCount)
         {
-            Debug.Assert(matrix.Length > 0);
+            Debug.Assert(nodes.Length > 0);
             Debug.Assert(columnCount > 0);
-            Debug.Assert(matrix.Length % columnCount == 0);
+            Debug.Assert(nodes.Length % columnCount == 0);
 
-            _matrix = matrix;
+            Nodes = nodes;
             ColumnCount = columnCount;
         }
 
+        public readonly Span<T> Nodes;
         public readonly int ColumnCount { get; }
-        public readonly int RowCount => _matrix.Length / ColumnCount;
-        public readonly ref T this[int row, int column] => ref _matrix[row * ColumnCount + column];
+        public readonly int RowCount => Nodes.Length / ColumnCount;
+
+        public readonly ref T this[int row, int column] => ref Nodes[row * ColumnCount + column];
 
         public override string ToString()
         {

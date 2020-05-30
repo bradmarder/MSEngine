@@ -19,7 +19,7 @@ namespace MSEngine.Benchmarks
     [MemoryDiagnoser]
     public class BoardGenTests
     {
-        [Benchmark]
+        //[Benchmark]
         public void LenTestSlow()
         {
             var n = 0;
@@ -31,7 +31,7 @@ namespace MSEngine.Benchmarks
             if (n > 480) { throw new Exception(); }
         }
 
-        [Benchmark]
+        //[Benchmark]
         public void LenTestFast()
         {
             var n = 0;
@@ -45,14 +45,17 @@ namespace MSEngine.Benchmarks
 
         // 18.17 ns
         //[Benchmark]
-        //public void Bar()
-        //{
-        //    Span<int> foo = stackalloc int[8];
-        //    foo.FillAdjacentNodeIndexes(64, 9, 3);
-        //}
+        public void Bar()
+        {
+            Span<int> foo = stackalloc int[8];
+            foo.FillAdjacentNodeIndexes(64, 9, 3);
+        }
 
-        //[Benchmark]
-        //public void Exec() => ExecuteGame();
+        [Benchmark]
+        public void Exec()
+        {
+            Play();
+        }
 
         private static void RunSimulations(int count)
         {
@@ -64,6 +67,66 @@ namespace MSEngine.Benchmarks
                 .Range(0, count)
                 //.WithDegreeOfParallelism(1)
                 .ForAll(_ => { });
+        }
+
+        private static void Play()
+        {
+            const int nodeCount = 8 * 8;
+            const int columnCount = 8;
+            //const int nodeCount = 30 * 16;
+            //const int columnCount = 30;
+            const int firstTurnNodeIndex = nodeCount / 2;
+
+            Span<Node> nodes = stackalloc Node[nodeCount];
+            Span<Turn> turns = stackalloc Turn[nodeCount];
+            var matrix = new Matrix<Node>(nodes, columnCount);
+
+            var iteration = 0;
+
+            while (true)
+            {
+                if (iteration == 0)
+                {
+                    Engine.Instance.FillBeginnerBoard(nodes);
+                    var turn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
+
+                    // Technically, computing the board *before* the check is redundant here, since we can just
+                    // inspect the node directly. We do this to maintain strict separation of clients
+                    // We could place this ComputeBoard method after the node inspection for perf
+                    BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+
+                    var node = nodes[turn.NodeIndex];
+                    if (node.HasMine || node.MineCount > 0)
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
+                    if (turnCount == 0)
+                    {
+                        turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
+                    }
+                    foreach (var turn in turns.Slice(0, turnCount))
+                    {
+                        BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+                    }
+                    if (turnCount == 0)
+                    {
+                        var turn = NodeStrategies.RevealFirstHiddenNode(nodes);
+                        BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+                    }
+                }
+                iteration++;
+
+                var status = nodes.Status();
+                if (status == BoardStatus.Pending)
+                {
+                    continue;
+                }
+                break;
+            }
         }
     }
 }

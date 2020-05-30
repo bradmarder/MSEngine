@@ -41,6 +41,7 @@ namespace MSEngine.ConsoleApp
 
             Span<Node> nodes = stackalloc Node[nodeCount];
             Span<Turn> turns = stackalloc Turn[nodeCount];
+            var matrix = new Matrix<Node>(nodes, columnCount);
 
             var iteration = 0;
 
@@ -54,7 +55,7 @@ namespace MSEngine.ConsoleApp
                     // Technically, computing the board *before* the check is redundant here, since we can just
                     // inspect the node directly. We do this to maintain strict separation of clients
                     // We could place this ComputeBoard method after the node inspection for perf
-                    BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, turn);
+                    BoardStateMachine.Instance.ComputeBoard(matrix, turn);
 
                     var node = nodes[turn.NodeIndex];
                     Debug.Assert(node.State == NodeState.Revealed);
@@ -65,19 +66,19 @@ namespace MSEngine.ConsoleApp
                 }
                 else
                 {
-                    var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, columnCount, false);
+                    var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
                     if (turnCount == 0)
                     {
-                        turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, columnCount, true);
+                        turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
                     }
                     foreach (var turn in turns.Slice(0, turnCount))
                     {
-                        BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, turn);
+                        BoardStateMachine.Instance.ComputeBoard(matrix, turn);
                     }
                     if (turnCount == 0)
                     {
                         var turn = NodeStrategies.RevealFirstHiddenNode(nodes);
-                        BoardStateMachine.Instance.ComputeBoard(nodes, columnCount, turn);
+                        BoardStateMachine.Instance.ComputeBoard(matrix, turn);
                     }
                 }
                 iteration++;

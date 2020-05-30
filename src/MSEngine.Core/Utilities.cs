@@ -103,25 +103,31 @@ namespace MSEngine.Core
                     m = RandomNumberGenerator.GetInt32(nodeCount);
                 } while (mines.IndexOf(m) != -1);
 
+                // #if NETCOREAPP3_1
+                //                 while  (!mines.Contains(m));
+                // #else
+                //                 while  (mines.IndexOf(m) != -1);
+                // #endif
+
                 mines[i] = m;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetAdjacentFlaggedNodeCount(ReadOnlySpan<Node> nodes, Span<int> buffer, int nodeIndex, int columnCount)
+        public static int GetAdjacentFlaggedNodeCount(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
         {
-            Debug.Assert(nodes.Length > nodeIndex);
+            Debug.Assert(matrix.Nodes.Length > nodeIndex);
             Debug.Assert(buffer.Length == 8);
             Debug.Assert(nodeIndex >= 0);
 
-            buffer.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
+            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
 
             var n = 0;
             foreach (var i in buffer)
             {
                 if (i == -1) { continue; }
 
-                if (nodes[i].State == NodeState.Flagged)
+                if (matrix.Nodes[i].State == NodeState.Flagged)
                 {
                     n++;
                 }
@@ -130,18 +136,18 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool HasHiddenAdjacentNodes(ReadOnlySpan<Node> nodes, Span<int> buffer, int nodeIndex, int columnCount)
+        public static bool HasHiddenAdjacentNodes(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
         {
-            Debug.Assert(nodes.Length > nodeIndex);
+            Debug.Assert(matrix.Nodes.Length > nodeIndex);
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(buffer.Length == 8);
 
-            buffer.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
+            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
 
             foreach (var x in buffer)
             {
                 if (x == -1) { continue; }
-                if (nodes[x].State == NodeState.Hidden)
+                if (matrix.Nodes[x].State == NodeState.Hidden)
                 {
                     return true;
                 }
@@ -150,12 +156,12 @@ namespace MSEngine.Core
             return false;
         }
 
-        public static string Log(ReadOnlySpan<Node> nodes)
+        public static string Log(Matrix<Node> matrix)
         {
             var sb = new System.Text.StringBuilder();
-            for (var i = 0; i < nodes.Length; i++)
+            for (var i = 0; i < matrix.Nodes.Length; i++)
             {
-                var node = nodes[i];
+                var node = matrix.Nodes[i];
                 var op = node.State switch
                 {
                     NodeState.Flagged => "NodeOperation.Flag",

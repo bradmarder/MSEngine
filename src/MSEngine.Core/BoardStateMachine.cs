@@ -7,8 +7,9 @@ namespace MSEngine.Core
     {
         public static IBoardStateMachine Instance { get; } = new BoardStateMachine();
 
-        public virtual void EnsureValidBoardConfiguration(ReadOnlySpan<Node> nodes, int columnCount, Turn turn)
+        public virtual void EnsureValidBoardConfiguration(Matrix<Node> matrix, Turn turn)
         {
+            var nodes = matrix.Nodes;
             if (nodes.Status() == BoardStatus.Completed || nodes.Status() == BoardStatus.Failed)
             {
                 throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
@@ -49,7 +50,7 @@ namespace MSEngine.Core
                 var nodeAdjacentFlagCount = 0;
                 var nodeAdjacentHiddenCount = 0;
                 Span<int> adjacentIndexes = stackalloc int[8];
-                adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, turn.NodeIndex, columnCount);
+                adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, turn.NodeIndex, matrix.ColumnCount);
 
                 foreach (var i in adjacentIndexes)
                 {
@@ -70,9 +71,9 @@ namespace MSEngine.Core
                 }
             }
         }
-        public virtual void ComputeBoard(Span<Node> nodes, int columnCount, Turn turn)
+        public virtual void ComputeBoard(Matrix<Node> matrix, Turn turn)
         {
-            var node = nodes[turn.NodeIndex];
+            var node = matrix.Nodes[turn.NodeIndex];
 
             // If a node is already revealed, we return instead of throwing an exception
             // This is because the solver generates batches of turns at a time, and any turn
@@ -85,7 +86,7 @@ namespace MSEngine.Core
             // these cases will only affect the singular node
             if (turn.Operation == NodeOperation.Flag || turn.Operation == NodeOperation.RemoveFlag || (turn.Operation == NodeOperation.Reveal && !node.HasMine && node.MineCount > 0))
             {
-                nodes[turn.NodeIndex] = new Node(node.HasMine, node.MineCount, turn.Operation);
+                matrix.Nodes[turn.NodeIndex] = new Node(node.HasMine, node.MineCount, turn.Operation);
                 return;
             }
 
@@ -93,19 +94,19 @@ namespace MSEngine.Core
             {
                 if (node.HasMine)
                 {
-                    RevealHiddenMines(nodes);
+                    RevealHiddenMines(matrix.Nodes);
                 }
                 else
                 {
-                    nodes[turn.NodeIndex] = new Node(node.HasMine, node.MineCount, NodeOperation.Reveal);
-                    ChainReaction(nodes, turn.NodeIndex, columnCount);
+                    matrix.Nodes[turn.NodeIndex] = new Node(node.HasMine, node.MineCount, NodeOperation.Reveal);
+                    ChainReaction(matrix, turn.NodeIndex);
                 }
                 return;
             }
 
             if (turn.Operation == NodeOperation.Chord)
             {
-                Chord(nodes, turn.NodeIndex, columnCount);
+                Chord(matrix, turn.NodeIndex);
                 return;
             }
         }
@@ -122,19 +123,19 @@ namespace MSEngine.Core
             }
         }
 
-        internal static void ChainReaction(Span<Node> nodes, int nodeIndex, int columnCount)
+        internal static void ChainReaction(Matrix<Node> matrix, int nodeIndex)
         {
             Debug.Assert(nodeIndex >= 0);
 
             var visitedIndexCount = 0;
-            Span<int> visitedIndexes = stackalloc int[nodes.Length]; //  subtract nodes.MineCount() ?
+            Span<int> visitedIndexes = stackalloc int[matrix.Nodes.Length]; //  subtract nodes.MineCount() ?
             visitedIndexes.Fill(-1);
 
-            VisitNode(nodes, nodeIndex, columnCount, visitedIndexes, ref visitedIndexCount);
+            VisitNode(matrix, nodeIndex, visitedIndexes, ref visitedIndexCount);
         }
 
         // Recursively visits and reveals nodes
-        internal static void VisitNode(Span<Node> nodes, int nodeIndex, int columnCount, Span<int> visitedIndexes, ref int visitedIndexCount)
+        internal static void VisitNode(Matrix<Node> matrix, int nodeIndex, Span<int> visitedIndexes, ref int visitedIndexCount)
         {
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(visitedIndexCount >= 0);
@@ -143,44 +144,43 @@ namespace MSEngine.Core
             visitedIndexCount++;
 
             Span<int> buffer = stackalloc int[8];
-            buffer.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
+            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
 
             foreach (var i in buffer)
             {
                 if (i == -1) { continue; }
 
-                var node = nodes[i];
+                var node = matrix.Nodes[i];
 
                 if (node.State == NodeState.Flagged) { continue; }
  
                 if (node.State == NodeState.Hidden)
                 {
-                    nodes[i] = new Node(false, node.MineCount, NodeOperation.Reveal);
+                    matrix.Nodes[i] = new Node(false, node.MineCount, NodeOperation.Reveal);
                 }
 
                 if (node.MineCount == 0 && visitedIndexes.IndexOf(i) == -1)
                 {
-                    VisitNode(nodes, i, columnCount, visitedIndexes, ref visitedIndexCount);
+                    VisitNode(matrix, i, visitedIndexes, ref visitedIndexCount);
                 }
             }
         }
 
-        internal void Chord(Span<Node> nodes, int nodeIndex, int columnCount)
+        internal void Chord(Matrix<Node> matrix, int nodeIndex)
         {
             Debug.Assert(nodeIndex >= 0);
-            Debug.Assert(nodeIndex < nodes.Length);
-            Debug.Assert(columnCount > 0);
+            Debug.Assert(nodeIndex < matrix.Nodes.Length);
 
             Span<int> buffer = stackalloc int[8];
-            buffer.FillAdjacentNodeIndexes(nodes.Length, nodeIndex, columnCount);
+            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
 
             foreach (var i in buffer)
             {
                 if (i == -1) { continue; }
-                if (nodes[i].State != NodeState.Hidden) { continue; }
+                if (matrix.Nodes[i].State != NodeState.Hidden) { continue; }
 
                 var turn = new Turn(i, NodeOperation.Reveal);
-                ComputeBoard(nodes, columnCount, turn);
+                ComputeBoard(matrix, turn);
             }
         }
     }

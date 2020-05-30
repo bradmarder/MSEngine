@@ -17,7 +17,7 @@ namespace MSEngine.Tests
         [Fact]
         public void CalculatesTurnsForZeroAugmentColumnPriorToGaussianElimination()
         {
-            ReadOnlySpan<Node> nodes = stackalloc Node[]
+            Span<Node> nodes = stackalloc Node[]
             {
                 new Node(false, 0, NodeState.Revealed),
                 new Node(false, 1, NodeState.Revealed),
@@ -50,8 +50,9 @@ namespace MSEngine.Tests
                 new Node(false, 0, NodeState.Hidden)
             };
             Span<Turn> turns = stackalloc Turn[nodes.Length];
+            var matrix = new Matrix<Node>(nodes, 5);
 
-            var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 5, false);
+            var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
 
             Assert.Equal(3, turnCount);
             Assert.Equal(new Turn(3, NodeOperation.Reveal), turns[0]);
@@ -72,7 +73,7 @@ namespace MSEngine.Tests
         [Fact]
         public void CalculatesTurnsForVectorSumEqualsAugmentColumnPriorToGaussianElimination()
         {
-            ReadOnlySpan<Node> nodes = stackalloc Node[]
+            Span<Node> nodes = stackalloc Node[]
             {
                 new Node(false, 0, NodeState.Revealed),
                 new Node(false, 0, NodeState.Revealed),
@@ -148,8 +149,9 @@ namespace MSEngine.Tests
                 new Node(false, 0, NodeState.Hidden)
             };
             Span<Turn> turns = stackalloc Turn[nodes.Length];
+            var matrix = new Matrix<Node>(nodes, 8);
 
-            var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 8, false);
+            var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
 
             Assert.Equal(2, turnCount);
             Assert.Equal(new Turn(46, NodeOperation.Flag), turns[0]);
@@ -162,7 +164,7 @@ namespace MSEngine.Tests
         [Fact]
         public void CalculatesTurnsWhenGaussianEliminationProducesNonIntegers()
         {
-            ReadOnlySpan<Node> nodes = stackalloc Node[]
+            Span<Node> nodes = stackalloc Node[]
             {
                 new Node(false, 1, NodeState.Revealed),
                 new Node(false, 1, NodeState.Revealed),
@@ -230,8 +232,9 @@ namespace MSEngine.Tests
                 new Node(false, 1, NodeState.Hidden),
             };
             Span<Turn> turns = stackalloc Turn[nodes.Length];
+            var matrix = new Matrix<Node>(nodes, 8);
 
-            var turnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 8, false);
+            var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
 
             Assert.Equal(2, turnCount);
 
@@ -249,7 +252,7 @@ namespace MSEngine.Tests
         [Fact]
         public void CalculatesTurnsWhenFactoringAllHiddenNodes()
         {
-            ReadOnlySpan<Node> nodes = stackalloc Node[]
+            Span<Node> nodes = stackalloc Node[]
             {
                 new Node(false, 1, NodeState.Revealed),
                 new Node(false, 1, NodeState.Revealed),
@@ -317,9 +320,10 @@ namespace MSEngine.Tests
                 new Node(false, 0, NodeState.Revealed),
             };
             Span<Turn> turns = stackalloc Turn[nodes.Length];
+            var matrix = new Matrix<Node>(nodes, 8);
 
-            var partialHiddenNodeTurnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 8, false);
-            var fullHiddenNodeTurnCount = MatrixSolver.CalculateTurns(nodes, ref turns, 8, true);
+            var partialHiddenNodeTurnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
+            var fullHiddenNodeTurnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
 
             Assert.Equal(0, partialHiddenNodeTurnCount);
             Assert.Equal(2, fullHiddenNodeTurnCount);

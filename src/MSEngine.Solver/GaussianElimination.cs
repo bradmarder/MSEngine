@@ -1,4 +1,4 @@
-﻿using System;
+﻿using MSEngine.Core;
 
 namespace MSEngine.Solver
 {

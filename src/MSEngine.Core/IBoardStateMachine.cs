@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace MSEngine.Core
+﻿namespace MSEngine.Core
 {
     public interface IBoardStateMachine
     {
@@ -21,8 +19,8 @@ namespace MSEngine.Core
         /// -May only chord a node when adjacent mine count equals adjacent node flag count
         /// -May only chord a node that has hidden adjacent nodes
         /// </exception>
-        void EnsureValidBoardConfiguration(ReadOnlySpan<Node> nodes, int columnCount, Turn turn);
+        void EnsureValidBoardConfiguration(Matrix<Node> matrix, Turn turn);
         
-        void ComputeBoard(Span<Node> nodes, int columnCount, Turn turn);
+        void ComputeBoard(Matrix<Node> matrix, Turn turn);
     }
 }

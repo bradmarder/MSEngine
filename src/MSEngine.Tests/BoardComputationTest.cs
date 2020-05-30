@@ -11,9 +11,10 @@ namespace MSEngine.Tests
         public void Zero_mine_count_with_one_reveal_completes_board()
         {
             Span<Node> nodes = stackalloc Node[8 * 8];
+            var matrix = new Matrix<Node>(nodes, 8);
             Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 8, 8);
             var turn = new Turn(0, NodeOperation.Reveal);
-            BoardStateMachine.Instance.ComputeBoard(nodes, 8, turn);
+            BoardStateMachine.Instance.ComputeBoard(matrix, turn);
 
             Assert.Equal(BoardStatus.Completed, nodes.Status());
         }
@@ -23,10 +24,11 @@ namespace MSEngine.Tests
         {
             Span<Node> nodes = stackalloc Node[2 * 2];
             Span<int> mines = stackalloc int[] { 0 };
+            var matrix = new Matrix<Node>(nodes, 2);
 
             Engine.Instance.FillCustomBoard(nodes, mines, 2, 2);
             var turn = new Turn(0, NodeOperation.Reveal);
-            BoardStateMachine.Instance.ComputeBoard(nodes, 2, turn);
+            BoardStateMachine.Instance.ComputeBoard(matrix, turn);
 
             Assert.Equal(BoardStatus.Failed, nodes.Status());
             foreach (var node in nodes)
@@ -40,10 +42,11 @@ namespace MSEngine.Tests
         {
             Span<Node> nodes = stackalloc Node[2 * 2];
             Span<int> mines = stackalloc int[] { 0 };
+            var matrix = new Matrix<Node>(nodes, 2);
             Engine.Instance.FillCustomBoard(nodes, mines, 2, 2);
             var board = nodes.ToArray();
             var turn = new Turn(0, NodeOperation.Flag);
-            BoardStateMachine.Instance.ComputeBoard(nodes, 2, turn);
+            BoardStateMachine.Instance.ComputeBoard(matrix, turn);
             var node = nodes[0];
             var everyOtherNodeHasNotChanged = nodes.ToArray().All(x => x.Equals(node) || board.Contains(x));
 
@@ -56,10 +59,11 @@ namespace MSEngine.Tests
         {
             Span<Node> nodes = stackalloc Node[2 * 2];
             Span<int> mines = stackalloc int[] { 0 };
+            var matrix = new Matrix<Node>(nodes, 2);
             Engine.Instance.FillCustomBoard(nodes, mines, 2, 2);
             var board = nodes.ToArray();
             var turn = new Turn(0, NodeOperation.Reveal);
-            BoardStateMachine.Instance.ComputeBoard(nodes, 2, turn);
+            BoardStateMachine.Instance.ComputeBoard(matrix, turn);
             var node = nodes[0];
             var everyOtherNodeHasNotChanged = nodes.ToArray().All(x => x.Equals(node) || board.Contains(x));
 
@@ -72,6 +76,7 @@ namespace MSEngine.Tests
         {
             Span<Node> nodes = stackalloc Node[2 * 2];
             ReadOnlySpan<int> mines = stackalloc int[] { 0 };
+            var matrix = new Matrix<Node>(nodes, 2);
             Engine.Instance.FillCustomBoard(nodes, mines, 2, 2);
             Span<Turn> turns = stackalloc Turn[3]
             {
@@ -81,7 +86,7 @@ namespace MSEngine.Tests
             };
             foreach (var x in turns)
             {
-                BoardStateMachine.Instance.ComputeBoard(nodes, 2, x);
+                BoardStateMachine.Instance.ComputeBoard(matrix, x);
             }
 
             // 0,0 has the only mine, so we flag it
@@ -96,10 +101,11 @@ namespace MSEngine.Tests
             var mineIndex = 0;
             Span<Node> nodes = stackalloc Node[3 * 3];
             Span<int> mines = stackalloc int[] { mineIndex };
+            var matrix = new Matrix<Node>(nodes, 3);
             Engine.Instance.FillCustomBoard(nodes, mines, 3, 3);
             var node = nodes[8];
             var turn = new Turn(8, NodeOperation.Reveal);
-            BoardStateMachine.Instance.ComputeBoard(nodes, 3, turn);
+            BoardStateMachine.Instance.ComputeBoard(matrix, turn);
 
             Assert.False(node.HasMine);
             Assert.Equal(0, node.MineCount);
@@ -116,9 +122,10 @@ namespace MSEngine.Tests
         public void Chain_reaction_is_blocked_by_false_flag()
         {
             Span<Node> nodes = stackalloc Node[5 * 1];
+            var matrix = new Matrix<Node>(nodes, 5);
             Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 5, 1);
-            BoardStateMachine.Instance.ComputeBoard(nodes, 5, new Turn(2, NodeOperation.Flag));
-            BoardStateMachine.Instance.ComputeBoard(nodes, 5, new Turn(4, NodeOperation.Reveal));
+            BoardStateMachine.Instance.ComputeBoard(matrix, new Turn(2, NodeOperation.Flag));
+            BoardStateMachine.Instance.ComputeBoard(matrix, new Turn(4, NodeOperation.Reveal));
 
             for (var i = 0; i < nodes.Length; i++)
             {

@@ -6,11 +6,12 @@ namespace MSEngine.Solver
 {
     public static class MatrixSolver
     {
-        public static int CalculateTurns(ReadOnlySpan<Node> nodes, ref Span<Turn> turns, int columnCount, bool useAllHiddenNodes)
+        public static int CalculateTurns(Matrix<Node> nodeMatrix, Span<Turn> turns, bool useAllHiddenNodes)
         {
+            var nodes = nodeMatrix.Nodes;
             Debug.Assert(nodes.Length > 0);
             Debug.Assert(nodes.Length == turns.Length);
-
+            
             Span<int> buffer = stackalloc int[8];
             Span<int> revealedAMCNodes = stackalloc int[nodes.Length];
 
@@ -20,7 +21,7 @@ namespace MSEngine.Solver
             for (var i = 0; i < nodes.Length; i++)
             {
                 var node = nodes[i];
-                if (node.State == NodeState.Revealed && node.MineCount > 0 && Utilities.HasHiddenAdjacentNodes(nodes, buffer, i, columnCount))
+                if (node.State == NodeState.Revealed && node.MineCount > 0 && Utilities.HasHiddenAdjacentNodes(nodeMatrix, buffer, i))
                 {
                     revealedAMCNodes[revealedAMCNodeCount] = i;
                     revealedAMCNodeCount++;
@@ -47,7 +48,7 @@ namespace MSEngine.Solver
                 var hasAHC = false;
                 if (!useAllHiddenNodes)
                 {
-                    buffer.FillAdjacentNodeIndexes(nodes.Length, i, columnCount);
+                    buffer.FillAdjacentNodeIndexes(nodes.Length, i, nodeMatrix.ColumnCount);
 
                     foreach (var x in buffer)
                     {
@@ -100,8 +101,8 @@ namespace MSEngine.Solver
                     var node = nodes[nodeIndex];
                     var isAugmentedColumn = column == columns - 1;
                     var val = isAugmentedColumn
-                        ? node.MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodes, buffer, nodeIndex, columnCount)
-                        : Utilities.IsAdjacentTo(buffer, nodes.Length, columnCount, nodeIndex, adjacentHiddenNodeIndex[column]) ? 1 : 0;
+                        ? node.MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex)
+                        : Utilities.IsAdjacentTo(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, adjacentHiddenNodeIndex[column]) ? 1 : 0;
 
                     matrix[row, column] = val;
 
