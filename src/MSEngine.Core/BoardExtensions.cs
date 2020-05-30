@@ -13,9 +13,8 @@ namespace MSEngine.Core
         public static BoardStatus Status(this ReadOnlySpan<Node> nodes)
         {
             var complete = true;
-            for (var i = 0; i < nodes.Length; i++)
+            foreach (var node in nodes)
             {
-                var node = nodes[i];
                 if (node.HasMineExploded)
                 {
                     return BoardStatus.Failed;
@@ -31,9 +30,9 @@ namespace MSEngine.Core
         public static int MineCount(this ReadOnlySpan<Node> nodes)
         {
             var n = 0;
-            for (var i = 0; i < nodes.Length; i++)
+            foreach (var node in nodes)
             {
-                if (nodes[i].HasMine)
+                if (node.HasMine)
                 {
                     n++;
                 }
@@ -43,9 +42,9 @@ namespace MSEngine.Core
         public static int FlaggedNodesCount(this ReadOnlySpan<Node> nodes)
         {
             var n = 0;
-            for (var i = 0; i < nodes.Length; i++)
+            foreach (var node in nodes)
             {
-                if (nodes[i].State == NodeState.Flagged)
+                if (node.State == NodeState.Flagged)
                 {
                     n++;
                 }
@@ -54,9 +53,8 @@ namespace MSEngine.Core
         }
         public static bool AllMinesFlagged(this ReadOnlySpan<Node> nodes)
         {
-            for (var i = 0; i < nodes.Length; i++)
+            foreach (var node in nodes)
             {
-                var node = nodes[i];
                 if (node.HasMine && node.State != NodeState.Flagged)
                 {
                     return false;
