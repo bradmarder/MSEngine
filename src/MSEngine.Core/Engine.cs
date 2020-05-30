@@ -34,16 +34,17 @@ namespace MSEngine.Core
                 nodes[i] = new Node(hasMine, amc);
             }
         }
-        internal static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> adjacentIndexes, int nodeIndex, int nodeCount, int columns)
+        internal static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columns)
         {
-            Debug.Assert(adjacentIndexes.Length == 8);
+            Debug.Assert(buffer.Length == 8);
+            Debug.Assert(nodeIndex >= 0);
 
-            adjacentIndexes.FillAdjacentNodeIndexes(nodeCount, nodeIndex, columns);
+            buffer.FillAdjacentNodeIndexes(nodeCount, nodeIndex, columns);
 
             var n = 0;
-            for (var i = 0; i < 8; i++)
+            foreach (var i in buffer)
             {
-                if (mineIndexes.IndexOf(adjacentIndexes[i]) != -1)
+                if (mineIndexes.IndexOf(i) != -1)
                 {
                     n++;
                 }
