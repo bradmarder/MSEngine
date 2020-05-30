@@ -103,12 +103,6 @@ namespace MSEngine.Core
                     m = RandomNumberGenerator.GetInt32(nodeCount);
                 } while (mines.IndexOf(m) != -1);
 
-                // #if NETCOREAPP3_1
-                //                 while  (!mines.Contains(m));
-                // #else
-                //                 while  (mines.IndexOf(m) != -1);
-                // #endif
-
                 mines[i] = m;
             }
         }
