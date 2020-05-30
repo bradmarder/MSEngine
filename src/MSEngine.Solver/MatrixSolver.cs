@@ -105,44 +105,50 @@ namespace MSEngine.Solver
                         : Utilities.IsAdjacentTo(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, adjacentHiddenNodeIndex[column]) ? 1 : 0;
 
                     matrix[row, column] = val;
+                }
+            }
 
-                    // if the augment column is zero, then all the 1's in the row are not mines
-                    if (isAugmentedColumn && val == 0)
+            #endregion
+
+            #region Pre-Gaussian-Elimination Turn Calculation
+
+            var turnCount = 0;
+            for (var row = 0; row < rows; row++)
+            {
+                var val = matrix[row, matrix.ColumnCount - 1];
+
+                // if the augment column is zero, then all the 1's in the row are not mines
+                if (val == 0)
+                {
+                    for (var c = 0; c < matrix.ColumnCount - 1; c++)
                     {
-                        var tc = 0;
+                        if (matrix[row, c] == 1)
+                        {
+                            var i = adjacentHiddenNodeIndex[c];
+                            turns[turnCount] = new Turn(i, NodeOperation.Reveal);
+                            turnCount++;
+                        }
+                    }
+                }
+
+                // if the sum of the row equals the augmented column, then all the 1's in the row are mines
+                if (val > 0)
+                {
+                    float sum = 0;
+                    for (var y = 0; y < columns - 1; y++)
+                    {
+                        sum += matrix[row, y];
+                    }
+                    if (sum == val)
+                    {
                         for (var c = 0; c < columns - 1; c++)
                         {
                             if (matrix[row, c] == 1)
                             {
-                                var ni = adjacentHiddenNodeIndex[c];
-                                turns[tc] = new Turn(ni, NodeOperation.Reveal);
-                                tc++;
+                                var i = adjacentHiddenNodeIndex[c];
+                                turns[turnCount] = new Turn(i, NodeOperation.Flag);
+                                turnCount++;
                             }
-                        }
-                        return tc;
-                    }
-
-                    // if the sum of the row equals the augmented column, then all the 1's in the row are mines
-                    if (isAugmentedColumn)
-                    {
-                        float sum = 0;
-                        for (var y = 0; y < columns - 1; y++)
-                        {
-                            sum += matrix[row, y];
-                        }
-                        if (sum == val)
-                        {
-                            var ta = 0;
-                            for (var c = 0; c < columns - 1; c++)
-                            {
-                                if (matrix[row, c] == 1)
-                                {
-                                    var ni = adjacentHiddenNodeIndex[c];
-                                    turns[ta] = new Turn(ni, NodeOperation.Flag);
-                                    ta++;
-                                }
-                            }
-                            return ta;
                         }
                     }
                 }
@@ -156,7 +162,6 @@ namespace MSEngine.Solver
 
             var augmentIndex = matrix.ColumnCount - 1;
             Span<float> vector = stackalloc float[augmentIndex];
-            var turnCount = 0;
 
             for (var row = 0; row < matrix.RowCount; row++)
             {

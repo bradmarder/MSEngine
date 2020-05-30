@@ -24,7 +24,6 @@ namespace MSEngine.Core
             return false;
         }
 
-        // cache? 18ns or whatever is already fast...
         public static void FillAdjacentNodeIndexes(this Span<int> indexes, int nodeCount, int index, int columnCount)
         {
             Debug.Assert(nodeCount > 0);
