@@ -15,7 +15,7 @@ namespace MSEngine.Tests
             Assert.ThrowsAny<Exception>(() =>
             {
                 Span<Node> nodes = stackalloc Node[columns * rows];
-                Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, columns, rows);
+                Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, columns);
             });
         }
 
@@ -29,21 +29,26 @@ namespace MSEngine.Tests
             Assert.ThrowsAny<Exception>(() =>
             {
                 Span<Node> nodes = stackalloc Node[columns * rows - 1];
-                Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, columns, rows);
+                Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, columns);
             });
         }
 
+        /// <summary>
+        /// verifies that nodes.Length % columns == 0
+        /// </summary>
+        /// <param name="columns"></param>
+        /// <param name="rows"></param>
         [Theory]
-        [InlineData(1, 1)]
+        [InlineData(2, 2)]
         [InlineData(8, 8)]
         [InlineData(16, 16)]
         [InlineData(30, 16)]
-        public void ThrowsOnOverallocatedBuffer(byte columns, byte rows)
+        public void ThrowsOnInvalidBuffer(byte columns, byte rows)
         {
             Assert.ThrowsAny<Exception>(() =>
             {
-                Span<Node> nodes = stackalloc Node[columns * rows + 1];
-                Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, columns, rows);
+                Span<Node> nodes = stackalloc Node[(columns * rows) + 1];
+                Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, columns);
             });
         }
 
@@ -57,7 +62,7 @@ namespace MSEngine.Tests
             Span<int> mines = stackalloc int[expectedMineCount];
             mines.Scatter(nodes.Length);
 
-            Engine.Instance.FillCustomBoard(nodes, mines, 8, 8);
+            Engine.Instance.FillCustomBoard(nodes, mines, 8);
 
             Assert.Equal(expectedMineCount, nodes.MineCount());
         }
@@ -70,7 +75,7 @@ namespace MSEngine.Tests
                 Span<Node> nodes = stackalloc Node[64];
                 Span<int> mines = stackalloc int[nodes.Length + 1];
 
-                Engine.Instance.FillCustomBoard(nodes, mines, 8, 8);
+                Engine.Instance.FillCustomBoard(nodes, mines, 8);
             });
         }
 

@@ -25,15 +25,13 @@ namespace MSEngine.Core
         /// <param name="nodes"></param>
         /// <param name="mineCount"></param>
         /// <param name="columns"></param>
-        /// <param name="rows"></param>
-        void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns, byte rows);
+        void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns);
 
         /// <summary>
         /// Generates a random minesweeper board.
         /// </summary>
         /// <param name="nodes"></param>
         /// <param name="columns"></param>
-        /// <param name="rows"></param>
-        void FillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns, byte rows);
+        void FillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns);
     }
 }

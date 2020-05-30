@@ -7,22 +7,21 @@ namespace MSEngine.Core
     {
         public static IEngine Instance { get; } = new Engine();
 
-        public virtual void FillBeginnerBoard(Span<Node> nodes) => FillCustomBoard(nodes, 10, 8, 8);
-        public virtual void FillIntermediateBoard(Span<Node> nodes) => FillCustomBoard(nodes, 40, 16, 16);
-        public virtual void FillExpertBoard(Span<Node> nodes) => FillCustomBoard(nodes, 99, 30, 16);
-        public virtual void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns, byte rows)
+        public virtual void FillBeginnerBoard(Span<Node> nodes) => FillCustomBoard(nodes, 10, 8);
+        public virtual void FillIntermediateBoard(Span<Node> nodes) => FillCustomBoard(nodes, 40, 16);
+        public virtual void FillExpertBoard(Span<Node> nodes) => FillCustomBoard(nodes, 99, 30);
+        public virtual void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns)
         {
             Span<int> mines = stackalloc int[mineCount];
             mines.Scatter(nodes.Length);
 
-            FillCustomBoard(nodes, mines, columns, rows);
+            FillCustomBoard(nodes, mines, columns);
         }
-        public virtual void FillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns, byte rows)
+        public virtual void FillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns)
         {
             Debug.Assert(columns > 0);
-            Debug.Assert(rows > 0);
             Debug.Assert(nodes.Length > mines.Length);
-            Debug.Assert(nodes.Length == columns * rows);
+            Debug.Assert(nodes.Length % columns == 0);
 
             Span<int> buffer = stackalloc int[8];
 
