@@ -30,7 +30,7 @@ namespace MSEngine.Core
                 var hasMine = mines.IndexOf(i) != -1;
                 var amc = GetAdjacentMineCount(mines, buffer, i, nodes.Length, columns);
                 
-                nodes[i] = new Node(hasMine, amc);
+                nodes[i] = new Node(i, hasMine, amc);
             }
         }
         internal static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columns)

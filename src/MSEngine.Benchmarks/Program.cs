@@ -13,12 +13,12 @@ namespace MSEngine.Benchmarks
     {
         static void Main(string[] args)
         {
-            BenchmarkRunner.Run<BoardGenTests>();
+            BenchmarkRunner.Run<FillBoardForeachVsFor>();
         }
     }
 
     [MemoryDiagnoser]
-    public class BoardGenTests
+    public class Tests
     {
         //[Benchmark]
         //public void Old()
@@ -67,22 +67,8 @@ namespace MSEngine.Benchmarks
         }
 
         //[Benchmark]
-        public void Exec()
-        {
-            Play();
-        }
+        public void Exec() => Play();
 
-        private static void RunSimulations(int count)
-        {
-            if (count < 1) { throw new ArgumentOutOfRangeException(nameof(count)); }
-
-            var watch = System.Diagnostics.Stopwatch.StartNew();
-
-            ParallelEnumerable
-                .Range(0, count)
-                //.WithDegreeOfParallelism(1)
-                .ForAll(_ => { });
-        }
 
         private static void Play()
         {
@@ -122,25 +108,14 @@ namespace MSEngine.Benchmarks
                     if (turnCount == 0)
                     {
                         turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
+						if (turnCount == 0){ break; }
                     }
                     foreach (var turn in turns.Slice(0, turnCount))
                     {
                         BoardStateMachine.Instance.ComputeBoard(matrix, turn);
                     }
-                    if (turnCount == 0)
-                    {
-                        var turn = NodeStrategies.RevealFirstHiddenNode(nodes);
-                        BoardStateMachine.Instance.ComputeBoard(matrix, turn);
-                    }
                 }
                 iteration++;
-
-                var status = nodes.Status();
-                if (status == BoardStatus.Pending)
-                {
-                    continue;
-                }
-                break;
             }
         }
     }

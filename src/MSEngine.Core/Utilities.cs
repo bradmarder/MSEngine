@@ -92,10 +92,9 @@ namespace MSEngine.Core
             // the "do while" loop is just too slow...
             //RandomNumberGenerator.Fill(mines);
 
+            int m;
             foreach (ref var x in mines)
             {
-                int m;
-
                 // we use a loop to prevent duplicate indexes
                 do
                 {
@@ -162,7 +161,7 @@ namespace MSEngine.Core
                     NodeState.Revealed => "NodeOperation.Reveal",
                     _ => ""
                 };
-                sb.AppendLine($"new Node({node.HasMine.ToString().ToLower()}, {node.MineCount}, {op}),");
+                sb.AppendLine($"new Node({i}, {node.HasMine.ToString().ToLower()}, {node.MineCount}, {op}),");
             }
             return sb.ToString();
         }

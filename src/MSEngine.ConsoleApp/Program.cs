@@ -14,11 +14,13 @@ namespace MSEngine.ConsoleApp
         private static readonly object _lock = new object();
         private static int _wins = 0;
         private static int _gamesPlayedCount = 0;
-        private static readonly Stopwatch _watch = Stopwatch.StartNew();
+        private static Stopwatch? _watch;
 
         static void Main(string[] args)
         {
+            _watch = Stopwatch.StartNew();
             RunSimulations(100000);
+            DisplayScore();
         }
 
         private static void RunSimulations(int count)
@@ -31,12 +33,17 @@ namespace MSEngine.ConsoleApp
                 .ForAll(_ => ExecuteGame());
         }
 
+        private static void DisplayScore()
+        {
+            var winRatio = ((decimal)_wins / _gamesPlayedCount) * 100;
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio}%  {_watch!.ElapsedMilliseconds}ms");
+        }
+
         private static void ExecuteGame()
         {
-            const int nodeCount = 8 * 8;
-            const int columnCount = 8;
-            //const int nodeCount = 30 * 16;
-            //const int columnCount = 30;
+            const int nodeCount = 8 * 8;const int columnCount = 8;
+            //const int nodeCount = 30 * 16;const int columnCount = 30;
             const int firstTurnNodeIndex = nodeCount / 2;
 
             Span<Node> nodes = stackalloc Node[nodeCount];
@@ -95,13 +102,11 @@ namespace MSEngine.ConsoleApp
                     Interlocked.Increment(ref _wins);
                 }
 
-                // we only update the score every 1000 games (because doing so within a lock is expensive)
-                if (_gamesPlayedCount % 1000 == 0)
-                {
-                    var winRatio = ((decimal)_wins / _gamesPlayedCount) * 100;
-                    Console.SetCursorPosition(0, Console.CursorTop);
-                    Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio}%  {_watch.ElapsedMilliseconds}ms");
-                }
+                // we only update the score every 10000 games (because doing so within a lock is expensive, and so are console commands)
+                //if (_gamesPlayedCount % 10000 == 0)
+                //{
+                //    DisplayScore();
+                //}
 
                 break;
             }
@@ -128,7 +133,7 @@ namespace MSEngine.ConsoleApp
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static char GetNodeChar(Node node)
+        private static char GetNodeChar(in Node node)
         {
             switch (node)
             {

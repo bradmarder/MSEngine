@@ -86,7 +86,7 @@ namespace MSEngine.Core
             // these cases will only affect the singular node
             if (turn.Operation == NodeOperation.Flag || turn.Operation == NodeOperation.RemoveFlag || (turn.Operation == NodeOperation.Reveal && !node.HasMine && node.MineCount > 0))
             {
-                matrix.Nodes[turn.NodeIndex] = new Node(node.HasMine, node.MineCount, turn.Operation);
+                matrix.Nodes[turn.NodeIndex] = new Node(node, turn.Operation);
                 return;
             }
 
@@ -98,7 +98,7 @@ namespace MSEngine.Core
                 }
                 else
                 {
-                    matrix.Nodes[turn.NodeIndex] = new Node(node.HasMine, node.MineCount, NodeOperation.Reveal);
+                    matrix.Nodes[turn.NodeIndex] = new Node(node, NodeOperation.Reveal);
                     ChainReaction(matrix, turn.NodeIndex);
                 }
                 return;
@@ -118,7 +118,7 @@ namespace MSEngine.Core
             {
                 if (node.HasMine && node.State == NodeState.Hidden)
                 {
-                    node = new Node(true, node.MineCount, NodeOperation.Reveal);
+                    node = new Node(node, NodeOperation.Reveal);
                 }
             }
         }
@@ -150,13 +150,13 @@ namespace MSEngine.Core
             {
                 if (i == -1) { continue; }
 
-                var node = matrix.Nodes[i];
+                ref var node = ref matrix.Nodes[i];
 
                 if (node.State == NodeState.Flagged) { continue; }
  
                 if (node.State == NodeState.Hidden)
                 {
-                    matrix.Nodes[i] = new Node(false, node.MineCount, NodeOperation.Reveal);
+                    node = new Node(node, NodeOperation.Reveal);
                 }
 
                 if (node.MineCount == 0 && visitedIndexes.IndexOf(i) == -1)
