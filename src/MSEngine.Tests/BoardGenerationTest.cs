@@ -90,16 +90,35 @@ namespace MSEngine.Tests
         }
 
         [Fact]
-        public void ScatteringMinesProducesValidIndexes()
+        public void ScatteringMinesProducesInRangeIndexes()
         {
-            Span<int> mines = stackalloc int[10];
+            const int mineCount = 10;
+            Span<int> mines = stackalloc int[mineCount];
             mines.Scatter(10);
 
             foreach (var x in mines)
             {
                 Assert.True(x > -1);
-                Assert.True(x < 10);
+                Assert.True(x < mineCount);
             }
+        }
+
+        /// <summary>
+        /// Silly test, but makes sure the mine randomizer is actually doing it's job
+        /// Will fail every 100c10 iterations!
+        /// </summary>
+        [Fact]
+        public void ScatteringMinesAreRandomized()
+        {
+            Span<int> setOne = stackalloc int[10];
+            setOne.Scatter(100);
+
+            Span<int> setTwo = stackalloc int[10];
+            setTwo.Scatter(100);
+
+            Assert.NotEqual(
+                setOne.ToArray().OrderBy(x => x),
+                setTwo.ToArray().OrderBy(x => x));
         }
     }
 }

@@ -85,12 +85,8 @@ namespace MSEngine.Core
             Debug.Assert(nodeCount > 0);
             Debug.Assert(nodeCount >= mines.Length);
 
-            // we must fill the span with -1 because the default (0) is a valid index
+            // we must fill the buffer with -1 because the default (0) is a valid index
             mines.Fill(-1);
-
-            // experiment? just fill with bytes, then um, convert to INT indexes?
-            // the "do while" loop is just too slow...
-            //RandomNumberGenerator.Fill(mines);
 
             int m;
             foreach (ref var x in mines)

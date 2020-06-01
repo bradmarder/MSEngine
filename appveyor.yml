@@ -1,4 +1,4 @@
-version: 3.0.{build}
+version: 4.0.{build}
 
 configuration: Release
 
@@ -19,7 +19,7 @@ deploy:
   skip_symbols: true
   artifact: /.*\.nupkg/
   api_key:
-    secure: Dln/VbbqTt++lS2ICbG45WE49bv1mmS7oWPet9yMH7bYY3/6ne2eD4UArqx6I58j
+    secure: o6YibhkhUt+doruc/1YfXRWj45W9HMO+KRWjxsH8OfwO7OTNfVWwnkXb9h6otVyD
   on:
     branch: master
 
