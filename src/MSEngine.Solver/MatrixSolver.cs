@@ -1,119 +1,241 @@
 ﻿using MSEngine.Core;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace MSEngine.Solver
 {
     public static class MatrixSolver
     {
-        private static readonly List<Turn> _emptyTurns = new List<Turn>(0);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int GetAdjacentFlaggedTileCount(Board board, Coordinates coordinates)
+        private static void ReduceMatrix(Matrix<float> matrix, ReadOnlySpan<int> adjacentHiddenNodeIndexes, Span<Turn> turns, ref int turnCount)
         {
-            return board.Tiles.Count(x =>
-                x.State == TileState.Flagged
-                && Utilities.IsAdjacentTo(x.Coordinates, coordinates));
-        }
+            var removeRowCount = 0;
+            Span<int> removeRowIndexes = stackalloc int[matrix.RowCount];
 
-        public static IEnumerable<IEnumerable<T>> Rows<T>(this T[,] matrix)
-        {
-            var min = matrix.GetLowerBound(0);
-            var max = matrix.GetUpperBound(0);
-
-            for (var x = min; x <= max; x++)
+            for (var row = 0; row < matrix.RowCount; row++)
             {
-                yield return Row(matrix, x);
-            }
-        }
+                var val = matrix[row, matrix.ColumnCount - 1];
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static IEnumerable<T> Row<T>(T[,] matrix, int r)
-        {
-            var min = matrix.GetLowerBound(1);
-            var max = matrix.GetUpperBound(1);
-
-            for (var x = min; x <= max; x++)
-            {
-                yield return matrix[r, x];
-            }
-        }
-
-        public static List<Turn> CalculateTurns(Board board)
-        {
-            var hiddenCoordinates = board.Tiles
-                .Where(x => x.State == TileState.Hidden)
-                .Select(x => x.Coordinates)
-                .ToList();
-            var list = board.Tiles
-                .Where(x => x.State == TileState.Revealed)
-                .Where(x => x.AdjacentMineCount > 0)
-                .Where(x => hiddenCoordinates.Any(y => Utilities.IsAdjacentTo(y, x.Coordinates)))
-                //.Where(x => x.AdjacentMineCount > GetAdjacentFlaggedTileCount(board, x.Coordinates)) insignificant optimzation
-                .ToList();
-
-            if (!list.Any())
-            {
-                return _emptyTurns;
-            }
-
-            var revealedCoordinates = list
-                .Select(x => x.Coordinates)
-                .ToList();
-            var adjacentHiddenCoordinates = hiddenCoordinates
-                .Where(x => revealedCoordinates.Any(y => Utilities.IsAdjacentTo(y, x)))
-                .ToList();
-
-            var rowCount = list.Count;
-            var columnCount = adjacentHiddenCoordinates.Count + 1;
-            var matrix = new float[rowCount, columnCount];
-
-            for (var row = 0; row < rowCount; row++)
-            {
-                for (var column = 0; column < columnCount; column++)
+                // if the augment column is zero, then all the 1's in the row are not mines
+                if (val == 0)
                 {
-                    var tile = list[row];
-                    matrix[row, column] = (float)(column == columnCount - 1
+                    removeRowIndexes[removeRowCount] = row;
+                    removeRowCount++;
 
-                        // augmented column has special logic
-                        ? tile.AdjacentMineCount - GetAdjacentFlaggedTileCount(board, tile.Coordinates)
+                    for (var c = 0; c < matrix.ColumnCount - 1; c++)
+                    {
+                        if (matrix[row, c] == 1)
+                        {
+                            var i = adjacentHiddenNodeIndexes[c];
+                            turns[turnCount] = new Turn(i, NodeOperation.Reveal);
+                            turnCount++;
+                        }
+                    }
+                }
 
-                        : Utilities.IsAdjacentTo(revealedCoordinates[row], adjacentHiddenCoordinates[column]) ? 1 : 0);
+                // if the sum of the row equals the augmented column, then all the 1's in the row are mines
+                if (val > 0)
+                {
+                    float sum = 0;
+                    for (var y = 0; y < matrix.ColumnCount - 1; y++)
+                    {
+                        sum += matrix[row, y];
+                    }
+                    if (sum == val)
+                    {
+                        removeRowIndexes[removeRowCount] = row;
+                        removeRowCount++;
+
+                        for (var c = 0; c < matrix.ColumnCount - 1; c++)
+                        {
+                            if (matrix[row, c] == 1)
+                            {
+                                var i = adjacentHiddenNodeIndexes[c];
+                                turns[turnCount] = new Turn(i, NodeOperation.Flag);
+                                turnCount++;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (removeRowCount > 0)
+            {
+				// var foo = matrix.Nodes.Slice()
+                // removeRowCount the rows/columns, prevent dupes
+				// tons of slicing....
+				//matrix.no
+                //ReduceMatrix(matrix, adjacentHiddenNodeIndexes, turns, ref turnCount);
+            }
+
+            // requires multiple passes
+            // remove rows
+            // remove columns (unless the row removed was the useAllHiddenNodes row)
+            // since doing multiple passes, must prevent duplicates?
+        }
+
+        public static int CalculateTurns(Matrix<Node> nodeMatrix, Span<Turn> turns, bool useAllHiddenNodes)
+        {
+            var nodes = nodeMatrix.Nodes;
+            Debug.Assert(nodes.Length > 0);
+            Debug.Assert(nodes.Length == turns.Length);
+            
+            Span<int> buffer = stackalloc int[8];
+            Span<int> revealedAMCNodes = stackalloc int[nodes.Length];
+
+            #region Revealed Nodes with AMC > 0
+
+            var revealedAMCNodeCount = 0;
+            foreach(var node in nodes)
+            {
+                if (node.State == NodeState.Revealed && node.MineCount > 0 && Utilities.HasHiddenAdjacentNodes(nodeMatrix, buffer, node.Index))
+                {
+                    revealedAMCNodes[revealedAMCNodeCount] = node.Index;
+                    revealedAMCNodeCount++;
                 }
             }
 
-            return matrix
-                .GaussEliminate()
-                .Rows()
-                .Select(Enumerable.ToList)
-                .Select(vector =>
+            if (revealedAMCNodeCount == 0)
+            {
+                return 0;
+            }
+
+            #endregion
+
+            #region Adjacent Hidden Node Indexes
+
+            var ahcCount = 0;
+            Span<int> adjacentHiddenNodeIndex = stackalloc int[nodes.Length];
+
+            foreach (var node in nodes)
+            {
+                if (node.State != NodeState.Hidden) { continue; }
+
+                var hasAHC = false;
+                if (!useAllHiddenNodes)
                 {
-                    // exclude the augmented column
-                    var vals = vector
-                        .Take(vector.Count - 1)
-                        .ToList();
+                    buffer.FillAdjacentNodeIndexes(nodes.Length, node.Index, nodeMatrix.ColumnCount);
 
-                    var final = vector.Last();
-                    var max = vals.Sum(x => x > 0 ? x : 0);
-                    var min = vals.Sum(x => x < 0 ? x : 0);
-                    var nonZeroValues = vals
-                        .Select((x, i) => (Val: x, Coordinates: adjacentHiddenCoordinates[i]))
-                        .Where(x => x.Val != 0);
+                    foreach (var x in buffer)
+                    {
+                        if (x == -1) { continue; }
 
-                    // All of the negative numbers in that row are mines and all of the positive values in that row are not mines
-                    return final == min ? nonZeroValues.Select(x => new Turn(x.Coordinates.X, x.Coordinates.Y, x.Val > 0 ? TileOperation.Reveal : TileOperation.Flag))
+                        var adjNode = nodes[x];
+                        if (adjNode.State == NodeState.Revealed && adjNode.MineCount > 0)
+                        {
+                            hasAHC = true;
+                            break;
+                        }
+                    }
+                }
 
-                        // All of the negative numbers in that row are not mines and all of the positive values in that row are mines.
-                        : final == max ? nonZeroValues.Select(x => new Turn(x.Coordinates.X, x.Coordinates.Y, x.Val > 0 ? TileOperation.Flag : TileOperation.Reveal))
+                if (useAllHiddenNodes || hasAHC)
+                {
+                    adjacentHiddenNodeIndex[ahcCount] = node.Index;
+                    ahcCount++;
+                }
+            }
 
-                        : Enumerable.Empty<Turn>();
-                })
-                .SelectMany(x => x)
-                .Distinct()
-                //.OrderByDescending(x => x.Operation) // questionable optimization: Flag before Reveal
-                .ToList();
+            #endregion
+
+            #region Raw Matrix Generation
+
+            var rows = revealedAMCNodeCount + (useAllHiddenNodes ? 1 : 0);
+            var columns = ahcCount + 1;
+
+            Span<float> nodeBuffer = stackalloc float[rows * columns];
+            var matrix = new Matrix<float>(nodeBuffer, columns);
+
+            for (var row = 0; row < rows; row++)
+            {
+                // loop over all the columns in the last row and set them to 1
+                // set the augment column equal to # of mines remaining
+                var isLastRow = row == rows - 1;
+                if (useAllHiddenNodes && isLastRow)
+                {
+                    for (var i = 0; i < matrix.ColumnCount; i++)
+                    {
+                        var isAugmentedColumn = i == matrix.ColumnCount - 1;
+                        matrix[matrix.RowCount - 1, i] = isAugmentedColumn ? nodes.FlagsAvailable() : 1;
+                    }
+                    break;
+                }
+
+                for (var column = 0; column < columns; column++)
+                {
+                    var nodeIndex = revealedAMCNodes[row];
+                    var node = nodes[nodeIndex];
+                    var isAugmentedColumn = column == columns - 1;
+                    var val = isAugmentedColumn
+                        ? node.MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex)
+                        : Utilities.IsAdjacentTo(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, adjacentHiddenNodeIndex[column]) ? 1 : 0;
+
+                    matrix[row, column] = val;
+                }
+            }
+
+            #endregion
+
+            #region Pre-Gaussian-Elimination Turn Calculation
+
+            var turnCount = 0;
+            ReduceMatrix(matrix, adjacentHiddenNodeIndex, turns, ref turnCount);
+
+            #endregion
+
+            matrix.GaussEliminate();
+
+            #region Guass Matrix Processing
+
+            var augmentIndex = matrix.ColumnCount - 1;
+            Span<float> vector = stackalloc float[augmentIndex];
+
+            for (var row = 0; row < matrix.RowCount; row++)
+            {
+                for (var column = 0; column < augmentIndex; column++)
+                {
+                    vector[column] = matrix[row, column];
+                }
+                
+                var augmentColumn = matrix[row, augmentIndex];
+                float min = 0;
+                float max = 0;
+                foreach (var x in vector)
+                {
+                    max += x > 0 ? x : 0;
+                    min += x < 0 ? x : 0;
+                }
+
+                if (augmentColumn != min && augmentColumn != max)
+                {
+                    continue;
+                }
+
+                for (var column = 0; column < augmentIndex; column++)
+                {
+                    var val = vector[column];
+                    if (val == 0)
+                    {
+                        continue;
+                    }
+                    var index = adjacentHiddenNodeIndex[column];
+
+                    var turn = augmentColumn == min
+                        ? new Turn(index, val > 0 ? NodeOperation.Reveal : NodeOperation.Flag)
+                        : new Turn(index, val > 0 ? NodeOperation.Flag : NodeOperation.Reveal);
+
+                    // prevent adding duplicate turns
+                    if (turns.Slice(0, turnCount).IndexOf(turn) == -1)
+                    {
+                        turns[turnCount] = turn;
+                        turnCount++;
+                    }
+                }
+            }
+
+            #endregion
+
+            // we must return the turncount so the caller knows how much to slice from turns
+            return turnCount;
         }
     }
 }

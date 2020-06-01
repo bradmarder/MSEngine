@@ -1,56 +1,54 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using static MSEngine.Core.Utilities;
+using System.Diagnostics;
 
 namespace MSEngine.Core
 {
     public class Engine : IEngine
     {
-        public static IEngine Instance { get; } = new Engine(Utilities.GetShuffledItems);
-        public static IEngine PureInstance { get; } = new Engine(Enumerable.AsEnumerable);
-        public static IEngine PseudoRandomInstance { get; } = new Engine(Utilities.GetPseudoShuffledItems);
+        public static IEngine Instance { get; } = new Engine();
 
-        private readonly Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> _shuffler;
-
-        public Engine(Func<IEnumerable<Coordinates>, IEnumerable<Coordinates>> shuffler)
+        public virtual void FillBeginnerBoard(Span<Node> nodes) => FillCustomBoard(nodes, 10, 8);
+        public virtual void FillIntermediateBoard(Span<Node> nodes) => FillCustomBoard(nodes, 40, 16);
+        public virtual void FillExpertBoard(Span<Node> nodes) => FillCustomBoard(nodes, 99, 30);
+        public virtual void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns)
         {
-            _shuffler = shuffler;
+            Span<int> mines = stackalloc int[mineCount];
+            mines.Scatter(nodes.Length);
+
+            FillCustomBoard(nodes, mines, columns);
         }
-
-        public virtual Board GenerateBeginnerBoard() => GenerateCustomBoard(8, 8, 10);
-        public virtual Board GenerateIntermediateBoard() => GenerateCustomBoard(16, 16, 40);
-        public virtual Board GenerateExpertBoard() => GenerateCustomBoard(30, 16, 99);
-        public virtual Board GenerateCustomBoard(byte columns, byte rows, byte mineCount)
+        public virtual void FillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns)
         {
-            if (columns == 0 || columns > 30) { throw new ArgumentOutOfRangeException(nameof(columns)); }
-            if (rows == 0 || rows > 16) { throw new ArgumentOutOfRangeException(nameof(rows)); }
-            var tileCount = columns * rows;
-            if (mineCount >= tileCount) { throw new ArgumentOutOfRangeException(nameof(mineCount)); }
+            Debug.Assert(columns > 0);
+            Debug.Assert(nodes.Length > mines.Length);
+            Debug.Assert(nodes.Length % columns == 0);
 
-            var coordinates = GetCoordinates(columns, rows);
-            var coordinatesToMineMap = _shuffler(coordinates)
-                .Select((x, i) => (Coordinates: x, Index: i))
-                .ToDictionary(x => x.Coordinates, x => x.Index < mineCount);
-            var coordinatesToAdjacentMineCountMap = coordinates.ToDictionary(
-                x => x,
-                x => coordinatesToMineMap.Count(y => y.Value && IsAdjacentTo(y.Key, x)));
-            var tiles = coordinatesToMineMap.Select(x => new Tile(x.Key, x.Value, coordinatesToAdjacentMineCountMap[x.Key]));
+            Span<int> buffer = stackalloc int[8];
 
-            return new Board(tiles);
+            for (var i = 0; i < nodes.Length; i++)
+            {
+                var hasMine = mines.IndexOf(i) != -1;
+                var amc = GetAdjacentMineCount(mines, buffer, i, nodes.Length, columns);
+                
+                nodes[i] = new Node(i, hasMine, amc);
+            }
         }
-
-        internal static Coordinates[] GetCoordinates(byte rows, byte columns)
+        internal static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columns)
         {
-            if (columns == 0) { throw new ArgumentOutOfRangeException(nameof(columns)); }
-            if (rows == 0) { throw new ArgumentOutOfRangeException(nameof(rows)); }
+            Debug.Assert(buffer.Length == 8);
+            Debug.Assert(nodeIndex >= 0);
 
-            return Enumerable
-                .Range(0, rows)
-                .SelectMany(x => Enumerable
-                    .Range(0, columns)
-                    .Select(y => new Coordinates((byte)x, (byte)y)))
-                .ToArray();
+            buffer.FillAdjacentNodeIndexes(nodeCount, nodeIndex, columns);
+
+            var n = 0;
+            foreach (var i in buffer)
+            {
+                if (mineIndexes.IndexOf(i) != -1)
+                {
+                    n++;
+                }
+            }
+            return n;
         }
     }
 }

@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
+using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using MSEngine.Core;
@@ -14,129 +13,144 @@ namespace MSEngine.Benchmarks
     {
         static void Main(string[] args)
         {
-            BenchmarkRunner.Run<BoardGenTests>();
+            BenchmarkRunner.Run<FillBoardForeachVsFor>();
         }
     }
 
     [MemoryDiagnoser]
-    public class BoardGenTests
+    public class Tests
     {
-        [Benchmark]
-        public void Beginner()
-        {
-            Engine.Instance.GenerateBeginnerBoard();
-        }
+        //[Benchmark]
+        //public void Old()
+        //{
+        //    Span<int> buffer = stackalloc int[8];
+        //    buffer.FillAdjacentNodeIndexes(64, 31, 8);
+        //}
 
         //[Benchmark]
-        public void Intermediate()
-        {
-            Engine.Instance.GenerateIntermediateBoard();
-        }
+        //public void New()
+        //{
+        //    Span<int> buffer = stackalloc int[8];
+        //    buffer.FillAdjacentNodeIndexesNEW(64, 31, 8);
+        //}
 
         //[Benchmark]
-        public void Expert()
+        public void LenTestSlow()
         {
-            Engine.Instance.GenerateExpertBoard();
-        }
-    }
-
-    [MemoryDiagnoser]
-    public class HashTest
-    {
-        [Benchmark]
-        public void Control()
-        {
-            const string input = "lol test ";
-            HashTest.CreateMD5(input);
-        }
-
-        [Benchmark]
-        public void Span()
-        {
-            const string input = "lol test ";
-            HashTest.SpanCreateMD5(input);
-        }
-
-        public static string CreateMD5(string input)
-        {
-            using (var md5 = System.Security.Cryptography.MD5.Create())
+            var n = 0;
+            Span<int> mobs = stackalloc int[480];
+            for (var i = 0; i < mobs.Length; i++)
             {
-                var inputBytes = System.Text.Encoding.UTF8.GetBytes(input);
-                var hashBytes = md5.ComputeHash(inputBytes);
+                n++;
+            }
+            if (n > 480) { throw new Exception(); }
+        }
 
-                var sb = new StringBuilder();
-                for (int i = 0; i < hashBytes.Length; i++)
+        //[Benchmark]
+        public void LenTestFast()
+        {
+            var n = 0;
+            Span<int> mobs = stackalloc int[480];
+            for (int i = 0, l = mobs.Length; i < l; i++)
+            {
+                n++;
+            }
+            if (n > 480) { throw new Exception(); }
+        }
+
+        // 18.17 ns
+        //[Benchmark]
+        public void Bar()
+        {
+            Span<int> foo = stackalloc int[8];
+            foo.FillAdjacentNodeIndexes(64, 9, 3);
+        }
+
+        //[Benchmark]
+        public void Exec() => Play();
+
+
+        private static void Play()
+        {
+            const int nodeCount = 8 * 8;
+            const int columnCount = 8;
+            //const int nodeCount = 30 * 16;
+            //const int columnCount = 30;
+            const int firstTurnNodeIndex = nodeCount / 2;
+
+            Span<Node> nodes = stackalloc Node[nodeCount];
+            Span<Turn> turns = stackalloc Turn[nodeCount];
+            var matrix = new Matrix<Node>(nodes, columnCount);
+
+            var iteration = 0;
+
+            while (true)
+            {
+                if (iteration == 0)
                 {
-                    sb.Append(hashBytes[i].ToString("X2"));
+                    Engine.Instance.FillBeginnerBoard(nodes);
+                    var turn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
+
+                    // Technically, computing the board *before* the check is redundant here, since we can just
+                    // inspect the node directly. We do this to maintain strict separation of clients
+                    // We could place this ComputeBoard method after the node inspection for perf
+                    BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+
+                    var node = nodes[turn.NodeIndex];
+                    if (node.HasMine || node.MineCount > 0)
+                    {
+                        continue;
+                    }
                 }
-                return sb.ToString();
-            }
-        }
-
-        public static string SpanCreateMD5(ReadOnlySpan<char> input)
-        {
-            var encoding = System.Text.Encoding.UTF8;
-            var inputByteCount = encoding.GetByteCount(input);
-
-            using (var md5 = System.Security.Cryptography.MD5.Create())
-            {
-                Span<byte> bytes = stackalloc byte[inputByteCount];
-                Span<byte> destination = stackalloc byte[md5.HashSize / 8];
-
-                encoding.GetBytes(input, bytes);
-
-                // checking the result is not required because this only returns false if "(destination.Length < HashSizeValue/8)", which is never true in this case
-                md5.TryComputeHash(bytes, destination, out int _bytesWritten);
-                
-                // cleanup???
-                return BitConverter.ToString(destination.ToArray());
+                else
+                {
+                    var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
+                    if (turnCount == 0)
+                    {
+                        turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
+						if (turnCount == 0){ break; }
+                    }
+                    foreach (var turn in turns.Slice(0, turnCount))
+                    {
+                        BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+                    }
+                }
+                iteration++;
             }
         }
     }
 
-    [MemoryDiagnoser]
-    public class Test
+    public static class Util
     {
-        private static readonly RandomNumberGenerator _rng = RandomNumberGenerator.Create();
-
-        [Benchmark]
-        public void Heap()
+        public static void FillAdjacentNodeIndexesNEW(this Span<int> indexes, int nodeCount, int index, int columnCount)
         {
-            var bytes = new byte[16];
-            _rng.GetBytes(bytes);
+            var key = GetKey(nodeCount, index, columnCount);
+            _keyToAdjacentNodeIndexMap![key].CopyTo(indexes);
         }
 
-        [Benchmark]
-        public void Fill()
+        private static IReadOnlyDictionary<uint, int[]>? _keyToAdjacentNodeIndexMap;
+
+        static Util()
         {
-            Span<byte> bytes = stackalloc byte[16];
-            RandomNumberGenerator.Fill(bytes);
+            var map = new Dictionary<uint, int[]>(64 + 256 + 480); // beginner/int/expert
+
+            Span<int> buffer = stackalloc int[8];
+            for (var i = 0; i < 64; i++)
+            {
+                var key = GetKey(64, i, 8);
+                buffer.FillAdjacentNodeIndexes(64, i, 8);
+                map.Add(key, buffer.ToArray());
+            }
+
+            _keyToAdjacentNodeIndexMap = map;
         }
+
+        /// <summary>
+        /// 4 byte key
+        /// 8 bits for columnCount, 12/12 for index/nodeCount
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static uint GetKey(int nodeCount, int index, int columnCount)
+            => (uint)columnCount | ((uint)nodeCount << 8) | ((uint)index << 20);
     }
 }
-//private static readonly Board PseudoRandomExpertBoard = Core.Engine.PseudoRandomInstance.GenerateExpertBoard();
-//private static readonly Board PseudoRandomExpertBoard2 = Core.Engine.PseudoRandomInstance.GenerateExpertBoard();
-
-//[Benchmark]
-//public void Control()
-//{
-//    var board = Core.Engine.PseudoRandomInstance.GenerateExpertBoard();
-
-//    while (board.Status == BoardStatus.Pending)
-//    {
-//        var (turn, strategy) = EliteSolver.Instance.ComputeTurn(board);
-//        board = BoardStateMachine.Instance.ComputeBoard(board, turn);
-//    }
-//}
-
-//[Benchmark]
-//public void Exp()
-//{
-//    var board = Core.Engine.PseudoRandomInstance.GenerateExpertBoard();
-
-//    while (board.Status == BoardStatus.Pending)
-//    {
-//        var (turn, strategy) = EliteSolver.Instance.ComputeTurn(board);
-//        board = BoardStateMachine.Instance.ComputeBoard(board, turn);
-//    }
-//}

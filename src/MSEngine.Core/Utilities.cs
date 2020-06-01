@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
@@ -9,99 +7,159 @@ namespace MSEngine.Core
 {
     public static class Utilities
     {
-        private static readonly ConcurrentDictionary<uint, bool> _adjacentTileMap = new ConcurrentDictionary<uint, bool>();
-        private static readonly ConcurrentDictionary<uint, bool> _nextTileMap = new ConcurrentDictionary<uint, bool>();
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsNextTo(Coordinates coordinateOne, Coordinates coordinateTwo)
+        public static bool IsAdjacentTo(Span<int> buffer, int nodeCount, int columnCount, int i1, int i2)
         {
-            var key = coordinateOne.X
-                | (uint)coordinateOne.Y << 8
-                | (uint)coordinateTwo.X << 16
-                | (uint)coordinateTwo.Y << 24;
+            Debug.Assert(buffer.Length == 8);
+            Debug.Assert(nodeCount > 0);
+            Debug.Assert(i1 >= 0);
+            Debug.Assert(i2 >= 0);
 
-            if (_nextTileMap.TryGetValue(key, out var value))
+            buffer.FillAdjacentNodeIndexes(nodeCount, i1, columnCount);
+
+            foreach (var i in buffer)
             {
-                return value;
+                if (i == i2) { return true; }
             }
 
-            var x = coordinateOne.X;
-            var y = coordinateOne.Y;
+            return false;
+        }
 
-            var val = (x == coordinateTwo.X && new[] { y + 1, y - 1 }.Contains(coordinateTwo.Y))
-                || (y == coordinateTwo.Y && new[] { x + 1, x - 1 }.Contains(coordinateTwo.X));
+        public static void FillAdjacentNodeIndexes(this Span<int> indexes, int nodeCount, int index, int columnCount)
+        {
+            Debug.Assert(nodeCount > 0);
+            Debug.Assert(index >= 0);
+            Debug.Assert(index < nodeCount);
+            Debug.Assert(columnCount > 0);
+            Debug.Assert(indexes.Length == 8);
 
-            _nextTileMap.TryAdd(key, val);
+            var isTop = index < columnCount;
+            var isLeftSide = index % columnCount == 0;
+            var isRightSide = (index + 1) % columnCount == 0;
+            var isBottom = index >= nodeCount - columnCount;
 
-            return val;
+            indexes.Fill(-1);
+
+            // ignore indexes 0/1/2 if isTop is true
+            // ignore indexes 0/3/5 isLeftSide is true
+            // ignore indexes 2/4/7 isRightSide is true
+            // ignore indexes 5/6/7 if isBottom is true
+
+            if (!isTop)
+            {
+                var val = index - columnCount;
+                if (!isLeftSide)
+                {
+                    indexes[0] = val - 1;
+                }
+                indexes[1] = val;
+                if (!isRightSide)
+                {
+                    indexes[2] = val + 1;
+                }
+            }
+            if (!isLeftSide)
+            {
+                indexes[3] = index - 1;
+            }
+            if (!isRightSide)
+            {
+                indexes[4] = index + 1;
+            }
+            if (!isBottom)
+            {
+                var val = index + columnCount;
+                if (!isLeftSide)
+                {
+                    indexes[5] = val - 1;
+                }
+                indexes[6] = val;
+                if (!isRightSide)
+                {
+                    indexes[7] = val + 1;
+                }
+            }
+        }
+
+        public static void Scatter(this Span<int> mines, int nodeCount)
+        {
+            Debug.Assert(nodeCount > 0);
+            Debug.Assert(nodeCount >= mines.Length);
+
+            // we must fill the buffer with -1 because the default (0) is a valid index
+            mines.Fill(-1);
+
+            int m;
+            foreach (ref var x in mines)
+            {
+                // we use a loop to prevent duplicate indexes
+                do
+                {
+                    m = RandomNumberGenerator.GetInt32(nodeCount);
+                } while (mines.IndexOf(m) != -1);
+
+                x = m;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsAdjacentTo(Coordinates coordinateOne, Coordinates coordinateTwo)
+        public static int GetAdjacentFlaggedNodeCount(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
         {
-            var key = coordinateOne.X
-                | (uint)coordinateOne.Y << 8
-                | (uint)coordinateTwo.X << 16
-                | (uint)coordinateTwo.Y << 24;
+            Debug.Assert(matrix.Nodes.Length > nodeIndex);
+            Debug.Assert(buffer.Length == 8);
+            Debug.Assert(nodeIndex >= 0);
 
-            if (_adjacentTileMap.TryGetValue(key, out var value))
+            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
+
+            var n = 0;
+            foreach (var i in buffer)
             {
-                return value;
+                if (i == -1) { continue; }
+
+                if (matrix.Nodes[i].State == NodeState.Flagged)
+                {
+                    n++;
+                }
             }
-
-            var x = coordinateOne.X;
-            var y = coordinateOne.Y;
-
-            var val = new[] { x, x + 1, x - 1 }.Contains(coordinateTwo.X)
-                && new[] { y, y + 1, y - 1 }.Contains(coordinateTwo.Y)
-                && coordinateOne != coordinateTwo;
-
-            _adjacentTileMap.TryAdd(key, val);
-
-            return val;
+            return n;
         }
 
-        internal static T[] GetShuffledItems<T>(this IEnumerable<T> list)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool HasHiddenAdjacentNodes(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
         {
-            var items = list.ToArray();
-            var n = items.Length;
+            Debug.Assert(matrix.Nodes.Length > nodeIndex);
+            Debug.Assert(nodeIndex >= 0);
+            Debug.Assert(buffer.Length == 8);
 
-            while (n > 1)
+            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
+
+            foreach (var x in buffer)
             {
-                n--;
-                var k = RandomNumberGenerator.GetInt32(n + 1);
-                var value = items[k];
-                items[k] = items[n];
-                items[n] = value;
+                if (x == -1) { continue; }
+                if (matrix.Nodes[x].State == NodeState.Hidden)
+                {
+                    return true;
+                }
             }
 
-            return items;
+            return false;
         }
 
-        /// <summary>
-        /// Intended for testing/benchmarking a deterministic board that requires zero guesses to solve
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="list"></param>
-        /// <returns></returns>
-        internal static T[] GetPseudoShuffledItems<T>(this IEnumerable<T> list)
+        public static string Log(Matrix<Node> matrix)
         {
-            var items = list.ToArray();
-            var n = items.Length;
-
-            // magic seed that produces a solvable board
-            var random = new Random(653635);
-
-            while (n > 1)
+            var sb = new System.Text.StringBuilder();
+            for (var i = 0; i < matrix.Nodes.Length; i++)
             {
-                n--;
-                var k = random.Next(n + 1);
-                var value = items[k];
-                items[k] = items[n];
-                items[n] = value;
+                var node = matrix.Nodes[i];
+                var op = node.State switch
+                {
+                    NodeState.Flagged => "NodeOperation.Flag",
+                    NodeState.Hidden => "NodeOperation.RemoveFlag",
+                    NodeState.Revealed => "NodeOperation.Reveal",
+                    _ => ""
+                };
+                sb.AppendLine($"new Node({i}, {node.HasMine.ToString().ToLower()}, {node.MineCount}, {op}),");
             }
-
-            return items;
+            return sb.ToString();
         }
     }
 }

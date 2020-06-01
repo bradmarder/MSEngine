@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using Xunit;
 using MSEngine.Core;
 
@@ -7,144 +6,191 @@ namespace MSEngine.Tests
 {
     public class BoardValidationTest
     {
-        private static readonly IBoardStateMachine _boardStateMachine = new BoardStateMachine();
-
-        [Fact]
-        public void Throws_if_board_has_duplicate_coordinates()
+        [Theory]
+        [InlineData(NodeOperation.Reveal)]
+        [InlineData(NodeOperation.Flag)]
+        [InlineData(NodeOperation.RemoveFlag)]
+        [InlineData(NodeOperation.Chord)]
+        public void Throws_exception_if_any_operation_applied_after_game_is_completed(NodeOperation operation)
         {
-            var dupeCoordinates = new Coordinates(0, 0);
-            var tile = new Tile(dupeCoordinates, false, 0);
-            var board = new Board(new[] { tile, tile });
+            Assert.Throws<InvalidGameStateException>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[8 * 8];
+                var matrix = new Matrix<Node>(nodes, 8);
+                Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 8);
+                var firstTurn = new Turn(0, NodeOperation.Reveal);
+                var secondTurn = new Turn(1, operation);
+                BoardStateMachine.Instance.ComputeBoard(matrix, firstTurn);
 
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(board, new Turn()));
+                Assert.Equal(BoardStatus.Completed, nodes.Status());
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(matrix, secondTurn);
+            });
         }
 
         [Theory]
-        [InlineData(TileOperation.Reveal)]
-        [InlineData(TileOperation.Flag)]
-        [InlineData(TileOperation.RemoveFlag)]
-        [InlineData(TileOperation.Chord)]
-        public void Throws_exception_if_any_operation_applied_after_game_is_completed(TileOperation operation)
+        [InlineData(NodeOperation.Reveal)]
+        [InlineData(NodeOperation.Flag)]
+        [InlineData(NodeOperation.RemoveFlag)]
+        [InlineData(NodeOperation.Chord)]
+        public void Throws_exception_if_any_operation_applied_after_game_is_failed(NodeOperation operation)
         {
-            var board = Engine.PureInstance.GenerateCustomBoard(8, 8, 0);
-            var firstTurn = new Turn(0, 0, TileOperation.Reveal);
-            var secondTurn = new Turn(0, 1, operation);
-            var boardAfterFirstTurn = _boardStateMachine.ComputeBoard(board, firstTurn);
+            Assert.Throws<InvalidGameStateException>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[8 * 8];
+                Span<int> mines = stackalloc int[] { 0 };
+                var matrix = new Matrix<Node>(nodes, 8);
+                Engine.Instance.FillCustomBoard(nodes, mines, 8);
+                var firstTurn = new Turn(0, NodeOperation.Reveal);
+                var secondTurn = new Turn(1, operation);
+                BoardStateMachine.Instance.ComputeBoard(matrix, firstTurn);
 
-            Assert.Equal(BoardStatus.Completed, boardAfterFirstTurn.Status);
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(boardAfterFirstTurn, secondTurn));
+                Assert.Equal(BoardStatus.Failed, nodes.Status());
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(matrix, secondTurn);
+            });
         }
 
         [Theory]
-        [InlineData(TileOperation.Reveal)]
-        [InlineData(TileOperation.Flag)]
-        [InlineData(TileOperation.RemoveFlag)]
-        [InlineData(TileOperation.Chord)]
-        public void Throws_exception_if_any_operation_applied_after_game_is_failed(TileOperation operation)
+        [InlineData(NodeOperation.Flag)]
+        [InlineData(NodeOperation.RemoveFlag)]
+        public void Throws_exception_if_flag_operation_applied_on_revealed_node(NodeOperation operation)
         {
-            var board = Engine.PureInstance.GenerateCustomBoard(8, 8, 1);
-            var firstTurn = new Turn(0, 0, TileOperation.Reveal);
-            var secondTurn = new Turn(0, 1, operation);
-            var boardAfterFirstTurn = _boardStateMachine.ComputeBoard(board, firstTurn);
-
-            Assert.Equal(BoardStatus.Failed, boardAfterFirstTurn.Status);
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(boardAfterFirstTurn, secondTurn));
-        }
-
-        [Theory]
-        [InlineData(TileOperation.Reveal)]
-        [InlineData(TileOperation.Flag)]
-        [InlineData(TileOperation.RemoveFlag)]
-        public void Throws_exception_if_reveal_or_flag_operation_applied_on_revealed_tile(TileOperation operation)
-        {
-            var board = Engine.PureInstance.GenerateCustomBoard(2, 2, 1);
-            var firstTurn = new Turn(1, 1, TileOperation.Reveal);
-            var boardAfterFirstTurn = _boardStateMachine.ComputeBoard(board, firstTurn);
-            var secondTurn = new Turn(1, 1, operation);
-
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(boardAfterFirstTurn, secondTurn));
+            Assert.Throws<InvalidGameStateException>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[2 * 2];
+                Span<int> mines = stackalloc int[] { 0 };
+                var matrix = new Matrix<Node>(nodes, 2);
+                Engine.Instance.FillCustomBoard(nodes, mines, 2);
+                var firstTurn = new Turn(3, NodeOperation.Reveal);
+                BoardStateMachine.Instance.ComputeBoard(matrix, firstTurn);
+                var secondTurn = new Turn(3, operation);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(matrix, secondTurn);
+            });
         }
 
         [Fact]
         public void Throws_exception_if_turn_coordinates_are_outside_board()
         {
-            var board = Engine.PureInstance.GenerateCustomBoard(1, 1, 0);
-            var turn = new Turn(1, 0, TileOperation.Reveal);
+            Assert.Throws<InvalidGameStateException>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[1 * 1];
+                var matrix = new Matrix<Node>(nodes, 1);
+                Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 1);
+                var turn = new Turn(1, NodeOperation.Reveal);
 
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(board, turn));
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(matrix, turn);
+            });
         }
 
         [Fact]
         public void Throws_exception_if_operation_is_flag_and_no_flags_available()
         {
-            var board = Engine.PureInstance.GenerateCustomBoard(1, 1, 0);
-            var turn = new Turn(0, 0, TileOperation.Flag);
+            Assert.Throws<InvalidGameStateException>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[1 * 1];
+                var matrix = new Matrix<Node>(nodes, 1);
+                Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 1);
+                var turn = new Turn(0, NodeOperation.Flag);
 
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(board, turn));
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(matrix, turn);
+            });
         }
 
         [Fact]
-        public void Throws_exception_if_operation_is_flag_and_tile_is_already_flagged()
+        public void Throws_exception_if_operation_is_flag_and_node_is_already_flagged()
         {
-            var board = Engine.PureInstance.GenerateCustomBoard(1, 2, 1);
-            var turn = new Turn(0, 0, TileOperation.Flag);
-            var boardAfterFirstTurn = _boardStateMachine.ComputeBoard(board, turn);
+            Assert.Throws<InvalidGameStateException>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[1 * 2];
+                Span<int> mines = stackalloc int[] { 0 };
+                var matrix = new Matrix<Node>(nodes, 1);
+                Engine.Instance.FillCustomBoard(nodes, mines, 1);
+                var turn = new Turn(0, NodeOperation.Flag);
+                BoardStateMachine.Instance.ComputeBoard(matrix, turn);
 
-            Assert.Equal(BoardStatus.Pending, boardAfterFirstTurn.Status);
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(boardAfterFirstTurn, turn));
+                Assert.Equal(BoardStatus.Pending, nodes.Status());
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(matrix, turn);
+            });
         }
 
         [Fact]
-        public void Throws_exception_if_operation_is_remove_flag_and_tile_is_not_flagged()
+        public void Throws_exception_if_operation_is_remove_flag_and_node_is_not_flagged()
         {
-            var board = Engine.PureInstance.GenerateCustomBoard(2, 2, 2);
-            var turn = new Turn(0, 0, TileOperation.RemoveFlag);
-            
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(board, turn));
+            Assert.Throws<InvalidGameStateException>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[2 * 2];
+                Span<int> mines = stackalloc int[] { 0, 1 };
+                var matrix = new Matrix<Node>(nodes, 2);
+                Engine.Instance.FillCustomBoard(nodes, mines, 2);
+                var turn = new Turn(0, NodeOperation.RemoveFlag);
+
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(matrix, turn);
+            });
         }
 
         [Fact]
-        public void Throws_exception_if_chord_on_non_revealed_tile()
+        public void Throws_exception_if_chord_on_non_revealed_node()
         {
-            var board = Engine.PureInstance.GenerateCustomBoard(1, 1, 0);
-            var turn = new Turn(0, 0, TileOperation.Chord);
+            Assert.Throws<InvalidGameStateException>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[1 * 1];
+                var matrix = new Matrix<Node>(nodes, 1);
+                Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 1);
+                var turn = new Turn(0, NodeOperation.Chord);
 
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(board, turn));
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(matrix, turn);
+            });
         }
 
         [Fact]
-        public void Throws_exception_if_chord_on_revealed_tile_with_zero_adjacent_mines()
+        public void Throws_exception_if_chord_on_revealed_node_with_zero_adjacent_mines()
         {
-            var origin = new Coordinates(2, 2);
-            var board = Engine.PureInstance.GenerateCustomBoard(3, 3, 1);
-            var firstTurn = new Turn(origin, TileOperation.Reveal);
-            var secondTurn = new Turn(origin, TileOperation.Chord);
-            var boardAfterFirstTurn = _boardStateMachine.ComputeBoard(board, firstTurn);
-            var targetTile = boardAfterFirstTurn.Tiles.Single(x => x.Coordinates == origin);
+            Assert.Throws<InvalidGameStateException>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[3 * 3];
+                Span<int> mines = stackalloc int[] { 0 };
+                var matrix = new Matrix<Node>(nodes, 3);
+                Engine.Instance.FillCustomBoard(nodes, mines, 3);
+                var firstTurn = new Turn(8, NodeOperation.Reveal);
+                var secondTurn = new Turn(8, NodeOperation.Chord);
+                BoardStateMachine.Instance.ComputeBoard(matrix, firstTurn);
+                var node = nodes[8];
 
-            Assert.Equal(TileState.Revealed, targetTile.State);
-            Assert.Equal(0, targetTile.AdjacentMineCount);
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(boardAfterFirstTurn, secondTurn));
+                Assert.Equal(NodeState.Revealed, node.State);
+                Assert.Equal(0, node.MineCount);
+
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(matrix, secondTurn);
+            });
         }
 
         [Fact]
-        public void Throws_exception_if_chord_on_revealed_tile_when_adjacent_mine_count_does_not_equal_adjacent_flag_count()
+        public void Throws_exception_if_chord_on_revealed_node_when_adjacent_mine_count_does_not_equal_adjacent_flag_count()
         {
-            var origin = new Coordinates(1, 1);
-            var board = Engine.PureInstance.GenerateCustomBoard(2, 2, 3);
-            var firstTurn = new Turn(0, 0, TileOperation.Flag);
-            var secondTurn = new Turn(origin, TileOperation.Reveal);
-            var thirdTurn = new Turn(origin, TileOperation.Chord);
-            var boardAfterFirstTurn = _boardStateMachine.ComputeBoard(board, firstTurn);
-            var boardAfterSecondTurn = _boardStateMachine.ComputeBoard(boardAfterFirstTurn, secondTurn);
-            
-            Assert.Throws<InvalidGameStateException>(() => _boardStateMachine.EnsureValidBoardConfiguration(boardAfterSecondTurn, thirdTurn));
+            Assert.Throws<InvalidGameStateException>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[2 * 2];
+                ReadOnlySpan<int> mines = stackalloc int[] { 0, 1, 2 };
+                var matrix = new Matrix<Node>(nodes, 2);
+                Engine.Instance.FillCustomBoard(nodes, mines, 2);
+                var firstTurn = new Turn(0, NodeOperation.Flag);
+                var secondTurn = new Turn(3, NodeOperation.Reveal);
+                var thirdTurn = new Turn(3, NodeOperation.Chord);
+
+                BoardStateMachine.Instance.ComputeBoard(matrix, firstTurn);
+                BoardStateMachine.Instance.ComputeBoard(matrix, secondTurn);
+                BoardStateMachine.Instance.EnsureValidBoardConfiguration(matrix, thirdTurn);
+            });
         }
 
         [Fact]
-        public void Mayonlychordatilethathashiddenadjacenttiles()
+        public void MayonlychordNodeWithHiddenadjacentNodes()
         {
             Assert.True(true);
         }
+
+        // We visit nodes regardless of whether they have already been revealed.
+        // Realistically, this never happens. However, there is a case with
+        // abusing flags which could lead to this case
+        // TODO: add test
+        // ring of flags used to create a ring of revealed nodes
     }
 }

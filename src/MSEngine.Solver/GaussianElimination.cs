@@ -1,14 +1,14 @@
-﻿using System;
+using MSEngine.Core;
 
 namespace MSEngine.Solver
 {
     public static class GaussianElimination
     {
-        public static float[,] GaussEliminate(this float[,] matrix)
+        public static void GaussEliminate(this Matrix<float> matrix)
         {
             var lead = 0;
-            var rowCount = matrix.GetLength(0);
-            var columnCount = matrix.GetLength(1);
+            var rowCount = matrix.RowCount;
+            var columnCount = matrix.ColumnCount;
 
             for (var r = 0; r < rowCount; r++)
             {
@@ -61,7 +61,6 @@ namespace MSEngine.Solver
                 }
                 lead++;
             }
-            return matrix;
         }
     }
 }

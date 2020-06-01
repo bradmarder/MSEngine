@@ -10,11 +10,13 @@ namespace MSEngine.Tests
         [Theory]
         [InlineData(1, 0)]
         [InlineData(0, 1)]
-        [InlineData(31, 16)]
-        [InlineData(30, 17)]
         public void Throws_on_invalid_columns(byte columns, byte rows)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => Engine.PureInstance.GenerateCustomBoard(columns, rows, 0));
+            Assert.ThrowsAny<Exception>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[columns * rows];
+                Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, columns);
+            });
         }
 
         [Theory]
@@ -22,31 +24,101 @@ namespace MSEngine.Tests
         [InlineData(8, 8)]
         [InlineData(16, 16)]
         [InlineData(30, 16)]
-        public void Expected_tile_count_equals_actual_tile_count(byte columns, byte rows)
+        public void ThrowsOnInsufficientBuffer(byte columns, byte rows)
         {
-            var expectedTileCount = columns * rows;
-            var board = Engine.PureInstance.GenerateCustomBoard(columns, rows, 0);
+            Assert.ThrowsAny<Exception>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[columns * rows - 1];
+                Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, columns);
+            });
+        }
 
-            Assert.Equal(expectedTileCount, board.Tiles.Length);
+        /// <summary>
+        /// verifies that nodes.Length % columns == 0
+        /// </summary>
+        /// <param name="columns"></param>
+        /// <param name="rows"></param>
+        [Theory]
+        [InlineData(2, 2)]
+        [InlineData(8, 8)]
+        [InlineData(16, 16)]
+        [InlineData(30, 16)]
+        public void ThrowsOnInvalidBuffer(byte columns, byte rows)
+        {
+            Assert.ThrowsAny<Exception>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[(columns * rows) + 1];
+                Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, columns);
+            });
         }
 
         [Theory]
         [InlineData(0)]
         [InlineData(1)]
-        [InlineData(99)]
+        [InlineData(63)]
         public void Expected_mine_count_equals_actual_mine_count(byte expectedMineCount)
         {
-            var board = Engine.PureInstance.GenerateCustomBoard(30, 16, expectedMineCount);
+            Span<Node> nodes = stackalloc Node[64];
+            Span<int> mines = stackalloc int[expectedMineCount];
+            mines.Scatter(nodes.Length);
 
-            Assert.Equal(expectedMineCount, board.MineCount);
+            Engine.Instance.FillCustomBoard(nodes, mines, 8);
+
+            Assert.Equal(expectedMineCount, nodes.MineCount());
         }
 
-        [Theory]
-        [InlineData(64)]
-        [InlineData(65)]
-        public void Throws_if_mine_count_is_greater_than_or_equal_to_tile_count(byte mineCount)
+        [Fact]
+        public void Throws_if_mine_count_is_greater_than_or_equal_to_node_count()
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => Engine.PureInstance.GenerateCustomBoard(8, 8, mineCount));
+            Assert.ThrowsAny<Exception>(() =>
+            {
+                Span<Node> nodes = stackalloc Node[64];
+                Span<int> mines = stackalloc int[nodes.Length + 1];
+
+                Engine.Instance.FillCustomBoard(nodes, mines, 8);
+            });
+        }
+
+        [Fact]
+        public void ScatteringMinesProducesZeroDuplicates()
+        {
+            Span<int> mines = stackalloc int[10];
+            mines.Scatter(11);
+            var distinctCount = mines.ToArray().Distinct().Count();
+
+            Assert.Equal(10, distinctCount);
+        }
+
+        [Fact]
+        public void ScatteringMinesProducesInRangeIndexes()
+        {
+            const int mineCount = 10;
+            Span<int> mines = stackalloc int[mineCount];
+            mines.Scatter(10);
+
+            foreach (var x in mines)
+            {
+                Assert.True(x > -1);
+                Assert.True(x < mineCount);
+            }
+        }
+
+        /// <summary>
+        /// Silly test, but makes sure the mine randomizer is actually doing it's job
+        /// Will fail every 100c10 iterations!
+        /// </summary>
+        [Fact]
+        public void ScatteringMinesAreRandomized()
+        {
+            Span<int> setOne = stackalloc int[10];
+            setOne.Scatter(100);
+
+            Span<int> setTwo = stackalloc int[10];
+            setTwo.Scatter(100);
+
+            Assert.NotEqual(
+                setOne.ToArray().OrderBy(x => x),
+                setTwo.ToArray().OrderBy(x => x));
         }
     }
 }

@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
-
 using MSEngine.Core;
 using MSEngine.Solver;
 
@@ -15,138 +14,118 @@ namespace MSEngine.ConsoleApp
         private static readonly object _lock = new object();
         private static int _wins = 0;
         private static int _gamesPlayedCount = 0;
+        private static Stopwatch? _watch;
 
         static void Main(string[] args)
         {
-            //RunRandomDistributionTest(Engine.Instance.GenerateRandomBeginnerBoard);
-            // RunSimulations(1, () => Engine.Instance.GenerateCustomBoard(4, 4, 2));
-            RunSimulations(10000, Engine.Instance.GenerateBeginnerBoard);
+            _watch = Stopwatch.StartNew();
+            RunSimulations(100000);
+            DisplayScore();
         }
 
-
-        private static void RunRandomDistributionTest(Func<Board> boardGenerator, int maxIterationCount = int.MaxValue)
-        {
-            var iteration = 0;
-            var board = boardGenerator();
-            var expectedAverage = board.MineCount / (decimal)(board.Width * board.Height);
-            var map = board.Tiles.ToDictionary(x => x.Coordinates, _ => 0);
-
-            while (iteration < maxIterationCount)
-            {
-                iteration++;
-
-                boardGenerator()
-                    .Tiles
-                    .Where(x => x.HasMine)
-                    .ToList()
-                    .ForEach(x => map[x.Coordinates]++);
-
-                var means = map
-                    .Select(y => y.Value / (decimal)iteration)
-                    .ToArray();
-                var min = means.Min();
-                var max = means.Max();
-                var minDiff = Math.Abs(expectedAverage - min); //.00369639666
-                var maxDiff = Math.Abs(expectedAverage - max); //.00333032896
-
-                Console.SetCursorPosition(0, Console.CursorTop);
-                Console.Write($"MinDiff = {minDiff} and MaxDiff = {maxDiff}");
-
-                // beginner
-                // MinDiff = 0.0008879570668942427624236854 and MaxDiff = 0.0007066073655878684435107989
-                // MinDiff = 0.0003602253545151916915500224 and MaxDiff = 0.0004654803596709192191884712
-            }
-
-            Console.ReadLine();
-        }
-
-        private static void RunSimulations(int count, Func<Board> boardGenerator)
+        private static void RunSimulations(int count)
         {
             if (count < 1) { throw new ArgumentOutOfRangeException(nameof(count)); }
-
-            var watch = System.Diagnostics.Stopwatch.StartNew();
 
             ParallelEnumerable
                 .Range(0, count)
                 //.WithDegreeOfParallelism(1)
-                .ForAll(_ =>
-                {
-                    var board = boardGenerator();
-                    var turnCount = 0;
-                    var turns = new Queue<Turn>();
-
-                    while (board.Status == BoardStatus.Pending)
-                    {
-                        if (turnCount == 0 && FirstTurnStrategy.TryUseStrategy(board, out var foo))
-                        {
-                            turns.Enqueue(foo);
-                        }
-
-                        if (!turns.Any())
-                        {
-                            MatrixSolver
-                                .CalculateTurns(board)
-                                .ForEach(turns.Enqueue);
-                        }
-
-                        // if the matrix solver couldn't calculate any turns, we just select a random hidden tile
-                        if (!turns.Any())
-                        {
-                            var guess = EducatedGuessStrategy.UseStrategy(board);
-                            turns.Enqueue(guess);
-                        }
-
-                        var turn = turns.Dequeue();
-
-                        board = BoardStateMachine.Instance.ComputeBoard(board, turn);
-
-                        // Get new board unless tile has no mine and zero AMC
-                        var targetTile = board.Tiles.First(x => x.Coordinates == turn.Coordinates);
-                        if (turnCount == 0 && (board.Status == BoardStatus.Failed || targetTile.AdjacentMineCount > 0))
-                        {
-                            board = boardGenerator();
-                            turns.Clear();
-                            continue;
-                        }
-                        turnCount++;
-                        
-                        if (board.Status == BoardStatus.Pending)
-                        {
-                            continue;
-                        }
-
-                        Interlocked.Increment(ref _gamesPlayedCount);
-                        if (board.Status == BoardStatus.Completed)
-                        {
-                            Interlocked.Increment(ref _wins);
-                        }
-
-                        lock (_lock)
-                        {
-                            var winRatio = ((decimal)_wins / _gamesPlayedCount) * 100;
-                            Console.SetCursorPosition(0, Console.CursorTop);
-                            Console.Write($"{_wins} of {_gamesPlayedCount} --- Win Ratio = {winRatio}%  within {watch.ElapsedMilliseconds} milliseconds");
-                        }
-                    }
-                });
+                .ForAll(_ => ExecuteGame());
         }
 
-        private static string GetBoardAsciiArt(Board board)
+        private static void DisplayScore()
         {
-            var sb = new StringBuilder(board.Tiles.Count());
+            var winRatio = ((decimal)_wins / _gamesPlayedCount) * 100;
+            Console.SetCursorPosition(0, Console.CursorTop);
+            Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio}%  {_watch!.ElapsedMilliseconds}ms");
+        }
 
-            for (byte y = 0; y < board.Height; y++)
+        private static void ExecuteGame()
+        {
+            const int nodeCount = 8 * 8;const int columnCount = 8;
+            //const int nodeCount = 30 * 16;const int columnCount = 30;
+            const int firstTurnNodeIndex = nodeCount / 2;
+
+            Span<Node> nodes = stackalloc Node[nodeCount];
+            Span<Turn> turns = stackalloc Turn[nodeCount];
+            var matrix = new Matrix<Node>(nodes, columnCount);
+
+            var iteration = 0;
+
+            while (true)
             {
-                for (byte x = 0; x < board.Width; x++)
+                if (iteration == 0)
                 {
-                    var tile = board.Tiles.Single(t => t.Coordinates.X == x && t.Coordinates.Y == y);
-                    var tileChar = GetTileChar(tile);
-                    sb.Append(tileChar);
+                    Engine.Instance.FillBeginnerBoard(nodes);
+                    var turn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
 
-                    if (x + 1 == board.Width)
+                    // Technically, computing the board *before* the check is redundant here, since we can just
+                    // inspect the node directly. We do this to maintain strict separation of clients
+                    // We could place this ComputeBoard method after the node inspection for perf
+                    BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+
+                    var node = nodes[turn.NodeIndex];
+                    Debug.Assert(node.State == NodeState.Revealed);
+                    if (node.HasMine || node.MineCount > 0)
                     {
-                        sb.AppendLine();
+                        continue;
                     }
+                }
+                else
+                {
+                    var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
+                    if (turnCount == 0)
+                    {
+                        turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
+                    }
+                    foreach (var turn in turns.Slice(0, turnCount))
+                    {
+                        BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+                    }
+                    if (turnCount == 0)
+                    {
+                        var turn = NodeStrategies.RevealFirstHiddenNode(nodes);
+                        BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+                    }
+                }
+                iteration++;
+                
+                var status = nodes.Status();
+                if (status == BoardStatus.Pending)
+                {
+                    continue;
+                }
+
+                Interlocked.Increment(ref _gamesPlayedCount);
+                if (status == BoardStatus.Completed)
+                {
+                    Interlocked.Increment(ref _wins);
+                }
+
+                // we only update the score every 10000 games (because doing so within a lock is expensive, and so are console commands)
+                //if (_gamesPlayedCount % 10000 == 0)
+                //{
+                //    DisplayScore();
+                //}
+
+                break;
+            }
+        }
+
+        private static string GetBoardAsciiArt(ReadOnlySpan<Node> nodes, int columnCount)
+        {
+            var sb = new StringBuilder(nodes.Length);
+
+            for (var i = 0; i < nodes.Length; i++)
+            {
+                var node = nodes[i];
+                var nodeChar = GetNodeChar(node);
+                sb.Append(nodeChar);
+
+                if (i % columnCount == 1) 
+                {
+                    sb.AppendLine();
+                    throw new NotImplementedException();
                 }
             }
 
@@ -154,20 +133,24 @@ namespace MSEngine.ConsoleApp
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static char GetTileChar(in Tile tile)
+        private static char GetNodeChar(in Node node)
         {
-            switch (tile)
+            switch (node)
             {
-                case var z when z.State == TileState.Hidden:
+                case var z when z.State == NodeState.Hidden:
                     return '_';
-                case var z when z.State == TileState.Flagged:
+                case var z when !z.HasMine && z.State == NodeState.Flagged:
+                    return '!';
+                case var z when z.State == NodeState.Flagged:
                     return '>';
+                case var z when z.HasMine && z.State == NodeState.Revealed:
+                    return '*';
                 case var z when z.HasMine:
                     return 'x';
-                case var z when z.State == TileState.Revealed:
-                    return z.AdjacentMineCount.ToString().First();
+                case var z when z.State == NodeState.Revealed:
+                    return z.MineCount.ToString().First();
                 default:
-                    throw new NotImplementedException(tile.ToString());
+                    throw new NotImplementedException(node.ToString());
             }
         }
     }
