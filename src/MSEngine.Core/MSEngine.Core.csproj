@@ -26,7 +26,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <IncludeSource>true</IncludeSource>
     <IncludeSymbols>false</IncludeSymbols>
-    <PackageTags>c# minesweeper engine solver zero allocation performance</PackageTags>
+    <PackageTags>c# minesweeper zero-allocations performance</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

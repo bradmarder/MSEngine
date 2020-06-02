@@ -6,7 +6,7 @@
 [![install from nuget](http://img.shields.io/nuget/v/MSEngine.Core.svg?style=flat-square)](https://www.nuget.org/packages/MSEngine.Core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-### The core API of MSEngine Ultra
+### The core API of MSEngine ZA Ultra
 ```c#
 void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns);
 void ComputeBoard(Matrix<Node> matrix, Turn turn);
@@ -57,3 +57,4 @@ To run benchmarks, open a terminal and navigate to `src\MSEngine.Benchmarks\` an
 - ~~Benchmarks~~
 - ~~Matrix / Linear Algebra solver~~ *(Special thanks to [Robert Massaioli](https://massaioli.wordpress.com/2013/01/12/solving-minesweeper-with-matricies/) for providing a detailed implementation)*
 - Probabilistic Solver
+- Implement SIMD / Instrinsics

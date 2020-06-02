@@ -20,7 +20,7 @@ namespace MSEngine.ConsoleApp
         {
             _watch = Stopwatch.StartNew();
             RunSimulations(100000);
-            DisplayScore();
+            //DisplayScore();
         }
 
         private static void RunSimulations(int count)
@@ -80,10 +80,14 @@ namespace MSEngine.ConsoleApp
                     }
                     foreach (var turn in turns.Slice(0, turnCount))
                     {
+                        var node = nodes[turn.NodeIndex];
+                        Debug.Assert(node.HasMine ? turn.Operation == NodeOperation.Flag : turn.Operation == NodeOperation.Reveal);
                         BoardStateMachine.Instance.ComputeBoard(matrix, turn);
                     }
                     if (turnCount == 0)
                     {
+                        //Console.WriteLine(GetBoardAsciiArt(matrix));
+
                         var turn = NodeStrategies.RevealFirstHiddenNode(nodes);
                         BoardStateMachine.Instance.ComputeBoard(matrix, turn);
                     }
@@ -102,30 +106,29 @@ namespace MSEngine.ConsoleApp
                     Interlocked.Increment(ref _wins);
                 }
 
-                // we only update the score every 10000 games (because doing so within a lock is expensive, and so are console commands)
-                //if (_gamesPlayedCount % 10000 == 0)
-                //{
-                //    DisplayScore();
-                //}
+                // we only update the score every 10000 games(because doing so within a lock is expensive, and so are console commands)
+                if (_gamesPlayedCount % 10000 == 0)
+                {
+                    DisplayScore();
+                }
 
                 break;
             }
         }
 
-        private static string GetBoardAsciiArt(ReadOnlySpan<Node> nodes, int columnCount)
+        private static string GetBoardAsciiArt(Matrix<Node> matrix)
         {
-            var sb = new StringBuilder(nodes.Length);
+            var sb = new StringBuilder(matrix.Nodes.Length);
 
-            for (var i = 0; i < nodes.Length; i++)
+            for (var i = 0; i < matrix.Nodes.Length; i++)
             {
-                var node = nodes[i];
+                var node = matrix.Nodes[i];
                 var nodeChar = GetNodeChar(node);
                 sb.Append(nodeChar);
 
-                if (i % columnCount == 1) 
+                if (i > 0 && (i + 1) % matrix.ColumnCount == 0) 
                 {
                     sb.AppendLine();
-                    throw new NotImplementedException();
                 }
             }
 

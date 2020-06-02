@@ -13,7 +13,7 @@ namespace MSEngine.Benchmarks
     {
         static void Main(string[] args)
         {
-            BenchmarkRunner.Run<FillBoardForeachVsFor>();
+            BenchmarkRunner.Run<Tests>();
         }
     }
 
@@ -66,7 +66,7 @@ namespace MSEngine.Benchmarks
             foo.FillAdjacentNodeIndexes(64, 9, 3);
         }
 
-        //[Benchmark]
+        [Benchmark]
         public void Exec() => Play();
 
 

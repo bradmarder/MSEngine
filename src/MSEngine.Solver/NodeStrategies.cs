@@ -11,12 +11,11 @@ namespace MSEngine.Solver
         {
             Debug.Assert(nodes.Length > 0);
 
-            for (var i = 0; i < nodes.Length; i++)
+            foreach (var node in nodes)
             {
-                var node = nodes[i];
                 if (node.State == NodeState.Hidden)
                 {
-                    return new Turn(i, NodeOperation.Reveal);
+                    return new Turn(node.Index, NodeOperation.Reveal);
                 }
             }
 

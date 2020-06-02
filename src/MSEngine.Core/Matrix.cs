@@ -23,15 +23,23 @@ namespace MSEngine.Core
 
         public override string ToString()
         {
-            var foo = new T[,] { };
+            var sb = new System.Text.StringBuilder();
+
             for (var row = 0; row < RowCount; row++)
             {
                 for (var column = 0; column < ColumnCount; column++)
                 {
-                    foo[row, column] = this[row, column];
+                    sb.Append(this[row, column]);
+                    sb.Append('\t');
+
+                    if (column > 0 && (column + 1) % ColumnCount == 0)
+                    {
+                        sb.AppendLine();
+                    }
                 }
             }
-            throw new NotImplementedException();
+
+            return sb.ToString();
         }
     }
 }

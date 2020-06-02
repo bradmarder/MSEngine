@@ -6,10 +6,17 @@ namespace MSEngine.Solver
 {
     public static class MatrixSolver
     {
-        private static void ReduceMatrix(Matrix<float> matrix, ReadOnlySpan<int> adjacentHiddenNodeIndexes, Span<Turn> turns, ref int turnCount)
+        private static void ReduceMatrix(
+            Matrix<Node> nodeMatrix,
+            Matrix<float> matrix,
+            ReadOnlySpan<int> adjacentHiddenNodeIndexes,
+            ReadOnlySpan<int> revealedAMCNodes,
+            Span<Turn> turns,
+            ref int turnCount,
+            bool useAllHiddenNodes)
         {
-            var removeRowCount = 0;
-            Span<int> removeRowIndexes = stackalloc int[matrix.RowCount];
+            var hasReduced = false;
+            Span<int> buffer = stackalloc int[8];
 
             for (var row = 0; row < matrix.RowCount; row++)
             {
@@ -18,16 +25,25 @@ namespace MSEngine.Solver
                 // if the augment column is zero, then all the 1's in the row are not mines
                 if (val == 0)
                 {
-                    removeRowIndexes[removeRowCount] = row;
-                    removeRowCount++;
-
                     for (var c = 0; c < matrix.ColumnCount - 1; c++)
                     {
                         if (matrix[row, c] == 1)
                         {
-                            var i = adjacentHiddenNodeIndexes[c];
-                            turns[turnCount] = new Turn(i, NodeOperation.Reveal);
-                            turnCount++;
+                            hasReduced = true;
+
+                            var turn = new Turn(adjacentHiddenNodeIndexes[c], NodeOperation.Reveal);
+
+                            if (turns.Slice(0, turnCount).IndexOf(turn) == -1)
+                            {
+                                turns[turnCount] = turn;
+                                turnCount++;
+                            }
+
+                            // zero'ify this column from all rows in the matrix
+                            for (var ir = 0; ir < matrix.RowCount; ir++)
+                            {
+                                matrix[ir, c] = 0;
+                            }
                         }
                     }
                 }
@@ -42,35 +58,52 @@ namespace MSEngine.Solver
                     }
                     if (sum == val)
                     {
-                        removeRowIndexes[removeRowCount] = row;
-                        removeRowCount++;
-
                         for (var c = 0; c < matrix.ColumnCount - 1; c++)
                         {
                             if (matrix[row, c] == 1)
                             {
-                                var i = adjacentHiddenNodeIndexes[c];
-                                turns[turnCount] = new Turn(i, NodeOperation.Flag);
-                                turnCount++;
+                                hasReduced = true;
+
+                                var index = adjacentHiddenNodeIndexes[c];
+                                var turn = new Turn(index, NodeOperation.Flag);
+                                if (turns.Slice(0, turnCount).IndexOf(turn) == -1)
+                                {
+                                    turns[turnCount] = turn;
+                                    turnCount++;
+                                }
+
+                                // zero'ify this column from all rows in the matrix
+                                for (var ir = 0; ir < matrix.RowCount; ir++)
+                                {
+                                    matrix[ir, c] = 0;
+                                }
+
+                                buffer.FillAdjacentNodeIndexes(nodeMatrix.Nodes.Length, index, nodeMatrix.ColumnCount);
+
+                                foreach (var i in buffer)
+                                {
+                                    if (i == -1) { continue; }
+                                    var rowIndex = revealedAMCNodes.IndexOf(i);
+                                    if (rowIndex != -1)
+                                    {
+                                        matrix[rowIndex, matrix.ColumnCount - 1]--;
+                                    }
+                                }
+
+                                if (useAllHiddenNodes)
+                                {
+                                    matrix[matrix.RowCount - 1, matrix.ColumnCount - 1]--;
+                                }
                             }
                         }
                     }
                 }
             }
             
-            if (removeRowCount > 0)
+            if (hasReduced)
             {
-				// var foo = matrix.Nodes.Slice()
-                // removeRowCount the rows/columns, prevent dupes
-				// tons of slicing....
-				//matrix.no
-                //ReduceMatrix(matrix, adjacentHiddenNodeIndexes, turns, ref turnCount);
+                ReduceMatrix(nodeMatrix, matrix, adjacentHiddenNodeIndexes, revealedAMCNodes, turns, ref turnCount, useAllHiddenNodes);
             }
-
-            // requires multiple passes
-            // remove rows
-            // remove columns (unless the row removed was the useAllHiddenNodes row)
-            // since doing multiple passes, must prevent duplicates?
         }
 
         public static int CalculateTurns(Matrix<Node> nodeMatrix, Span<Turn> turns, bool useAllHiddenNodes)
@@ -99,12 +132,14 @@ namespace MSEngine.Solver
                 return 0;
             }
 
+            revealedAMCNodes = revealedAMCNodes.Slice(0, revealedAMCNodeCount);
+
             #endregion
 
             #region Adjacent Hidden Node Indexes
 
             var ahcCount = 0;
-            Span<int> adjacentHiddenNodeIndex = stackalloc int[nodes.Length];
+            Span<int> adjacentHiddenNodeIndexes = stackalloc int[nodes.Length];
 
             foreach (var node in nodes)
             {
@@ -130,10 +165,12 @@ namespace MSEngine.Solver
 
                 if (useAllHiddenNodes || hasAHC)
                 {
-                    adjacentHiddenNodeIndex[ahcCount] = node.Index;
+                    adjacentHiddenNodeIndexes[ahcCount] = node.Index;
                     ahcCount++;
                 }
             }
+
+            adjacentHiddenNodeIndexes = adjacentHiddenNodeIndexes.Slice(0, ahcCount);
 
             #endregion
 
@@ -165,22 +202,17 @@ namespace MSEngine.Solver
                     var nodeIndex = revealedAMCNodes[row];
                     var node = nodes[nodeIndex];
                     var isAugmentedColumn = column == columns - 1;
-                    var val = isAugmentedColumn
-                        ? node.MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex)
-                        : Utilities.IsAdjacentTo(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, adjacentHiddenNodeIndex[column]) ? 1 : 0;
 
-                    matrix[row, column] = val;
+                    matrix[row, column] = isAugmentedColumn
+                        ? node.MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex)
+                        : Utilities.IsAdjacentTo(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, adjacentHiddenNodeIndexes[column]) ? 1 : 0;
                 }
             }
 
             #endregion
 
-            #region Pre-Gaussian-Elimination Turn Calculation
-
             var turnCount = 0;
-            ReduceMatrix(matrix, adjacentHiddenNodeIndex, turns, ref turnCount);
-
-            #endregion
+            ReduceMatrix(nodeMatrix, matrix, adjacentHiddenNodeIndexes, revealedAMCNodes, turns, ref turnCount, useAllHiddenNodes);
 
             matrix.GaussEliminate();
 
@@ -217,8 +249,8 @@ namespace MSEngine.Solver
                     {
                         continue;
                     }
-                    var index = adjacentHiddenNodeIndex[column];
 
+                    var index = adjacentHiddenNodeIndexes[column];
                     var turn = augmentColumn == min
                         ? new Turn(index, val > 0 ? NodeOperation.Reveal : NodeOperation.Flag)
                         : new Turn(index, val > 0 ? NodeOperation.Flag : NodeOperation.Reveal);
