@@ -11,17 +11,19 @@ namespace MSEngine.Core
         {
             Debug.Assert(buffer.Length == 8);
             Debug.Assert(nodeCount > 0);
+            Debug.Assert(columnCount > 0);
             Debug.Assert(i1 >= 0);
             Debug.Assert(i2 >= 0);
+            Debug.Assert(i1 != i2);
 
             buffer.FillAdjacentNodeIndexes(nodeCount, i1, columnCount);
 
-            foreach (var i in buffer)
-            {
-                if (i == i2) { return true; }
-            }
+#if NETCOREAPP3_1
+            return buffer.Contains(i2);
+#else
+            return buffer.IndexOf(i2) != -1;
+#endif
 
-            return false;
         }
 
         public static void FillAdjacentNodeIndexes(this Span<int> indexes, int nodeCount, int index, int columnCount)
@@ -95,7 +97,12 @@ namespace MSEngine.Core
                 do
                 {
                     m = RandomNumberGenerator.GetInt32(nodeCount);
-                } while (mines.IndexOf(m) != -1);
+                }
+#if NETCOREAPP3_1
+                while (mines.Contains(m));
+#else
+                while (mines.IndexOf(m) != -1);
+#endif
 
                 x = m;
             }
@@ -147,17 +154,16 @@ namespace MSEngine.Core
         public static string Log(Matrix<Node> matrix)
         {
             var sb = new System.Text.StringBuilder();
-            for (var i = 0; i < matrix.Nodes.Length; i++)
+            foreach (var node in matrix.Nodes)
             {
-                var node = matrix.Nodes[i];
                 var op = node.State switch
                 {
                     NodeState.Flagged => "NodeOperation.Flag",
                     NodeState.Hidden => "NodeOperation.RemoveFlag",
                     NodeState.Revealed => "NodeOperation.Reveal",
-                    _ => ""
+                    _ => string.Empty
                 };
-                sb.AppendLine($"new Node({i}, {node.HasMine.ToString().ToLower()}, {node.MineCount}, {op}),");
+                sb.AppendLine($"new Node({node.Index}, {node.HasMine.ToString().ToLower()}, {node.MineCount}, {op}),");
             }
             return sb.ToString();
         }

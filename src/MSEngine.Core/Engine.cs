@@ -27,7 +27,11 @@ namespace MSEngine.Core
 
             for (var i = 0; i < nodes.Length; i++)
             {
+#if NETCOREAPP3_1
+                var hasMine = mines.Contains(i);
+#else
                 var hasMine = mines.IndexOf(i) != -1;
+#endif
                 var amc = GetAdjacentMineCount(mines, buffer, i, nodes.Length, columns);
                 
                 nodes[i] = new Node(i, hasMine, amc);
@@ -43,7 +47,11 @@ namespace MSEngine.Core
             var n = 0;
             foreach (var i in buffer)
             {
+#if NETCOREAPP3_1
+                if (mineIndexes.Contains(i))
+#else
                 if (mineIndexes.IndexOf(i) != -1)
+#endif
                 {
                     n++;
                 }

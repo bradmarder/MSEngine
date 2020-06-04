@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -19,6 +20,8 @@ namespace MSEngine.ConsoleApp
         static void Main(string[] args)
         {
             _watch = Stopwatch.StartNew();
+            //var a = new System.Numerics.BigInteger();
+
             RunSimulations(100000);
             //DisplayScore();
         }
@@ -42,8 +45,8 @@ namespace MSEngine.ConsoleApp
 
         private static void ExecuteGame()
         {
-            const int nodeCount = 8 * 8;const int columnCount = 8;
-            //const int nodeCount = 30 * 16;const int columnCount = 30;
+            //const int nodeCount = 8 * 8;const int columnCount = 8;
+            const int nodeCount = 30 * 16;const int columnCount = 30;
             const int firstTurnNodeIndex = nodeCount / 2;
 
             Span<Node> nodes = stackalloc Node[nodeCount];
@@ -56,7 +59,7 @@ namespace MSEngine.ConsoleApp
             {
                 if (iteration == 0)
                 {
-                    Engine.Instance.FillBeginnerBoard(nodes);
+                    Engine.Instance.FillExpertBoard(nodes);
                     var turn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
 
                     // Technically, computing the board *before* the check is redundant here, since we can just
@@ -87,9 +90,12 @@ namespace MSEngine.ConsoleApp
                     if (turnCount == 0)
                     {
                         //Console.WriteLine(GetBoardAsciiArt(matrix));
-
-                        var turn = NodeStrategies.RevealFirstHiddenNode(nodes);
-                        BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+                        //Interlocked.Increment(ref _gamesPlayedCount);
+                        //break;
+                        var turn = ProbabilitySolver.ComputeTurn(matrix);
+                        Interlocked.Increment(ref _gamesPlayedCount);
+                        break;
+                        //BoardStateMachine.Instance.ComputeBoard(matrix, turn);
                     }
                 }
                 iteration++;
@@ -107,7 +113,7 @@ namespace MSEngine.ConsoleApp
                 }
 
                 // we only update the score every 10000 games(because doing so within a lock is expensive, and so are console commands)
-                if (_gamesPlayedCount % 10000 == 0)
+                if (_gamesPlayedCount % 1000 == 0)
                 {
                     DisplayScore();
                 }
