@@ -15,11 +15,11 @@ namespace MSEngine.Core
             var complete = true;
             foreach (var node in nodes)
             {
-                if (node.HasMineExploded)
+                if (node.HasMine && node.State == NodeState.Revealed)
                 {
                     return BoardStatus.Failed;
                 }
-                if (!node.SatisfiesWinningCriteria)
+                if (!node.HasMine && node.State != NodeState.Revealed)
                 {
                     complete = false;
                 }

@@ -51,12 +51,6 @@ namespace MSEngine.Core
         public byte MineCount { get; }
         public NodeState State { get; }
 
-        public bool HasMineExploded => HasMine && State == NodeState.Revealed;
-        public bool SatisfiesWinningCriteria =>
-            HasMine
-                ? State == NodeState.Flagged
-                : State == NodeState.Revealed;
-
         public override string ToString() =>
             $"{nameof(Index)}: {Index}, {nameof(HasMine)}: {HasMine}, {nameof(State)}: {State}, {nameof(MineCount)}: {MineCount}";
         public override int GetHashCode() => HashCode.Combine(Index, HasMine, State, MineCount);
