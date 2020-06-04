@@ -13,11 +13,12 @@ namespace MSEngine.Core
 
             Nodes = nodes;
             ColumnCount = columnCount;
+            RowCount = nodes.Length / columnCount;
         }
 
         public readonly Span<T> Nodes;
         public readonly int ColumnCount { get; }
-        public readonly int RowCount => Nodes.Length / ColumnCount;
+        public readonly int RowCount { get; }
 
         public readonly ref T this[int row, int column] => ref Nodes[row * ColumnCount + column];
 
