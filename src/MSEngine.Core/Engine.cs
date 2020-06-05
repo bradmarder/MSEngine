@@ -32,31 +32,10 @@ namespace MSEngine.Core
 #else
                 var hasMine = mines.IndexOf(i) != -1;
 #endif
-                var amc = GetAdjacentMineCount(mines, buffer, i, nodes.Length, columns);
+                var amc = Utilities.GetAdjacentMineCount(mines, buffer, i, nodes.Length, columns);
                 
                 nodes[i] = new Node(i, hasMine, amc);
             }
-        }
-        internal static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columns)
-        {
-            Debug.Assert(buffer.Length == 8);
-            Debug.Assert(nodeIndex >= 0);
-
-            buffer.FillAdjacentNodeIndexes(nodeCount, nodeIndex, columns);
-
-            var n = 0;
-            foreach (var i in buffer)
-            {
-#if NETCOREAPP3_1
-                if (mineIndexes.Contains(i))
-#else
-                if (mineIndexes.IndexOf(i) != -1)
-#endif
-                {
-                    n++;
-                }
-            }
-            return n;
         }
     }
 }

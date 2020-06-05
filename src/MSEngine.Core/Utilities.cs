@@ -7,6 +7,7 @@ namespace MSEngine.Core
 {
     public static class Utilities
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsAdjacentTo(Span<int> buffer, int nodeCount, int columnCount, int i1, int i2)
         {
             Debug.Assert(buffer.Length == 8);
@@ -26,6 +27,7 @@ namespace MSEngine.Core
 
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void FillAdjacentNodeIndexes(this Span<int> indexes, int nodeCount, int index, int columnCount)
         {
             Debug.Assert(nodeCount > 0);
@@ -82,6 +84,7 @@ namespace MSEngine.Core
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Scatter(this Span<int> mines, int nodeCount)
         {
             Debug.Assert(nodeCount > 0);
@@ -106,6 +109,32 @@ namespace MSEngine.Core
 
                 x = m;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columns)
+        {
+            Debug.Assert(buffer.Length == 8);
+            Debug.Assert(nodeIndex >= 0);
+            Debug.Assert(nodeCount > 0);
+            Debug.Assert(columns > 0);
+            Debug.Assert(nodeIndex < nodeCount);
+
+            buffer.FillAdjacentNodeIndexes(nodeCount, nodeIndex, columns);
+
+            var n = 0;
+            foreach (var i in buffer)
+            {
+#if NETCOREAPP3_1
+                if (mineIndexes.Contains(i))
+#else
+                if (mineIndexes.IndexOf(i) != -1)
+#endif
+                {
+                    n++;
+                }
+            }
+            return n;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -156,14 +185,8 @@ namespace MSEngine.Core
             var sb = new System.Text.StringBuilder();
             foreach (var node in matrix.Nodes)
             {
-                var op = node.State switch
-                {
-                    NodeState.Flagged => "NodeOperation.Flag",
-                    NodeState.Hidden => "NodeOperation.RemoveFlag",
-                    NodeState.Revealed => "NodeOperation.Reveal",
-                    _ => string.Empty
-                };
-                sb.AppendLine($"new Node({node.Index}, {node.HasMine.ToString().ToLower()}, {node.MineCount}, {op}),");
+                var state = string.Concat(nameof(NodeState), '.', node.State);
+                sb.AppendLine($"new {nameof(Node)}({node.Index}, {node.HasMine.ToString().ToLower()}, {node.MineCount}, {state}),");
             }
             return sb.ToString();
         }
