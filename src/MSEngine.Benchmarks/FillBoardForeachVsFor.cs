@@ -55,11 +55,11 @@ namespace MSEngine.Benchmarks
             }
         }
 
-        internal static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columns)
+        internal static byte GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columns)
         {
             buffer.FillAdjacentNodeIndexes(nodeCount, nodeIndex, columns);
 
-            var n = 0;
+            byte n = 0;
             foreach (var i in buffer)
             {
                 if (mineIndexes.IndexOf(i) != -1)

@@ -8,19 +8,19 @@ namespace MSEngine.Core
         internal Node(in Node node, NodeOperation op)
         {
             Debug.Assert(Enum.IsDefined(typeof(NodeOperation), op));
+            Debug.Assert(op != NodeOperation.Chord);
 
             Index = node.Index;
             HasMine = node.HasMine;
             MineCount = node.MineCount;
 
-#pragma warning disable CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
             State = op switch
             {
                 NodeOperation.Reveal => NodeState.Revealed,
                 NodeOperation.Flag => NodeState.Flagged,
-                NodeOperation.RemoveFlag => NodeState.Hidden
+                NodeOperation.RemoveFlag => NodeState.Hidden,
+                _ => NodeState.Hidden
             };
-#pragma warning restore CS8509 // The switch expression does not handle all possible values of its input type (it is not exhaustive).
         }
         internal Node(int index, bool hasMine, int mineCount, NodeState state)
         {
@@ -34,7 +34,7 @@ namespace MSEngine.Core
             MineCount = (byte)mineCount;
             State = state;
         }
-        internal Node(int index, bool hasMine, int mineCount)
+        internal Node(int index, bool hasMine, byte mineCount)
         {
             Debug.Assert(index >= 0);
             Debug.Assert(mineCount >= 0);
@@ -42,7 +42,7 @@ namespace MSEngine.Core
 
             Index = index;
             HasMine = hasMine;
-            MineCount = (byte)mineCount;
+            MineCount = mineCount;
             State = NodeState.Hidden;
         }
 

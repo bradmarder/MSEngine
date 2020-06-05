@@ -112,7 +112,7 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static int GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columns)
+        internal static byte GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columns)
         {
             Debug.Assert(buffer.Length == 8);
             Debug.Assert(nodeIndex >= 0);
@@ -122,7 +122,7 @@ namespace MSEngine.Core
 
             buffer.FillAdjacentNodeIndexes(nodeCount, nodeIndex, columns);
 
-            var n = 0;
+            byte n = 0;
             foreach (var i in buffer)
             {
 #if NETCOREAPP3_1
