@@ -27,11 +27,7 @@ namespace MSEngine.Core
 
             for (var i = 0; i < nodes.Length; i++)
             {
-#if NETCOREAPP3_1
                 var hasMine = mines.Contains(i);
-#else
-                var hasMine = mines.IndexOf(i) != -1;
-#endif
                 var amc = Utilities.GetAdjacentMineCount(mines, buffer, i, nodes.Length, columns);
                 
                 nodes[i] = new Node(i, hasMine, amc);

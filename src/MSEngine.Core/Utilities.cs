@@ -19,12 +19,7 @@ namespace MSEngine.Core
 
             buffer.FillAdjacentNodeIndexes(nodeCount, i1, columnCount);
 
-#if NETCOREAPP3_1
             return buffer.Contains(i2);
-#else
-            return buffer.IndexOf(i2) != -1;
-#endif
-
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -100,12 +95,7 @@ namespace MSEngine.Core
                 do
                 {
                     m = RandomNumberGenerator.GetInt32(nodeCount);
-                }
-#if NETCOREAPP3_1
-                while (mines.Contains(m));
-#else
-                while (mines.IndexOf(m) != -1);
-#endif
+                } while (mines.Contains(m));
 
                 x = m;
             }
@@ -125,11 +115,7 @@ namespace MSEngine.Core
             byte n = 0;
             foreach (var i in buffer)
             {
-#if NETCOREAPP3_1
                 if (mineIndexes.Contains(i))
-#else
-                if (mineIndexes.IndexOf(i) != -1)
-#endif
                 {
                     n++;
                 }
@@ -178,6 +164,26 @@ namespace MSEngine.Core
             }
 
             return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool Contains(this ReadOnlySpan<int> elements, int i)
+        {
+#if NETCOREAPP3_1
+            return MemoryExtensions.Contains(elements, i);
+#else
+            return elements.IndexOf(i) != -1;
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool Contains(this Span<int> elements, int i)
+        {
+#if NETCOREAPP3_1
+            return MemoryExtensions.Contains(elements, i);
+#else
+            return elements.IndexOf(i) != -1;
+#endif
         }
 
         public static string Log(Matrix<Node> matrix)
