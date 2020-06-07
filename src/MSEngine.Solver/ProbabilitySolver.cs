@@ -71,11 +71,6 @@ namespace MSEngine.Solver
             var rows = revealedAMCNodeCount;
             var columns = hiddenNodeCount;
 
-            //bool IsBitSet(byte b, int pos)
-            //{
-            //    return (b & (1 << pos)) != 0;
-            //}
-
             if (columns > 128)
             {
                 throw new Exception("Must use BigInteger type instead of long = " + columns);
@@ -102,6 +97,8 @@ namespace MSEngine.Solver
             }
 
             #endregion
+
+            #region Testing Vector Visitation
 
             Span<float> foo = stackalloc float[revealedAMCNodeCount * (hiddenNodeCount + 1)];
             var matrix = new Matrix<float>(foo, hiddenNodeCount + 1);
@@ -164,64 +161,7 @@ namespace MSEngine.Solver
 
             VisitVector(vecs, augs, 0, ref solution, ref ignoreBits, solutions, ref solutionCount);
 
-            void VisitVector(ReadOnlySpan<ulong> vecs, ReadOnlySpan<int> augments, int row, ref ulong solution, ref ulong ignoreBits, Span<ulong> solutions, ref int solutionCount)
-            {
-                // select the vector
-                var vector = vecs[row];
-
-                // count the shared bits between the solution/ignoreBits and the vector
-                var sharedSolutionBitCount = BitOperations.PopCount(vector & solution);
-                var ignoredBitCount = BitOperations.PopCount(vector & ignoreBits);
-
-                // select the computed augment
-                var augment = augments[row]
-                    - sharedSolutionBitCount
-                    - ignoredBitCount;
-
-                // if the augment is zero, we essentially "skip" this row since our current solution satisfies
-                if (augment > 0)
-                {
-
-                    // mask the vector with the current solution???
-
-                    // how many bits are available to choose from?
-                    var N = BitOperations.PopCount(vector)
-                        - sharedSolutionBitCount
-                        - ignoredBitCount;
-
-                    Debug.Assert(N > 0, "The augment > 0 condition above should have already filtered");
-
-                    // find sum of current combination
-                    // find all possible combinations
-                    // find "leftmost sum" of current combination
-                    // take the next sum combination possible
-                    var maxVectorSolutions = MathNet.Numerics.Combinatorics.Combinations(N, augment);
-                    Span<ulong> vSols = stackalloc ulong[(int)maxVectorSolutions];
-                    for (var c = 0; c < maxVectorSolutions; c++)
-                    {
-                        ulong vSol = 0b0101; // WRONG,must select combination C
-                        vSols[c] = vSol; // take SUM of N bit combinations
-                    }
-
-                    // if a bit is NOT selected, we OR it with our notMines vector
-                    var nonSelectedBits = ulong.MaxValue;
-                    ignoreBits = nonSelectedBits & ignoreBits;
-                }
-
-                // if we are on the last row, get ALL solutions for this row, then backtrack
-                if (row == vecs.Length - 1)
-                {
-                    solutions[solutionCount] = solution;
-                    solutionCount++;
-                    // adjust solution AND ignoreBits
-                    // ???????? how do we know we just backtracked and now should select the leftmost N+1 bits?????
-                    VisitVector(vecs, augments, row - 1, ref solution, ref ignoreBits, solutions, ref solutionCount);
-                }
-                else
-                {
-                    VisitVector(vecs, augments, row + 1, ref solution, ref ignoreBits, solutions, ref solutionCount);
-                }
-            }
+            #endregion
 
             #region Grouping
 
@@ -254,6 +194,7 @@ namespace MSEngine.Solver
 
             #endregion
 
+            #region Fail Group Processing
 
 #if NETCOREAPP3_1
             foreach (var group in groups)
@@ -285,15 +226,90 @@ namespace MSEngine.Solver
             }
 #endif
 
-                // for each group, the # of bits set represents the # of vectors we must consider probabilities for
-                // generate matrix of all possible solutions (HOW?)
-                // calculate probabably of 1 appears in a column out of N rows
+            // for each group, the # of bits set represents the # of vectors we must consider probabilities for
+            // generate matrix of all possible solutions (HOW?)
+            // calculate probabably of 1 appears in a column out of N rows
 
+            #endregion
 
+            return new Turn(0, NodeOperation.Chord);
+        }
 
+        internal static void VisitVector(ReadOnlySpan<ulong> vecs, ReadOnlySpan<int> augments, int row, ref ulong solution, ref ulong ignoreBits, Span<ulong> solutions, ref int solutionCount)
+        {
+            // select the vector
+            var vector = vecs[row];
 
+            // count the shared bits between the solution/ignoreBits and the vector
+            var sharedSolutionBitCount = BitOperations.PopCount(vector & solution);
+            var ignoredBitCount = BitOperations.PopCount(vector & ignoreBits);
 
-                return new Turn(0, NodeOperation.Chord);
+            // select the computed augment
+            var augment = augments[row]
+                - sharedSolutionBitCount
+                - ignoredBitCount;
+
+            // if the augment is zero, we essentially "skip" this row since our current solution satisfies
+            if (augment > 0)
+            {
+                // mask the vector with the current solution???
+
+                // how many bits are available to choose from?
+                var bits = BitOperations.PopCount(vector)
+                    - sharedSolutionBitCount
+                    - ignoredBitCount;
+
+                Debug.Assert(bits > 0, "The augment > 0 condition above should have already filtered");
+
+                var solution = GetVectorSolution(vector, bits, augment);
+
+                // if a bit is NOT selected, we OR it with our notMines vector
+                var nonSelectedBits = ulong.MaxValue;
+                ignoreBits = nonSelectedBits & ignoreBits;
+            }
+
+            // if we are on the last row, get ALL solutions for this row, then backtrack
+            if (row == vecs.Length - 1)
+            {
+                solutions[solutionCount] = solution;
+                solutionCount++;
+                // adjust solution AND ignoreBits
+                // ???????? how do we know we just backtracked and now should select the leftmost N+1 bits?????
+                VisitVector(vecs, augments, row - 1, ref solution, ref ignoreBits, solutions, ref solutionCount);
+            }
+            else
+            {
+                VisitVector(vecs, augments, row + 1, ref solution, ref ignoreBits, solutions, ref solutionCount);
+            }
+        }
+
+        internal static bool IsBitSet(ulong b, int pos)
+            => (b & ((ulong)1 << pos)) != 0;
+
+        internal static ulong GetVectorSolution(ulong vector, int bits, int augment)
+        {
+            var maxVectorSolutions = MathNet.Numerics.Combinatorics.Combinations(bits, augment);
+            Span<ulong> solutionSums = stackalloc ulong[(int)maxVectorSolutions];
+
+            for (var c = 0; c < maxVectorSolutions; c++)
+            {
+                var bitsAvailable = bits;
+                ulong sum = 0;
+
+                for (var i = 0; i < sizeof(ulong) * 8; i++)
+                {
+                    // WE MUST USE C TO GET UNIQUE SETS OF BITS....HOW?
+                    if (IsBitSet(vector, i))
+                    {
+                        sum += (ulong)1 << i;
+                        bitsAvailable--;
+                    }
+                    if (bitsAvailable == 0) { break; }
+                }
+                solutionSums[c] = sum; // take SUM of N bit combinations
+            }
+
+            return solutionSums[0]; // TODO
         }
     }
 }
