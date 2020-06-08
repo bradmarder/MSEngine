@@ -36,7 +36,7 @@ namespace MSEngine.Benchmarks
                 var hasMine = mines.IndexOf(i) != -1;
                 var amc = GetAdjacentMineCount(mines, buffer, i, nodes.Length, columns);
 
-                nodes[i] = new Node(i, hasMine, amc);
+                nodes[i] = new Node(i, hasMine, amc, NodeState.Revealed);
             }
         }
 
@@ -50,7 +50,7 @@ namespace MSEngine.Benchmarks
                 var hasMine = mines.IndexOf(i) != -1;
                 var amc = GetAdjacentMineCount(mines, buffer, i, nodes.Length, columns);
 
-                node = new Node(i, hasMine, amc);
+                node = new Node(i, hasMine, amc, NodeState.Revealed);
                 i++;
             }
         }

@@ -35,9 +35,6 @@ public interface IEngine
     void FillExpertBoard(Span<Node> nodes);
     void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns);
     void FillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns);
-}
-public interface IBoardStateMachine
-{
     void EnsureValidBoardConfiguration(Matrix<Node> matrix, Turn turn);
     void ComputeBoard(Matrix<Node> matrix, Turn turn);
 }

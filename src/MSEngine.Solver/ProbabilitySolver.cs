@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace MSEngine.Solver
 {
@@ -261,7 +262,7 @@ namespace MSEngine.Solver
 
                 Debug.Assert(bits > 0, "The augment > 0 condition above should have already filtered");
 
-                var solution = GetVectorSolution(vector, bits, augment);
+                var _solution = GetVectorSolution(vector, bits, augment);
 
                 // if a bit is NOT selected, we OR it with our notMines vector
                 var nonSelectedBits = ulong.MaxValue;
@@ -283,6 +284,7 @@ namespace MSEngine.Solver
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsBitSet(ulong b, int pos)
             => (b & ((ulong)1 << pos)) != 0;
 

@@ -124,7 +124,7 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int GetAdjacentFlaggedNodeCount(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
+        public static byte GetAdjacentFlaggedNodeCount(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
         {
             Debug.Assert(matrix.Nodes.Length > nodeIndex);
             Debug.Assert(buffer.Length == 8);
@@ -132,7 +132,7 @@ namespace MSEngine.Core
 
             buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
 
-            var n = 0;
+            byte n = 0;
             foreach (var i in buffer)
             {
                 if (i == -1) { continue; }

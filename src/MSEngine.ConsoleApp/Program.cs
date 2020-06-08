@@ -21,7 +21,13 @@ namespace MSEngine.ConsoleApp
         {
             _watch = Stopwatch.StartNew();
             //var a = new System.Numerics.BigInteger();
+            //Console.WriteLine("1 = " + BitOperations.Log2(1));
+            //Console.WriteLine("2 = " + BitOperations.Log2(2));
+            //Console.WriteLine("4 = " + BitOperations.Log2(4));
+            //Console.WriteLine("10 = " + BitOperations.Log2(10));
+            //Console.WriteLine("100 = " + BitOperations.Log2(100));
 
+            
             RunSimulations(100000);
             //DisplayScore();
         }
@@ -32,7 +38,7 @@ namespace MSEngine.ConsoleApp
 
             ParallelEnumerable
                 .Range(0, count)
-                //.WithDegreeOfParallelism(1)
+                .WithDegreeOfParallelism(1)
                 .ForAll(_ => ExecuteGame());
         }
 
@@ -45,8 +51,8 @@ namespace MSEngine.ConsoleApp
 
         private static void ExecuteGame()
         {
-            //const int nodeCount = 8 * 8;const int columnCount = 8;
-            const int nodeCount = 30 * 16;const int columnCount = 30;
+            const int nodeCount = 8 * 8;const int columnCount = 8;
+            //const int nodeCount = 30 * 16;const int columnCount = 30;
             const int firstTurnNodeIndex = nodeCount / 2;
 
             Span<Node> nodes = stackalloc Node[nodeCount];
@@ -59,13 +65,13 @@ namespace MSEngine.ConsoleApp
             {
                 if (iteration == 0)
                 {
-                    Engine.Instance.FillExpertBoard(nodes);
+                    Engine.Instance.FillBeginnerBoard(nodes);
                     var turn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
 
                     // Technically, computing the board *before* the check is redundant here, since we can just
                     // inspect the node directly. We do this to maintain strict separation of clients
                     // We could place this ComputeBoard method after the node inspection for perf
-                    BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+                    Engine.Instance.ComputeBoard(matrix, turn);
 
                     var node = nodes[turn.NodeIndex];
                     Debug.Assert(node.State == NodeState.Revealed);
@@ -85,17 +91,20 @@ namespace MSEngine.ConsoleApp
                     {
                         var node = nodes[turn.NodeIndex];
                         Debug.Assert(node.HasMine ? turn.Operation == NodeOperation.Flag : turn.Operation == NodeOperation.Reveal);
-                        BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+                        Engine.Instance.ComputeBoard(matrix, turn);
                     }
                     if (turnCount == 0)
                     {
                         //Console.WriteLine(GetBoardAsciiArt(matrix));
                         //Interlocked.Increment(ref _gamesPlayedCount);
                         //break;
+                        Console.WriteLine("BOARD");
+                        Console.WriteLine(GetBoardAsciiArt(matrix));
                         var turn = ProbabilitySolver.ComputeTurn(matrix);
+                        Console.WriteLine(turn);
                         Interlocked.Increment(ref _gamesPlayedCount);
                         break;
-                        //BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+                        //Engine.Instance.ComputeBoard(matrix, turn);
                     }
                 }
                 iteration++;

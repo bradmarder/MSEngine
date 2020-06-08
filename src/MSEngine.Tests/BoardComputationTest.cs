@@ -14,7 +14,7 @@ namespace MSEngine.Tests
             var matrix = new Matrix<Node>(nodes, 8);
             Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 8);
             var turn = new Turn(0, NodeOperation.Reveal);
-            BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+            Engine.Instance.ComputeBoard(matrix, turn);
 
             Assert.Equal(BoardStatus.Completed, nodes.Status());
         }
@@ -28,7 +28,7 @@ namespace MSEngine.Tests
 
             Engine.Instance.FillCustomBoard(nodes, mines, 2);
             var turn = new Turn(0, NodeOperation.Reveal);
-            BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+            Engine.Instance.ComputeBoard(matrix, turn);
 
             Assert.Equal(BoardStatus.Failed, nodes.Status());
             foreach (var node in nodes)
@@ -46,7 +46,7 @@ namespace MSEngine.Tests
             Engine.Instance.FillCustomBoard(nodes, mines, 2);
             var board = nodes.ToArray();
             var turn = new Turn(0, NodeOperation.Flag);
-            BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+            Engine.Instance.ComputeBoard(matrix, turn);
             var node = nodes[0];
             var everyOtherNodeHasNotChanged = nodes.ToArray().All(x => x.Equals(node) || board.Contains(x));
 
@@ -63,7 +63,7 @@ namespace MSEngine.Tests
             Engine.Instance.FillCustomBoard(nodes, mines, 2);
             var board = nodes.ToArray();
             var turn = new Turn(0, NodeOperation.Reveal);
-            BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+            Engine.Instance.ComputeBoard(matrix, turn);
             var node = nodes[0];
             var everyOtherNodeHasNotChanged = nodes.ToArray().All(x => x.Equals(node) || board.Contains(x));
 
@@ -86,7 +86,7 @@ namespace MSEngine.Tests
             };
             foreach (var x in turns)
             {
-                BoardStateMachine.Instance.ComputeBoard(matrix, x);
+                Engine.Instance.ComputeBoard(matrix, x);
             }
 
             // 0,0 has the only mine, so we flag it
@@ -105,7 +105,7 @@ namespace MSEngine.Tests
             Engine.Instance.FillCustomBoard(nodes, mines, 3);
             var node = nodes[8];
             var turn = new Turn(8, NodeOperation.Reveal);
-            BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+            Engine.Instance.ComputeBoard(matrix, turn);
 
             Assert.False(node.HasMine);
             Assert.Equal(0, node.MineCount);
@@ -124,8 +124,8 @@ namespace MSEngine.Tests
             Span<Node> nodes = stackalloc Node[5 * 1];
             var matrix = new Matrix<Node>(nodes, 5);
             Engine.Instance.FillCustomBoard(nodes, Span<int>.Empty, 5);
-            BoardStateMachine.Instance.ComputeBoard(matrix, new Turn(2, NodeOperation.Flag));
-            BoardStateMachine.Instance.ComputeBoard(matrix, new Turn(4, NodeOperation.Reveal));
+            Engine.Instance.ComputeBoard(matrix, new Turn(2, NodeOperation.Flag));
+            Engine.Instance.ComputeBoard(matrix, new Turn(4, NodeOperation.Reveal));
 
             for (var i = 0; i < nodes.Length; i++)
             {
