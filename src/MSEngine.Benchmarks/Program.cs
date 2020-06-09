@@ -13,70 +13,20 @@ namespace MSEngine.Benchmarks
     {
         static void Main(string[] args)
         {
-            BenchmarkRunner.Run<Tests>();
+            BenchmarkRunner.Run<RunSimulation>();
         }
     }
 
     [MemoryDiagnoser]
-    public class Tests
+    public class RunSimulation
     {
-        //[Benchmark]
-        //public void Old()
-        //{
-        //    Span<int> buffer = stackalloc int[8];
-        //    buffer.FillAdjacentNodeIndexes(64, 31, 8);
-        //}
-
-        //[Benchmark]
-        //public void New()
-        //{
-        //    Span<int> buffer = stackalloc int[8];
-        //    buffer.FillAdjacentNodeIndexesNEW(64, 31, 8);
-        //}
-
-        //[Benchmark]
-        public void LenTestSlow()
-        {
-            var n = 0;
-            Span<int> mobs = stackalloc int[480];
-            for (var i = 0; i < mobs.Length; i++)
-            {
-                n++;
-            }
-            if (n > 480) { throw new Exception(); }
-        }
-
-        //[Benchmark]
-        public void LenTestFast()
-        {
-            var n = 0;
-            Span<int> mobs = stackalloc int[480];
-            for (int i = 0, l = mobs.Length; i < l; i++)
-            {
-                n++;
-            }
-            if (n > 480) { throw new Exception(); }
-        }
-
-        // 18.17 ns
-        //[Benchmark]
-        public void Bar()
-        {
-            Span<int> foo = stackalloc int[8];
-            foo.FillAdjacentNodeIndexes(64, 9, 3);
-        }
-
         [Benchmark]
         public void Exec() => Play();
 
-
         private static void Play()
         {
-            const int nodeCount = 8 * 8;
-            const int columnCount = 8;
-            //const int nodeCount = 30 * 16;
-            //const int columnCount = 30;
-            const int firstTurnNodeIndex = nodeCount / 2;
+            const int nodeCount = 8 * 8;const int columnCount = 8; const int firstTurnNodeIndex = 18; // 2:2 for beginner/int
+            //const int nodeCount = 30 * 16;const int columnCount = 30; const int firstTurnNodeIndex = 93; // 3:3 for expert
 
             Span<Node> nodes = stackalloc Node[nodeCount];
             Span<Turn> turns = stackalloc Turn[nodeCount];
@@ -94,7 +44,7 @@ namespace MSEngine.Benchmarks
                     // Technically, computing the board *before* the check is redundant here, since we can just
                     // inspect the node directly. We do this to maintain strict separation of clients
                     // We could place this ComputeBoard method after the node inspection for perf
-                    BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+                    Engine.Instance.ComputeBoard(matrix, turn);
 
                     var node = nodes[turn.NodeIndex];
                     if (node.HasMine || node.MineCount > 0)
@@ -112,7 +62,7 @@ namespace MSEngine.Benchmarks
                     }
                     foreach (var turn in turns.Slice(0, turnCount))
                     {
-                        BoardStateMachine.Instance.ComputeBoard(matrix, turn);
+                        Engine.Instance.ComputeBoard(matrix, turn);
                     }
                 }
                 iteration++;

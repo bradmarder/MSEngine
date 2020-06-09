@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using MSEngine.Core;
 using Xunit;
 
@@ -30,6 +29,82 @@ namespace MSEngine.Tests
             actualIndexes.FillAdjacentNodeIndexes(nodeCount, index, columnCount);
 
             Assert.Equal(expectedIndexes, actualIndexes.ToArray());
+        }
+
+        // 3x3 grid, all corners have a mine
+        [Theory]
+        [InlineData(1, 2)]
+        [InlineData(3, 2)]
+        [InlineData(4, 4)]
+        [InlineData(5, 2)]
+        [InlineData(7, 2)]
+        public void GetAdjacentMineCounts(int nodeIndex, int expectedMineCount)
+        {
+            Span<int> mines = stackalloc int[] { 0, 2, 6, 8 };
+            Span<int> buffer = stackalloc int[8];
+
+            var actualMineCount = Utilities.GetAdjacentMineCount(mines, buffer, nodeIndex, 9, 3);
+
+            Assert.Equal(expectedMineCount, actualMineCount);
+        }
+
+        // 3x3 grid, all corners have a flag
+        [Theory]
+        [InlineData(1, 2)]
+        [InlineData(3, 2)]
+        [InlineData(4, 4)]
+        [InlineData(5, 2)]
+        [InlineData(7, 2)]
+        public void GetAdjacentFlaggedNodes(int nodeIndex, int expectedFlagCount)
+        {
+            Span<int> buffer = stackalloc int[8];
+            Span<Node> nodes = stackalloc Node[]
+            {
+                new Node(0, false, 0, NodeState.Flagged),
+                new Node(1, false, 0, NodeState.Hidden),
+                new Node(2, false, 0, NodeState.Flagged),
+                new Node(3, false, 0, NodeState.Hidden),
+                new Node(4, false, 0, NodeState.Hidden),
+                new Node(5, false, 0, NodeState.Hidden),
+                new Node(6, false, 0, NodeState.Flagged),
+                new Node(7, false, 0, NodeState.Hidden),
+                new Node(8, false, 0, NodeState.Flagged)
+            };
+            var matrix = new Matrix<Node>(nodes, 3);
+
+            var actualFlagCount = Utilities.GetAdjacentFlaggedNodeCount(matrix, buffer, nodeIndex);
+
+            Assert.Equal(expectedFlagCount, actualFlagCount);
+        }
+
+        // 3x3 grid, top row is hidden
+        [Theory]
+        [InlineData(3, true)]
+        [InlineData(4, true)]
+        [InlineData(5, true)]
+        [InlineData(6, false)]
+        [InlineData(7, false)]
+        [InlineData(8, false)]
+        public void HasHiddenAdjacentNodes(int nodeIndex, bool expectedHasNodes)
+        {
+            Span<int> buffer = stackalloc int[8];
+            Span<Node> nodes = stackalloc Node[]
+            {
+                new Node(0, false, 0, NodeState.Hidden),
+                new Node(1, false, 0, NodeState.Hidden),
+                new Node(2, false, 0, NodeState.Hidden),
+                new Node(3, false, 0, NodeState.Revealed),
+                new Node(4, false, 0, NodeState.Revealed),
+                new Node(5, false, 0, NodeState.Revealed),
+                new Node(6, false, 0, NodeState.Revealed),
+                new Node(7, false, 0, NodeState.Revealed),
+                new Node(8, false, 0, NodeState.Revealed)
+            };
+            var matrix = new Matrix<Node>(nodes, 3);
+
+            var actualHasNodes = Utilities.HasHiddenAdjacentNodes(matrix, buffer, nodeIndex);
+
+            Assert.Equal(expectedHasNodes, actualHasNodes);
         }
     }
 }
