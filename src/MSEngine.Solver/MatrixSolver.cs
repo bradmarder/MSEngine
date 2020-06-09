@@ -207,7 +207,7 @@ namespace MSEngine.Solver
 
                     matrix[row, column] = isAugmentedColumn
                         ? nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex)
-                        : Utilities.IsAdjacentTo(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, adjacentHiddenNodeIndexes[column]) ? 1 : 0;
+                        : Utilities.AreNodesAdjacent(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, adjacentHiddenNodeIndexes[column]) ? 1 : 0;
                 }
             }
 

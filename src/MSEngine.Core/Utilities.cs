@@ -8,18 +8,18 @@ namespace MSEngine.Core
     public static class Utilities
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsAdjacentTo(Span<int> buffer, int nodeCount, int columnCount, int i1, int i2)
+        public static bool AreNodesAdjacent(Span<int> buffer, int nodeCount, int columnCount, int nodeIndexOne, int nodeIndexTwo)
         {
             Debug.Assert(buffer.Length == 8);
             Debug.Assert(nodeCount > 0);
             Debug.Assert(columnCount > 0);
-            Debug.Assert(i1 >= 0);
-            Debug.Assert(i2 >= 0);
-            Debug.Assert(i1 != i2);
+            Debug.Assert(nodeIndexOne >= 0);
+            Debug.Assert(nodeIndexTwo >= 0);
+            Debug.Assert(nodeIndexOne != nodeIndexTwo);
 
-            buffer.FillAdjacentNodeIndexes(nodeCount, i1, columnCount);
+            buffer.FillAdjacentNodeIndexes(nodeCount, nodeIndexOne, columnCount);
 
-            return buffer.Contains(i2);
+            return buffer.Contains(nodeIndexTwo);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -106,5 +106,32 @@ namespace MSEngine.Tests
 
             Assert.Equal(expectedHasNodes, actualHasNodes);
         }
+
+        // 3x3 grid, middle node adjacent to all, corners never adjacent to each other
+        [Theory]
+        [InlineData(4, 0, true)]
+        [InlineData(4, 1, true)]
+        [InlineData(4, 2, true)]
+        [InlineData(4, 3, true)]
+        [InlineData(4, 5, true)]
+        [InlineData(4, 6, true)]
+        [InlineData(4, 7, true)]
+        [InlineData(4, 8, true)]
+        [InlineData(0, 2, false)]
+        [InlineData(0, 6, false)]
+        [InlineData(0, 8, false)]
+        [InlineData(2, 6, false)]
+        [InlineData(2, 8, false)]
+        [InlineData(6, 8, false)]
+        public void AreNodesAdjacent(int nodeIndexOne, int nodeIndexTwo, bool expected)
+        {
+            Span<int> buffer = stackalloc int[8];
+            Span<Node> nodes = stackalloc Node[9];
+            Engine.Instance.FillCustomBoard(nodes, 0, 3);
+
+            var actual = Utilities.AreNodesAdjacent(buffer, 9, 3, nodeIndexOne, nodeIndexTwo);
+
+            Assert.Equal(expected, actual);
+        }
     }
 }
