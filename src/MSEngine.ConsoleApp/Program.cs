@@ -51,9 +51,8 @@ namespace MSEngine.ConsoleApp
 
         private static void ExecuteGame()
         {
-            const int nodeCount = 8 * 8;const int columnCount = 8;
-            //const int nodeCount = 30 * 16;const int columnCount = 30;
-            const int firstTurnNodeIndex = nodeCount / 2;
+            const int nodeCount = 8 * 8; const int columnCount = 8; const int firstTurnNodeIndex = 18; // 2:2 for beginner/int
+            //const int nodeCount = 30 * 16;const int columnCount = 30; const int firstTurnNodeIndex = 93; // 3:3 for expert
 
             Span<Node> nodes = stackalloc Node[nodeCount];
             Span<Turn> turns = stackalloc Turn[nodeCount];

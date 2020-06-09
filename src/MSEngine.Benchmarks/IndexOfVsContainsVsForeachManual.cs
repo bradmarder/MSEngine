@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using MSEngine.Core;
 using System;
 
 namespace MSEngine.Benchmarks
@@ -9,7 +10,7 @@ namespace MSEngine.Benchmarks
         [Benchmark]
         public bool ForeachManual()
         {
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 
             foreach (var i in buffer)
             {
@@ -22,7 +23,7 @@ namespace MSEngine.Benchmarks
         [Benchmark]
         public bool IndexOf()
         {
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 
             return buffer.IndexOf(5) != -1;
         }
@@ -30,7 +31,7 @@ namespace MSEngine.Benchmarks
         [Benchmark]
         public bool Contains()
         {
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 
             return buffer.Contains(5);
         }

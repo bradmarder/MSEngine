@@ -13,7 +13,7 @@ namespace MSEngine.Solver
             var nodes = nodeMatrix.Nodes;
             Debug.Assert(nodes.Length > 0);
 
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
             Span<int> revealedAMCNodes = stackalloc int[nodes.Length];
             Span<int> hiddenNodes = stackalloc int[nodes.Length];
 
@@ -76,6 +76,8 @@ namespace MSEngine.Solver
             {
                 throw new Exception("Must use BigInteger type instead of long = " + columns);
             }
+            if (columns == 0) { throw new Exception("ZXERO col"); }
+            if (rows == 0) { throw new Exception("zero rows"); }
 
             Span<ulong> vectors = stackalloc ulong[rows];
             Span<int> augments = stackalloc int[rows]; // possibly make these bytes?
@@ -90,7 +92,7 @@ namespace MSEngine.Solver
                     {
                         augments[row] = nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex);
                     }
-                    if (Utilities.IsAdjacentTo(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]))
+                    if (Utilities.AreNodesAdjacent(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]))
                     {
                         vectors[row] |= (ulong)1 << column;
                     }
@@ -112,7 +114,7 @@ namespace MSEngine.Solver
 
                     matrix[row, column] = isAugmentedColumn
                         ? nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex)
-                        : Utilities.IsAdjacentTo(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]) ? 1 : 0;
+                        : Utilities.AreNodesAdjacent(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]) ? 1 : 0;
                 }
             }
 
@@ -260,13 +262,18 @@ namespace MSEngine.Solver
                     - sharedSolutionBitCount
                     - ignoredBitCount;
 
+                // If bits < augment, we must backtrack, 
+                Debug.Assert(bits >= augment);
+
+                // BACKTRACK in this case? it implies the current solution is invalid maybe??
                 Debug.Assert(bits > 0, "The augment > 0 condition above should have already filtered");
 
                 var _solution = GetVectorSolution(vector, bits, augment);
 
-                // if a bit is NOT selected, we OR it with our notMines vector
-                var nonSelectedBits = ulong.MaxValue;
-                ignoreBits = nonSelectedBits & ignoreBits;
+                // All bits *not* selected from the vector will be added to the ignoreBits
+                ignoreBits |= _solution & vector ^ vector;
+
+                solution |= _solution;
             }
 
             // if we are on the last row, get ALL solutions for this row, then backtrack
@@ -276,7 +283,9 @@ namespace MSEngine.Solver
                 solutionCount++;
                 // adjust solution AND ignoreBits
                 // ???????? how do we know we just backtracked and now should select the leftmost N+1 bits?????
-                VisitVector(vecs, augments, row - 1, ref solution, ref ignoreBits, solutions, ref solutionCount);
+                //VisitVector(vecs, augments, row - 1, ref solution, ref ignoreBits, solutions, ref solutionCount);
+                Console.WriteLine(solution);
+                Console.WriteLine();
             }
             else
             {
@@ -288,6 +297,7 @@ namespace MSEngine.Solver
         internal static bool IsBitSet(ulong b, int pos)
             => (b & ((ulong)1 << pos)) != 0;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static ulong GetVectorSolution(ulong vector, int bits, int augment)
         {
             var maxVectorSolutions = MathNet.Numerics.Combinatorics.Combinations(bits, augment);

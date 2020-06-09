@@ -10,7 +10,7 @@ namespace MSEngine.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool AreNodesAdjacent(Span<int> buffer, int nodeCount, int columnCount, int nodeIndexOne, int nodeIndexTwo)
         {
-            Debug.Assert(buffer.Length == 8);
+            Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
             Debug.Assert(nodeCount > 0);
             Debug.Assert(columnCount > 0);
             Debug.Assert(nodeIndexOne >= 0);
@@ -29,7 +29,7 @@ namespace MSEngine.Core
             Debug.Assert(index >= 0);
             Debug.Assert(index < nodeCount);
             Debug.Assert(columnCount > 0);
-            Debug.Assert(indexes.Length == 8);
+            Debug.Assert(indexes.Length == Engine.MaxNodeEdges);
 
             var isTop = index < columnCount;
             var isLeftSide = index % columnCount == 0;
@@ -104,7 +104,7 @@ namespace MSEngine.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static byte GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columns)
         {
-            Debug.Assert(buffer.Length == 8);
+            Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeCount > 0);
             Debug.Assert(columns > 0);
@@ -127,7 +127,7 @@ namespace MSEngine.Core
         public static byte GetAdjacentFlaggedNodeCount(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
         {
             Debug.Assert(matrix.Nodes.Length > nodeIndex);
-            Debug.Assert(buffer.Length == 8);
+            Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
             Debug.Assert(nodeIndex >= 0);
 
             buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
@@ -150,7 +150,7 @@ namespace MSEngine.Core
         {
             Debug.Assert(matrix.Nodes.Length > nodeIndex);
             Debug.Assert(nodeIndex >= 0);
-            Debug.Assert(buffer.Length == 8);
+            Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
 
             buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
 

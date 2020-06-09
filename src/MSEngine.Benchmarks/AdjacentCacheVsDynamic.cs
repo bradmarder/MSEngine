@@ -19,7 +19,7 @@ namespace MSEngine.Benchmarks
         {
             var map = new Dictionary<uint, int[]>(64 + 256 + 480); // beginner/int/expert
 
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
             for (var i = 0; i < 64; i++)
             {
                 var key = GetKey(64, i, 8);

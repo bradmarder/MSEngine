@@ -16,7 +16,7 @@ namespace MSEngine.Solver
             bool useAllHiddenNodes)
         {
             var hasReduced = false;
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 
             for (var row = 0; row < matrix.RowCount; row++)
             {
@@ -112,7 +112,7 @@ namespace MSEngine.Solver
             Debug.Assert(nodes.Length > 0);
             Debug.Assert(nodes.Length == turns.Length);
 
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
             Span<int> revealedAMCNodes = stackalloc int[nodes.Length];
 
             #region Revealed Nodes with AMC > 0

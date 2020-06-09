@@ -41,7 +41,7 @@ namespace MSEngine.Tests
         public void GetAdjacentMineCounts(int nodeIndex, int expectedMineCount)
         {
             Span<int> mines = stackalloc int[] { 0, 2, 6, 8 };
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 
             var actualMineCount = Utilities.GetAdjacentMineCount(mines, buffer, nodeIndex, 9, 3);
 
@@ -57,7 +57,7 @@ namespace MSEngine.Tests
         [InlineData(7, 2)]
         public void GetAdjacentFlaggedNodes(int nodeIndex, int expectedFlagCount)
         {
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
             Span<Node> nodes = stackalloc Node[]
             {
                 new Node(0, false, 0, NodeState.Flagged),
@@ -87,7 +87,7 @@ namespace MSEngine.Tests
         [InlineData(8, false)]
         public void HasHiddenAdjacentNodes(int nodeIndex, bool expectedHasNodes)
         {
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
             Span<Node> nodes = stackalloc Node[]
             {
                 new Node(0, false, 0, NodeState.Hidden),
@@ -125,7 +125,7 @@ namespace MSEngine.Tests
         [InlineData(6, 8, false)]
         public void AreNodesAdjacent(int nodeIndexOne, int nodeIndexTwo, bool expected)
         {
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
             Span<Node> nodes = stackalloc Node[9];
             Engine.Instance.FillCustomBoard(nodes, 0, 3);
 

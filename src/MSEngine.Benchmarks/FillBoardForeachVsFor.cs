@@ -29,7 +29,7 @@ namespace MSEngine.Benchmarks
 
         public virtual void ForFillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns)
         {
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 
             for (var i = 0; i < nodes.Length; i++)
             {
@@ -42,7 +42,7 @@ namespace MSEngine.Benchmarks
 
         public virtual void RefForeachFillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns)
         {
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 
             int i = 0;
             foreach (ref var node in nodes)

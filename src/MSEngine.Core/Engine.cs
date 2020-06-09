@@ -6,6 +6,7 @@ namespace MSEngine.Core
     public class Engine : IEngine
     {
         public static IEngine Instance { get; } = new Engine();
+        public const byte MaxNodeEdges = 8;
 
         public virtual void FillBeginnerBoard(Span<Node> nodes) => FillCustomBoard(nodes, 10, 8);
         public virtual void FillIntermediateBoard(Span<Node> nodes) => FillCustomBoard(nodes, 40, 16);
@@ -23,7 +24,7 @@ namespace MSEngine.Core
             Debug.Assert(nodes.Length > mines.Length);
             Debug.Assert(nodes.Length % columns == 0);
 
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[MaxNodeEdges];
 
             for (var i = 0; i < nodes.Length; i++)
             {
@@ -76,7 +77,7 @@ namespace MSEngine.Core
 
                 var nodeAdjacentFlagCount = 0;
                 var nodeAdjacentHiddenCount = 0;
-                Span<int> adjacentIndexes = stackalloc int[8];
+                Span<int> adjacentIndexes = stackalloc int[MaxNodeEdges];
                 adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, turn.NodeIndex, matrix.ColumnCount);
 
                 foreach (var i in adjacentIndexes)
@@ -142,7 +143,7 @@ namespace MSEngine.Core
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeIndex < matrix.Nodes.Length);
 
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[MaxNodeEdges];
             buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
 
             foreach (var i in buffer)
@@ -187,7 +188,7 @@ namespace MSEngine.Core
             visitedIndexes[visitedIndexCount] = nodeIndex;
             visitedIndexCount++;
 
-            Span<int> buffer = stackalloc int[8];
+            Span<int> buffer = stackalloc int[MaxNodeEdges];
             buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
 
             foreach (var i in buffer)
