@@ -167,22 +167,22 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool Contains(this ReadOnlySpan<int> elements, int i)
+        public static bool Contains<T>(this ReadOnlySpan<T> span, T value) where T : IEquatable<T>
         {
 #if NETCOREAPP3_1
-            return MemoryExtensions.Contains(elements, i);
+            return MemoryExtensions.Contains(span, value);
 #else
-            return elements.IndexOf(i) != -1;
+            return span.IndexOf(value) != -1;
 #endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool Contains(this Span<int> elements, int i)
+        public static bool Contains<T>(this Span<T> span, T value) where T : IEquatable<T>
         {
 #if NETCOREAPP3_1
-            return MemoryExtensions.Contains(elements, i);
+            return MemoryExtensions.Contains(span, value);
 #else
-            return elements.IndexOf(i) != -1;
+            return span.IndexOf(value) != -1;
 #endif
         }
 

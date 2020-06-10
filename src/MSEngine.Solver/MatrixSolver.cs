@@ -33,7 +33,7 @@ namespace MSEngine.Solver
 
                             var turn = new Turn(adjacentHiddenNodeIndexes[c], NodeOperation.Reveal);
 
-                            if (turns.Slice(0, turnCount).IndexOf(turn) == -1)
+                            if (!Utilities.Contains(turns.Slice(0, turnCount), turn))
                             {
                                 turns[turnCount] = turn;
                                 turnCount++;
@@ -66,7 +66,7 @@ namespace MSEngine.Solver
 
                                 var index = adjacentHiddenNodeIndexes[c];
                                 var turn = new Turn(index, NodeOperation.Flag);
-                                if (turns.Slice(0, turnCount).IndexOf(turn) == -1)
+                                if (!Utilities.Contains(turns.Slice(0, turnCount), turn))
                                 {
                                     turns[turnCount] = turn;
                                     turnCount++;
@@ -258,7 +258,7 @@ namespace MSEngine.Solver
                         : new Turn(index, val > 0 ? NodeOperation.Flag : NodeOperation.Reveal);
 
                     // prevent adding duplicate turns
-                    if (turns.Slice(0, turnCount).IndexOf(turn) == -1)
+                    if (!Utilities.Contains(turns.Slice(0, turnCount), turn))
                     {
                         turns[turnCount] = turn;
                         turnCount++;
