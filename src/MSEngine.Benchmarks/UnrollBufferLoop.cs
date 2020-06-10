@@ -1,4 +1,5 @@
-﻿using MSEngine.Core;
+﻿using BenchmarkDotNet.Attributes;
+using MSEngine.Core;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -6,31 +7,131 @@ using System.Text;
 
 namespace MSEngine.Benchmarks
 {
+    /// <summary>
+    /// | Method |     Mean |    Error |   StdDev | Gen 0 | Gen 1 | Gen 2 | Allocated |
+    /// |------- |---------:|---------:|---------:|------:|------:|------:|----------:|
+    /// |    Old | 49.70 ns | 0.226 ns | 0.211 ns |     - |     - |     - |         - |
+    /// |    New | 71.09 ns | 0.364 ns | 0.340 ns |     - |     - |     - |         - |
+    /// </summary>
+    [MemoryDiagnoser]
     public class UnrollBufferLoop
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool HasHiddenAdjacentNodes(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
+        [Benchmark]
+        public void Old()
         {
+            Span<int> buffer = stackalloc int[8];
+            Span<Node> nodes = stackalloc Node[]
+            {
+                new Node(0, true, 0, NodeState.Revealed),
+                new Node(1, true, 0, NodeState.Revealed),
+                new Node(2, true, 0, NodeState.Revealed),
+                new Node(3, true, 0, NodeState.Revealed),
+                new Node(4, true, 0, NodeState.Revealed),
+                new Node(5, true, 0, NodeState.Revealed),
+                new Node(6, true, 0, NodeState.Revealed),
+                new Node(7, true, 0, NodeState.Revealed),
+                new Node(8, true, 0, NodeState.Revealed),
+            };
+            var matrix = new Matrix<Node>(nodes, 3);
+            OldHasHiddenAdjacentNodes(matrix, buffer, 4);
+        }
 
+        [Benchmark]
+        public void New()
+        {
+            Span<int> buffer = stackalloc int[8];
+            Span<Node> nodes = stackalloc Node[]
+            {
+                new Node(0, true, 0, NodeState.Revealed),
+                new Node(1, true, 0, NodeState.Revealed),
+                new Node(2, true, 0, NodeState.Revealed),
+                new Node(3, true, 0, NodeState.Revealed),
+                new Node(4, true, 0, NodeState.Revealed),
+                new Node(5, true, 0, NodeState.Revealed),
+                new Node(6, true, 0, NodeState.Revealed),
+                new Node(7, true, 0, NodeState.Revealed),
+                new Node(8, true, 0, NodeState.Revealed),
+            };
+            var matrix = new Matrix<Node>(nodes, 3);
+            NewHasHiddenAdjacentNodes(matrix, buffer, 4);
+        }
+
+        [Benchmark]
+        public void LastChance()
+        {
+            Span<int> buffer = stackalloc int[8];
+            Span<Node> nodes = stackalloc Node[]
+            {
+                new Node(0, true, 0, NodeState.Revealed),
+                new Node(1, true, 0, NodeState.Revealed),
+                new Node(2, true, 0, NodeState.Revealed),
+                new Node(3, true, 0, NodeState.Revealed),
+                new Node(4, true, 0, NodeState.Revealed),
+                new Node(5, true, 0, NodeState.Revealed),
+                new Node(6, true, 0, NodeState.Revealed),
+                new Node(7, true, 0, NodeState.Revealed),
+                new Node(8, true, 0, NodeState.Revealed),
+            };
+            var matrix = new Matrix<Node>(nodes, 3);
+            LastChance(matrix, buffer, 4);
+        }
+
+        public static bool OldHasHiddenAdjacentNodes(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
+        {
             buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
 
-            var a = buffer[0];
-            if (a != -1 && matrix.Nodes[a].State == NodeState.Hidden) { return true; }
-            a = buffer[1];
-            if (a != -1 && matrix.Nodes[a].State == NodeState.Hidden) { return true; }
-            a = buffer[2];
-            if (a != -1 && matrix.Nodes[a].State == NodeState.Hidden) { return true; }
-            a = buffer[3];
-            if (a != -1 && matrix.Nodes[a].State == NodeState.Hidden) { return true; }
-            a = buffer[4];
-            if (a != -1 && matrix.Nodes[a].State == NodeState.Hidden) { return true; }
-            a = buffer[5];
-            if (a != -1 && matrix.Nodes[a].State == NodeState.Hidden) { return true; }
-            a = buffer[6];
-            if (a != -1 && matrix.Nodes[a].State == NodeState.Hidden) { return true; }
-            a = buffer[7];
-            if (a != -1 && matrix.Nodes[a].State == NodeState.Hidden) { return true; }
+            foreach (var x in buffer)
+            {
+                if (x == -1) { continue; }
+                if (matrix.Nodes[x].State == NodeState.Hidden)
+                {
+                    return true;
+                }
+            }
 
+            return false;
+        }
+        public static bool NewHasHiddenAdjacentNodes(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
+        {
+            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
+
+            var enumerator = buffer.GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                if (enumerator.Current != -1 && matrix.Nodes[enumerator.Current].State == NodeState.Hidden) { return true; }
+            }
+
+            return false;
+        }
+        public static bool LastChance(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
+        {
+            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
+
+            var enumerator = buffer.GetEnumerator();
+            enumerator.MoveNext();
+
+            if (enumerator.Current != -1 && matrix.Nodes[enumerator.Current].State == NodeState.Hidden) { return true; }
+            enumerator.MoveNext();
+
+            if (enumerator.Current != -1 && matrix.Nodes[enumerator.Current].State == NodeState.Hidden) { return true; }
+            enumerator.MoveNext();
+
+            if (enumerator.Current != -1 && matrix.Nodes[enumerator.Current].State == NodeState.Hidden) { return true; }
+            enumerator.MoveNext();
+
+            if (enumerator.Current != -1 && matrix.Nodes[enumerator.Current].State == NodeState.Hidden) { return true; }
+            enumerator.MoveNext();
+
+            if (enumerator.Current != -1 && matrix.Nodes[enumerator.Current].State == NodeState.Hidden) { return true; }
+            enumerator.MoveNext();
+
+            if (enumerator.Current != -1 && matrix.Nodes[enumerator.Current].State == NodeState.Hidden) { return true; }
+            enumerator.MoveNext();
+
+            if (enumerator.Current != -1 && matrix.Nodes[enumerator.Current].State == NodeState.Hidden) { return true; }
+            enumerator.MoveNext();
+
+            if (enumerator.Current != -1 && matrix.Nodes[enumerator.Current].State == NodeState.Hidden) { return true; }
 
             return false;
         }

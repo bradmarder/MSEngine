@@ -237,7 +237,7 @@ namespace MSEngine.Solver
 
             return new Turn(0, NodeOperation.Chord);
         }
-
+#if NETCOREAPP3_1
         internal static void VisitVector(ReadOnlySpan<ulong> vecs, ReadOnlySpan<int> augments, int row, ref ulong solution, ref ulong ignoreBits, Span<ulong> solutions, ref int solutionCount)
         {
             // select the vector
@@ -292,6 +292,13 @@ namespace MSEngine.Solver
                 VisitVector(vecs, augments, row + 1, ref solution, ref ignoreBits, solutions, ref solutionCount);
             }
         }
+#else
+        internal static void VisitVector(ReadOnlySpan<ulong> _vecs, ReadOnlySpan<int> _augments, int _row, ref ulong _solution, ref ulong _ignoreBits, Span<ulong> _solutions, ref int _solutionCount)
+        {
+
+        }
+#endif
+
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static bool IsBitSet(ulong b, int pos)

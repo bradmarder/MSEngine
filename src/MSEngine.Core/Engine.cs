@@ -127,7 +127,7 @@ namespace MSEngine.Core
                 else
                 {
                     matrix.Nodes[turn.NodeIndex] = new Node(node, NodeOperation.Reveal);
-                    ChainReaction(matrix, turn.NodeIndex);
+                    TriggerChainReaction(matrix, turn.NodeIndex);
                 }
                 return;
             }
@@ -168,25 +168,26 @@ namespace MSEngine.Core
             }
         }
 
-        internal static void ChainReaction(Matrix<Node> matrix, int nodeIndex)
+        internal static void TriggerChainReaction(Matrix<Node> matrix, int nodeIndex)
         {
             Debug.Assert(nodeIndex >= 0);
 
-            var visitedIndexCount = 0;
             Span<int> visitedIndexes = stackalloc int[matrix.Nodes.Length]; //  subtract nodes.MineCount() ?
             visitedIndexes.Fill(-1);
+            var enumerator = visitedIndexes.GetEnumerator();
+            enumerator.MoveNext();
 
-            VisitNode(matrix, nodeIndex, visitedIndexes, ref visitedIndexCount);
+            VisitNode(matrix, nodeIndex, visitedIndexes, enumerator);
         }
 
         // Recursively visits and reveals nodes
-        internal static void VisitNode(Matrix<Node> matrix, int nodeIndex, Span<int> visitedIndexes, ref int visitedIndexCount)
+        internal static void VisitNode(Matrix<Node> matrix, int nodeIndex, ReadOnlySpan<int> visitedIndexes, Span<int>.Enumerator enumerator)
         {
             Debug.Assert(nodeIndex >= 0);
-            Debug.Assert(visitedIndexCount >= 0);
 
-            visitedIndexes[visitedIndexCount] = nodeIndex;
-            visitedIndexCount++;
+            enumerator.Current = nodeIndex;
+            var pass = enumerator.MoveNext();
+            Debug.Assert(pass);
 
             Span<int> buffer = stackalloc int[MaxNodeEdges];
             buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
@@ -206,7 +207,7 @@ namespace MSEngine.Core
 
                 if (node.MineCount == 0 && !visitedIndexes.Contains(i))
                 {
-                    VisitNode(matrix, i, visitedIndexes, ref visitedIndexCount);
+                    VisitNode(matrix, i, visitedIndexes, enumerator);
                 }
             }
         }
