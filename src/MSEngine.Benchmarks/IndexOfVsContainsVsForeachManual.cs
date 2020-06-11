@@ -33,7 +33,7 @@ namespace MSEngine.Benchmarks
         {
             Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 
-            return buffer.Contains(5);
+            return System.MemoryExtensions.Contains(buffer, 5);
         }
     }
 }

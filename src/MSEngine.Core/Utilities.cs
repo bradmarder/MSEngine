@@ -115,7 +115,7 @@ namespace MSEngine.Core
             byte n = 0;
             foreach (var i in buffer)
             {
-                if (mineIndexes.Contains(i))
+                if (i != -1 && mineIndexes.Contains(i))
                 {
                     n++;
                 }
@@ -135,9 +135,7 @@ namespace MSEngine.Core
             byte n = 0;
             foreach (var i in buffer)
             {
-                if (i == -1) { continue; }
-
-                if (matrix.Nodes[i].State == NodeState.Flagged)
+                if (i != -1 && matrix.Nodes[i].State == NodeState.Flagged)
                 {
                     n++;
                 }
@@ -156,8 +154,7 @@ namespace MSEngine.Core
 
             foreach (var x in buffer)
             {
-                if (x == -1) { continue; }
-                if (matrix.Nodes[x].State == NodeState.Hidden)
+                if (x != -1 && matrix.Nodes[x].State == NodeState.Hidden)
                 {
                     return true;
                 }
