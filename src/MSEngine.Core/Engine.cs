@@ -29,9 +29,9 @@ namespace MSEngine.Core
             for (var i = 0; i < nodes.Length; i++)
             {
                 var hasMine = mines.Contains(i);
-                var amc = Utilities.GetAdjacentMineCount(mines, buffer, i, nodes.Length, columns);
+                var mineCount = Utilities.GetAdjacentMineCount(mines, buffer, i, nodes.Length, columns);
                 
-                nodes[i] = new Node(i, hasMine, amc);
+                nodes[i] = new Node(i, hasMine, mineCount);
             }
         }
 
@@ -111,13 +111,6 @@ namespace MSEngine.Core
                 return;
             }
 
-            // these cases will only affect the singular node
-            if (turn.Operation == NodeOperation.Flag || turn.Operation == NodeOperation.RemoveFlag || (turn.Operation == NodeOperation.Reveal && !node.HasMine && node.MineCount > 0))
-            {
-                matrix.Nodes[turn.NodeIndex] = new Node(node, turn.Operation);
-                return;
-            }
-
             if (turn.Operation == NodeOperation.Reveal)
             {
                 if (node.HasMine)
@@ -126,8 +119,11 @@ namespace MSEngine.Core
                 }
                 else
                 {
-                    matrix.Nodes[turn.NodeIndex] = new Node(node, NodeOperation.Reveal);
-                    TriggerChainReaction(matrix, turn.NodeIndex);
+                    matrix.Nodes[turn.NodeIndex] = new Node(node, NodeState.Revealed);
+                    if (node.MineCount == 0)
+                    {
+                        TriggerChainReaction(matrix, turn.NodeIndex);
+                    }
                 }
                 return;
             }
@@ -137,6 +133,19 @@ namespace MSEngine.Core
                 Chord(matrix, turn.NodeIndex);
                 return;
             }
+
+            if (turn.Operation == NodeOperation.Flag)
+            {
+                matrix.Nodes[turn.NodeIndex] = new Node(node, NodeState.Flagged);
+                return;
+            }
+
+            if (turn.Operation == NodeOperation.RemoveFlag)
+            {
+                matrix.Nodes[turn.NodeIndex] = new Node(node, NodeState.Hidden);
+                return;
+            }
+
         }
         internal void Chord(Matrix<Node> matrix, int nodeIndex)
         {
@@ -158,12 +167,11 @@ namespace MSEngine.Core
 
         internal static void RevealHiddenMines(Span<Node> nodes)
         {
-            // should we show false flags?
             foreach (ref var node in nodes)
             {
                 if (node.HasMine && node.State == NodeState.Hidden)
                 {
-                    node = new Node(node, NodeOperation.Reveal);
+                    node = new Node(node, NodeState.Revealed);
                 }
             }
         }
@@ -202,7 +210,7 @@ namespace MSEngine.Core
 
                 if (node.State == NodeState.Hidden)
                 {
-                    node = new Node(node, NodeOperation.Reveal);
+                    node = new Node(node, NodeState.Revealed);
                 }
 
                 if (node.MineCount == 0 && !visitedIndexes.Contains(i))

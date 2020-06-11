@@ -1,28 +1,19 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace MSEngine.Core
 {
     public readonly struct Node : IEquatable<Node>
     {
-        internal Node(in Node node, NodeOperation op)
-        {
-            Debug.Assert(Enum.IsDefined(typeof(NodeOperation), op));
-            Debug.Assert(op != NodeOperation.Chord);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal Node(int index, bool hasMine, byte mineCount) : this(index, hasMine, mineCount, NodeState.Hidden) { }
 
-            Index = node.Index;
-            HasMine = node.HasMine;
-            MineCount = node.MineCount;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal Node(in Node node, NodeState state) : this(node.Index, node.HasMine, node.MineCount, state) { }
 
-            State = op switch
-            {
-                NodeOperation.Reveal => NodeState.Revealed,
-                NodeOperation.Flag => NodeState.Flagged,
-                NodeOperation.RemoveFlag => NodeState.Hidden,
-                _ => NodeState.Hidden
-            };
-        }
-        internal Node(int index, bool hasMine, int mineCount, NodeState state)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal Node(int index, bool hasMine, byte mineCount, NodeState state)
         {
             Debug.Assert(index >= 0);
             Debug.Assert(mineCount >= 0);
@@ -31,19 +22,8 @@ namespace MSEngine.Core
 
             Index = index;
             HasMine = hasMine;
-            MineCount = (byte)mineCount;
-            State = state;
-        }
-        internal Node(int index, bool hasMine, byte mineCount)
-        {
-            Debug.Assert(index >= 0);
-            Debug.Assert(mineCount >= 0);
-            Debug.Assert(mineCount <= 8);
-
-            Index = index;
-            HasMine = hasMine;
             MineCount = mineCount;
-            State = NodeState.Hidden;
+            State = state;
         }
 
         public int Index { get; }
