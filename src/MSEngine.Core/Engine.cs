@@ -103,16 +103,15 @@ namespace MSEngine.Core
         {
             var node = matrix.Nodes[turn.NodeIndex];
 
-            // If a node is already revealed, we return instead of throwing an exception
-            // This is because the solver generates batches of turns at a time, and any turn
-            // may trigger a chain reaction and auto-reveal other nodes
-            if (node.State == NodeState.Revealed && turn.Operation == NodeOperation.Reveal)
-            {
-                return;
-            }
-
             if (turn.Operation == NodeOperation.Reveal)
             {
+                // If a node is already revealed, we return instead of throwing an exception
+                // This is because the solver generates batches of turns at a time, and any turn
+                // may trigger a chain reaction and auto-reveal other nodes
+                if (node.State == NodeState.Revealed)
+                {
+                    return;
+                }
                 if (node.HasMine)
                 {
                     RevealHiddenMines(matrix.Nodes);
@@ -128,12 +127,6 @@ namespace MSEngine.Core
                 return;
             }
 
-            if (turn.Operation == NodeOperation.Chord)
-            {
-                Chord(matrix, turn.NodeIndex);
-                return;
-            }
-
             if (turn.Operation == NodeOperation.Flag)
             {
                 matrix.Nodes[turn.NodeIndex] = new Node(node, NodeState.Flagged);
@@ -146,6 +139,11 @@ namespace MSEngine.Core
                 return;
             }
 
+            if (turn.Operation == NodeOperation.Chord)
+            {
+                Chord(matrix, turn.NodeIndex);
+                return;
+            }
         }
         internal void Chord(Matrix<Node> matrix, int nodeIndex)
         {

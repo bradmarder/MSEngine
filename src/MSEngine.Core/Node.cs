@@ -42,5 +42,7 @@ namespace MSEngine.Core
             && MineCount == other.MineCount;
         public static bool operator ==(in Node c1, in Node c2) => c1.Equals(c2);
         public static bool operator !=(in Node c1, in Node c2) => !(c1 == c2);
+
+        public string NewNodeCtor() => $"new {nameof(Node)}({Index}, {HasMine.ToString().ToLower()}, {MineCount}, {nameof(NodeState)}.{State}),";
     }
 }

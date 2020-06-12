@@ -8,8 +8,6 @@ namespace MSEngine.Core
         public Turn(int nodeIndex, NodeOperation operation)
         {
             Debug.Assert(nodeIndex >= 0);
-
-            // Despite being a public API, we assert instead of throw because otherwise this method will allocate on the heap
             Debug.Assert(Enum.IsDefined(typeof(NodeOperation), operation));
 
             NodeIndex = nodeIndex;
@@ -25,5 +23,7 @@ namespace MSEngine.Core
         public bool Equals(Turn other) => NodeIndex == other.NodeIndex && Operation == other.Operation;
         public static bool operator ==(Turn c1, Turn c2) => c1.Equals(c2);
         public static bool operator !=(Turn c1, Turn c2) => !(c1 == c2);
+
+        public string NewTurnCtor() => $"new {nameof(Turn)}({NodeIndex}, {nameof(NodeOperation)}.{Operation}),";
     }
 }

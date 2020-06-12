@@ -188,8 +188,7 @@ namespace MSEngine.Core
             var sb = new System.Text.StringBuilder();
             foreach (var node in matrix.Nodes)
             {
-                var state = string.Concat(nameof(NodeState), '.', node.State);
-                sb.AppendLine($"new {nameof(Node)}({node.Index}, {node.HasMine.ToString().ToLower()}, {node.MineCount}, {state}),");
+                sb.AppendLine(node.NewNodeCtor());
             }
             return sb.ToString();
         }
