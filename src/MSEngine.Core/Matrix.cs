@@ -20,7 +20,16 @@ namespace MSEngine.Core
         public readonly int ColumnCount { get; }
         public readonly int RowCount { get; }
 
-        public readonly ref T this[int row, int column] => ref Nodes[row * ColumnCount + column];
+        public readonly ref T this[int row, int column]
+        {
+            get
+            {
+                Debug.Assert(column >= 0 && column < ColumnCount);
+                Debug.Assert(row >= 0 && row < RowCount);
+
+                return ref Nodes[row * ColumnCount + column];
+            }
+        }
 
         public override string ToString()
         {
