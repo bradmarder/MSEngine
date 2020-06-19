@@ -1,11 +1,37 @@
 ﻿using MSEngine.Core;
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace MSEngine.Solver
 {
     public static class MatrixSolver
     {
+        // zero'ify this column from all rows in the matrix
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ZeroifyColumn(Matrix<float> matrix, int column)
+        {
+            Debug.Assert(column >= 0);
+
+            foreach (var row in matrix)
+            {
+                row[column] = 0;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void TryAddTurn(Span<Turn> turns, Turn turn, ref int turnCount)
+        {
+            Debug.Assert(turnCount >= 0);
+            Debug.Assert(turns.Length > turnCount);
+
+            if (!Utilities.Contains(turns.Slice(0, turnCount), turn))
+            {
+                turns[turnCount] = turn;
+                turnCount++;
+            }
+        }
+
         private static void ReduceMatrix(
             Matrix<Node> nodeMatrix,
             Matrix<float> matrix,
@@ -18,32 +44,23 @@ namespace MSEngine.Solver
             var hasReduced = false;
             Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 
-            for (var row = 0; row < matrix.RowCount; row++)
+            foreach (var row in matrix)
             {
-                var val = matrix[row, matrix.ColumnCount - 1];
+                var val = row[matrix.ColumnCount - 1];
 
                 // if the augment column is zero, then all the 1's in the row are not mines
                 if (val == 0)
                 {
                     for (var c = 0; c < matrix.ColumnCount - 1; c++)
                     {
-                        if (matrix[row, c] == 1)
+                        if (row[c] == 1)
                         {
                             hasReduced = true;
 
                             var turn = new Turn(adjacentHiddenNodeIndexes[c], NodeOperation.Reveal);
 
-                            if (!Utilities.Contains(turns.Slice(0, turnCount), turn))
-                            {
-                                turns[turnCount] = turn;
-                                turnCount++;
-                            }
-
-                            // zero'ify this column from all rows in the matrix
-                            for (var ir = 0; ir < matrix.RowCount; ir++)
-                            {
-                                matrix[ir, c] = 0;
-                            }
+                            TryAddTurn(turns, turn, ref turnCount);
+                            ZeroifyColumn(matrix, c);
                         }
                     }
                 }
@@ -54,29 +71,21 @@ namespace MSEngine.Solver
                     float sum = 0;
                     for (var y = 0; y < matrix.ColumnCount - 1; y++)
                     {
-                        sum += matrix[row, y];
+                        sum += row[y];
                     }
                     if (sum == val)
                     {
                         for (var c = 0; c < matrix.ColumnCount - 1; c++)
                         {
-                            if (matrix[row, c] == 1)
+                            if (row[c] == 1)
                             {
                                 hasReduced = true;
 
                                 var index = adjacentHiddenNodeIndexes[c];
                                 var turn = new Turn(index, NodeOperation.Flag);
-                                if (!Utilities.Contains(turns.Slice(0, turnCount), turn))
-                                {
-                                    turns[turnCount] = turn;
-                                    turnCount++;
-                                }
 
-                                // zero'ify this column from all rows in the matrix
-                                for (var ir = 0; ir < matrix.RowCount; ir++)
-                                {
-                                    matrix[ir, c] = 0;
-                                }
+                                TryAddTurn(turns, turn, ref turnCount);
+                                ZeroifyColumn(matrix, c);
 
                                 buffer.FillAdjacentNodeIndexes(nodeMatrix.Nodes.Length, index, nodeMatrix.ColumnCount);
 
@@ -109,8 +118,6 @@ namespace MSEngine.Solver
         public static int CalculateTurns(Matrix<Node> nodeMatrix, Span<Turn> turns, bool useAllHiddenNodes)
         {
             var nodes = nodeMatrix.Nodes;
-            Debug.Assert(nodes.Length > 0);
-            Debug.Assert(nodes.Length == turns.Length);
 
             Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
             Span<int> revealedAMCNodes = stackalloc int[nodes.Length];
@@ -223,14 +230,14 @@ namespace MSEngine.Solver
             var augmentIndex = matrix.ColumnCount - 1;
             Span<float> vector = stackalloc float[augmentIndex];
 
-            for (var row = 0; row < matrix.RowCount; row++)
+            foreach (var row in matrix)
             {
                 for (var column = 0; column < augmentIndex; column++)
                 {
-                    vector[column] = matrix[row, column];
+                    vector[column] = row[column];
                 }
 
-                var augmentColumn = matrix[row, augmentIndex];
+                var augmentColumn = row[augmentIndex];
                 float min = 0;
                 float max = 0;
                 foreach (var x in vector)
@@ -257,12 +264,7 @@ namespace MSEngine.Solver
                         ? new Turn(index, val > 0 ? NodeOperation.Reveal : NodeOperation.Flag)
                         : new Turn(index, val > 0 ? NodeOperation.Flag : NodeOperation.Reveal);
 
-                    // prevent adding duplicate turns
-                    if (!Utilities.Contains(turns.Slice(0, turnCount), turn))
-                    {
-                        turns[turnCount] = turn;
-                        turnCount++;
-                    }
+                    TryAddTurn(turns, turn, ref turnCount);
                 }
             }
 
