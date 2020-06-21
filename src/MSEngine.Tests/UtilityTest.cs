@@ -1,5 +1,6 @@
 ﻿using System;
 using MSEngine.Core;
+using MSEngine.Solver;
 using Xunit;
 
 namespace MSEngine.Tests
@@ -132,6 +133,28 @@ namespace MSEngine.Tests
             var actual = Utilities.AreNodesAdjacent(buffer, 9, 3, nodeIndexOne, nodeIndexTwo);
 
             Assert.Equal(expected, actual);
+        }
+
+        // 3x3 matrix, all 1's, then we zero'ify the middle column
+        [Theory]
+        [InlineData(0, 1)]
+        [InlineData(1, 0)]
+        [InlineData(2, 1)]
+        [InlineData(3, 1)]
+        [InlineData(4, 0)]
+        [InlineData(5, 1)]
+        [InlineData(6, 1)]
+        [InlineData(7, 0)]
+        [InlineData(8, 1)]
+        public void MatrixColumnZeroification(int index, int expected)
+        {
+            Span<float> data = stackalloc float[9];
+            data.Fill(1);
+            var matrix = new Matrix<float>(data, 3);
+
+            MatrixSolver.ZeroifyColumn(matrix, 1);
+
+            Assert.Equal(expected, data[index]);
         }
     }
 }

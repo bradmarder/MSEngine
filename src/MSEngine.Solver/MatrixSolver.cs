@@ -9,9 +9,10 @@ namespace MSEngine.Solver
     {
         // zero'ify this column from all rows in the matrix
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ZeroifyColumn(Matrix<float> matrix, int column)
+        internal static void ZeroifyColumn(Matrix<float> matrix, int column)
         {
             Debug.Assert(column >= 0);
+            Debug.Assert(column < matrix.ColumnCount);
 
             foreach (var row in matrix)
             {
@@ -20,19 +21,23 @@ namespace MSEngine.Solver
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void TryAddTurn(Span<Turn> turns, Turn turn, ref int turnCount)
+        internal static bool TryAddTurn(Span<Turn> turns, Turn turn, ref int turnCount)
         {
             Debug.Assert(turnCount >= 0);
             Debug.Assert(turns.Length > turnCount);
 
-            if (!Utilities.Contains(turns.Slice(0, turnCount), turn))
+            if (Utilities.Contains(turns.Slice(0, turnCount), turn))
             {
-                turns[turnCount] = turn;
-                turnCount++;
+                return false;
             }
+
+            turns[turnCount] = turn;
+            turnCount++;
+
+            return true;
         }
 
-        private static void ReduceMatrix(
+        internal static void ReduceMatrix(
             Matrix<Node> nodeMatrix,
             Matrix<float> matrix,
             ReadOnlySpan<int> adjacentHiddenNodeIndexes,
@@ -42,25 +47,26 @@ namespace MSEngine.Solver
             bool useAllHiddenNodes)
         {
             var hasReduced = false;
+            var maxColumnIndex = matrix.ColumnCount - 1;
             Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 
             foreach (var row in matrix)
             {
-                var val = row[matrix.ColumnCount - 1];
+                var val = row[maxColumnIndex];
 
                 // if the augment column is zero, then all the 1's in the row are not mines
                 if (val == 0)
                 {
-                    for (var c = 0; c < matrix.ColumnCount - 1; c++)
+                    for (var c = 0; c < maxColumnIndex; c++)
                     {
                         if (row[c] == 1)
                         {
-                            hasReduced = true;
-
-                            var turn = new Turn(adjacentHiddenNodeIndexes[c], NodeOperation.Reveal);
+                            var index = adjacentHiddenNodeIndexes[c];
+                            var turn = new Turn(index, NodeOperation.Reveal);
 
                             TryAddTurn(turns, turn, ref turnCount);
                             ZeroifyColumn(matrix, c);
+                            hasReduced = true;
                         }
                     }
                 }
@@ -69,23 +75,22 @@ namespace MSEngine.Solver
                 if (val > 0)
                 {
                     float sum = 0;
-                    for (var y = 0; y < matrix.ColumnCount - 1; y++)
+                    for (var y = 0; y < maxColumnIndex; y++)
                     {
                         sum += row[y];
                     }
                     if (sum == val)
                     {
-                        for (var c = 0; c < matrix.ColumnCount - 1; c++)
+                        for (var c = 0; c < maxColumnIndex; c++)
                         {
                             if (row[c] == 1)
                             {
-                                hasReduced = true;
-
                                 var index = adjacentHiddenNodeIndexes[c];
                                 var turn = new Turn(index, NodeOperation.Flag);
 
                                 TryAddTurn(turns, turn, ref turnCount);
                                 ZeroifyColumn(matrix, c);
+                                hasReduced = true;
 
                                 buffer.FillAdjacentNodeIndexes(nodeMatrix.Nodes.Length, index, nodeMatrix.ColumnCount);
 
@@ -93,15 +98,14 @@ namespace MSEngine.Solver
                                 {
                                     if (i == -1) { continue; }
                                     var rowIndex = revealedAMCNodes.IndexOf(i);
-                                    if (rowIndex != -1)
-                                    {
-                                        matrix[rowIndex, matrix.ColumnCount - 1]--;
-                                    }
+                                    if (rowIndex == -1) { continue; }
+
+                                    matrix[rowIndex, maxColumnIndex]--;
                                 }
 
                                 if (useAllHiddenNodes)
                                 {
-                                    matrix[matrix.RowCount - 1, matrix.ColumnCount - 1]--;
+                                    matrix[matrix.RowCount - 1, maxColumnIndex]--;
                                 }
                             }
                         }
