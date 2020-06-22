@@ -39,18 +39,13 @@ namespace MSEngine.Core
         {
             var sb = new System.Text.StringBuilder();
 
-            for (var row = 0; row < RowCount; row++)
+            foreach (var row in this)
             {
-                for (var column = 0; column < ColumnCount; column++)
+                foreach (var col in row)
                 {
-                    sb.Append(this[row, column]);
-                    sb.Append('\t');
-
-                    if (column > 0 && (column + 1) % ColumnCount == 0)
-                    {
-                        sb.AppendLine();
-                    }
+                    sb.Append(col + "\t");
                 }
+                sb.AppendLine();
             }
 
             return sb.ToString();

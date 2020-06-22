@@ -8,7 +8,7 @@ namespace MSEngine.Core
         public static IEngine Instance { get; } = new Engine();
         public const byte MaxNodeEdges = 8;
 
-        public virtual void FillBeginnerBoard(Span<Node> nodes) => FillCustomBoard(nodes, 10, 8);
+        public virtual void FillBeginnerBoard(Span<Node> nodes) => FillCustomBoard(nodes, 10, 9);
         public virtual void FillIntermediateBoard(Span<Node> nodes) => FillCustomBoard(nodes, 40, 16);
         public virtual void FillExpertBoard(Span<Node> nodes) => FillCustomBoard(nodes, 99, 30);
         public virtual void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns)
@@ -56,10 +56,6 @@ namespace MSEngine.Core
             {
                 throw new InvalidGameStateException("Only chord/reveal operations are allowed on revealed nodes");
             }
-            if (node.State == NodeState.Flagged && turn.Operation == NodeOperation.Flag)
-            {
-                throw new InvalidGameStateException("May not flag a node that is already flagged");
-            }
             if (turn.Operation == NodeOperation.RemoveFlag && node.State != NodeState.Flagged)
             {
                 throw new InvalidGameStateException("Impossible to remove flag from un-flagged node");
@@ -103,46 +99,43 @@ namespace MSEngine.Core
         {
             var node = matrix.Nodes[turn.NodeIndex];
 
-            if (turn.Operation == NodeOperation.Reveal)
+            switch (turn.Operation)
             {
-                // If a node is already revealed, we return instead of throwing an exception
-                // This is because the solver generates batches of turns at a time, and any turn
-                // may trigger a chain reaction and auto-reveal other nodes
-                if (node.State == NodeState.Revealed)
-                {
-                    return;
-                }
-                if (node.HasMine)
-                {
-                    RevealHiddenMines(matrix.Nodes);
-                }
-                else
-                {
-                    matrix.Nodes[turn.NodeIndex] = new Node(node, NodeState.Revealed);
-                    if (node.MineCount == 0)
+                case NodeOperation.Reveal:
+                    if (node.State == NodeState.Revealed)
                     {
-                        TriggerChainReaction(matrix, turn.NodeIndex);
+                        break;
                     }
-                }
-                return;
-            }
+                    if (node.HasMine)
+                    {
+                        RevealHiddenMines(matrix.Nodes);
+                    }
+                    else
+                    {
+                        matrix.Nodes[turn.NodeIndex] = new Node(node, NodeState.Revealed);
+                        if (node.MineCount == 0)
+                        {
+                            TriggerChainReaction(matrix, turn.NodeIndex);
+                        }
+                    }
+                    break;
+                case NodeOperation.Flag:
+                    if (node.State == NodeState.Flagged)
+                    {
+                        break;
+                    }
 
-            if (turn.Operation == NodeOperation.Flag)
-            {
-                matrix.Nodes[turn.NodeIndex] = new Node(node, NodeState.Flagged);
-                return;
-            }
-
-            if (turn.Operation == NodeOperation.RemoveFlag)
-            {
-                matrix.Nodes[turn.NodeIndex] = new Node(node, NodeState.Hidden);
-                return;
-            }
-
-            if (turn.Operation == NodeOperation.Chord)
-            {
-                Chord(matrix, turn.NodeIndex);
-                return;
+                    matrix.Nodes[turn.NodeIndex] = new Node(node, NodeState.Flagged);
+                    break;
+                case NodeOperation.RemoveFlag:
+                    matrix.Nodes[turn.NodeIndex] = new Node(node, NodeState.Hidden);
+                    break;
+                case NodeOperation.Chord:
+                    Chord(matrix, turn.NodeIndex);
+                    break;
+                default:
+                    Debug.Fail(turn.Operation.ToString());
+                    break;
             }
         }
         internal void Chord(Matrix<Node> matrix, int nodeIndex)
@@ -180,20 +173,17 @@ namespace MSEngine.Core
 
             Span<int> visitedIndexes = stackalloc int[matrix.Nodes.Length]; //  subtract nodes.MineCount() ?
             visitedIndexes.Fill(-1);
-            var enumerator = visitedIndexes.GetEnumerator();
-            enumerator.MoveNext();
 
-            VisitNode(matrix, nodeIndex, visitedIndexes, enumerator);
+            VisitNode(matrix, nodeIndex, visitedIndexes, visitedIndexes.GetEnumerator());
         }
 
-        // Recursively visits and reveals nodes
         internal static void VisitNode(Matrix<Node> matrix, int nodeIndex, ReadOnlySpan<int> visitedIndexes, Span<int>.Enumerator enumerator)
         {
             Debug.Assert(nodeIndex >= 0);
 
-            enumerator.Current = nodeIndex;
             var pass = enumerator.MoveNext();
             Debug.Assert(pass);
+            enumerator.Current = nodeIndex;
 
             Span<int> buffer = stackalloc int[MaxNodeEdges];
             buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
