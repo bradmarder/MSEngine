@@ -95,7 +95,7 @@ namespace MSEngine.Benchmarks
 
             foreach (var x in turns)
             {
-                Engine.Instance.ComputeBoard(matrix, x);
+                Engine.ComputeBoard(matrix, x);
             }
 
             Debug.Assert(matrix.Nodes.Status() == BoardStatus.Completed);

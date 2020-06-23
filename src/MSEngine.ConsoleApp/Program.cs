@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -20,14 +19,7 @@ namespace MSEngine.ConsoleApp
         static void Main(string[] args)
         {
             _watch = Stopwatch.StartNew();
-            //var a = new System.Numerics.BigInteger();
-            //Console.WriteLine("1 = " + BitOperations.Log2(1));
-            //Console.WriteLine("2 = " + BitOperations.Log2(2));
-            //Console.WriteLine("4 = " + BitOperations.Log2(4));
-            //Console.WriteLine("10 = " + BitOperations.Log2(10));
-            //Console.WriteLine("100 = " + BitOperations.Log2(100));
 
-            
             RunSimulations(100000);
             //DisplayScore();
         }
@@ -37,9 +29,9 @@ namespace MSEngine.ConsoleApp
             if (count < 1) { throw new ArgumentOutOfRangeException(nameof(count)); }
 
             ParallelEnumerable
-                .Range(0, count)
-                .WithDegreeOfParallelism(1)
-                .ForAll(_ => ExecuteGame());
+                .Range(0, Environment.ProcessorCount)
+                //.WithDegreeOfParallelism(1)
+                .ForAll(_ => Master(count / Environment.ProcessorCount));
         }
 
         private static void DisplayScore()
@@ -49,30 +41,52 @@ namespace MSEngine.ConsoleApp
             Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio}%  {_watch!.ElapsedMilliseconds}ms");
         }
 
-        private static void ExecuteGame()
+        private static void Master(int count)
         {
-            const int nodeCount = 8 * 8; const int columnCount = 8; const int firstTurnNodeIndex = 18; // 2:2 for beginner/int
-            //const int nodeCount = 30 * 16;const int columnCount = 30; const int firstTurnNodeIndex = 93; // 3:3 for expert
+            //const Difficulty difficulty = Difficulty.Beginner; const int nodeCount = 9 * 9; const int columnCount = 9; const int firstTurnNodeIndex = 20; // 2:2 for beginner/int
+            //const int nodeCount = 16 * 16; const int columnCount = 16; const int firstTurnNodeIndex = 49; // 2:2
+            const Difficulty difficulty = Difficulty.Expert; const int nodeCount = 30 * 16;const int columnCount = 30; const int firstTurnNodeIndex = 93; // 3:3 for expert
 
             Span<Node> nodes = stackalloc Node[nodeCount];
-            Span<Turn> turns = stackalloc Turn[nodeCount];
+            Span<Turn> turns = stackalloc Turn[nodeCount * 3];
             var matrix = new Matrix<Node>(nodes, columnCount);
 
+            while (count > 0)
+            {
+                ExecuteGame(matrix, turns, firstTurnNodeIndex, difficulty);
+                count--;
+            }
+        }
+
+        private static void ExecuteGame(Matrix<Node> matrix, Span<Turn> turns, int firstTurnNodeIndex, Difficulty difficulty)
+        {
             var iteration = 0;
 
             while (true)
             {
                 if (iteration == 0)
                 {
-                    Engine.Instance.FillBeginnerBoard(nodes);
+                    switch (difficulty)
+                    {
+                        case Difficulty.Beginner:
+                            Engine.FillBeginnerBoard(matrix.Nodes);
+                            break;
+                        case Difficulty.Intermediate:
+                            Engine.FillIntermediateBoard(matrix.Nodes);
+                            break;
+                        case Difficulty.Expert:
+                            Engine.FillExpertBoard(matrix.Nodes);
+                            break;
+                        default: throw new NotImplementedException();
+                    }
                     var turn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
 
                     // Technically, computing the board *before* the check is redundant here, since we can just
                     // inspect the node directly. We do this to maintain strict separation of clients
                     // We could place this ComputeBoard method after the node inspection for perf
-                    Engine.Instance.ComputeBoard(matrix, turn);
+                    Engine.ComputeBoard(matrix, turn);
 
-                    var node = nodes[turn.NodeIndex];
+                    var node = matrix.Nodes[turn.NodeIndex];
                     Debug.Assert(node.State == NodeState.Revealed);
                     if (node.HasMine || node.MineCount > 0)
                     {
@@ -88,27 +102,29 @@ namespace MSEngine.ConsoleApp
                     }
                     foreach (var turn in turns.Slice(0, turnCount))
                     {
-                        var node = nodes[turn.NodeIndex];
-                        Debug.Assert(node.HasMine ? turn.Operation == NodeOperation.Flag : turn.Operation == NodeOperation.Reveal);
-                        Engine.Instance.ComputeBoard(matrix, turn);
+                        var node = matrix.Nodes[turn.NodeIndex];
+                        if (node.HasMine)
+                        {
+                            Debug.Assert(turn.Operation == NodeOperation.Flag);
+                        }
+                        else
+                        {
+                            Debug.Assert(turn.Operation == NodeOperation.Reveal && node.State == NodeState.Hidden);
+                        }
+                    }
+                    foreach (var turn in turns.Slice(0, turnCount))
+                    {
+                        Engine.ComputeBoard(matrix, turn);
                     }
                     if (turnCount == 0)
                     {
-                        //Console.WriteLine(GetBoardAsciiArt(matrix));
-                        //Interlocked.Increment(ref _gamesPlayedCount);
-                        //break;
-                        Console.WriteLine("BOARD");
-                        Console.WriteLine(GetBoardAsciiArt(matrix));
-                        var turn = ProbabilitySolver.ComputeTurn(matrix);
-                        Console.WriteLine(turn);
                         Interlocked.Increment(ref _gamesPlayedCount);
                         break;
-                        //Engine.Instance.ComputeBoard(matrix, turn);
                     }
                 }
                 iteration++;
                 
-                var status = nodes.Status();
+                var status = matrix.Nodes.Status();
                 if (status == BoardStatus.Pending)
                 {
                     continue;
@@ -134,16 +150,13 @@ namespace MSEngine.ConsoleApp
         {
             var sb = new StringBuilder(matrix.Nodes.Length);
 
-            for (var i = 0; i < matrix.Nodes.Length; i++)
+            foreach (var row in matrix)
             {
-                var node = matrix.Nodes[i];
-                var nodeChar = GetNodeChar(node);
-                sb.Append(nodeChar);
-
-                if (i > 0 && (i + 1) % matrix.ColumnCount == 0) 
+                foreach (var node in row)
                 {
-                    sb.AppendLine();
+                    sb.Append(GetNodeChar(node));
                 }
+                sb.AppendLine();
             }
 
             return sb.ToString();

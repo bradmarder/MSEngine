@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
@@ -13,40 +12,56 @@ namespace MSEngine.Benchmarks
     {
         static void Main(string[] args)
         {
-            BenchmarkRunner.Run<RunSimulation>();
+            BenchmarkRunner.Run<StaticBeginnerGame>();
         }
     }
 
     [MemoryDiagnoser]
-    public class RunSimulation
+    public class RandomSimulation
     {
         [Benchmark]
-        public void Exec() => Play();
-
-        private static void Play()
+        public void Master()
         {
-            const int nodeCount = 8 * 8;const int columnCount = 8; const int firstTurnNodeIndex = 18; // 2:2 for beginner/int
+            const Difficulty difficulty = Difficulty.Beginner; const int nodeCount = 9 * 9; const int columnCount = 9; const int firstTurnNodeIndex = 20; // 2:2 for beginner/int
             //const int nodeCount = 30 * 16;const int columnCount = 30; const int firstTurnNodeIndex = 93; // 3:3 for expert
 
             Span<Node> nodes = stackalloc Node[nodeCount];
             Span<Turn> turns = stackalloc Turn[nodeCount];
             var matrix = new Matrix<Node>(nodes, columnCount);
 
-            var iteration = 0;
+            Beginner(matrix, turns, firstTurnNodeIndex, difficulty);
+        }
+
+        public void Beginner(Matrix<Node> matrix, Span<Turn> turns, int firstTurnNodeIndex, Difficulty difficulty)
+        {
+            bool isFirstIteration = true;
 
             while (true)
             {
-                if (iteration == 0)
+                if (isFirstIteration)
                 {
-                    Engine.Instance.FillBeginnerBoard(nodes);
+                    switch (difficulty)
+                    {
+                        case Difficulty.Beginner:
+                            Engine.FillBeginnerBoard(matrix.Nodes);
+                            break;
+                        case Difficulty.Intermediate:
+                            Engine.FillIntermediateBoard(matrix.Nodes);
+                            break;
+                        case Difficulty.Expert:
+                            Engine.FillExpertBoard(matrix.Nodes);
+                            break;
+                        default: throw new NotImplementedException();
+                    }
+
                     var turn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
 
                     // Technically, computing the board *before* the check is redundant here, since we can just
                     // inspect the node directly. We do this to maintain strict separation of clients
                     // We could place this ComputeBoard method after the node inspection for perf
-                    Engine.Instance.ComputeBoard(matrix, turn);
+                    Engine.ComputeBoard(matrix, turn);
 
-                    var node = nodes[turn.NodeIndex];
+                    var node = matrix.Nodes[turn.NodeIndex];
                     if (node.HasMine || node.MineCount > 0)
                     {
                         continue;
@@ -62,10 +77,10 @@ namespace MSEngine.Benchmarks
                     }
                     foreach (var turn in turns.Slice(0, turnCount))
                     {
-                        Engine.Instance.ComputeBoard(matrix, turn);
+                        Engine.ComputeBoard(matrix, turn);
                     }
                 }
-                iteration++;
+                isFirstIteration = false;
             }
         }
     }

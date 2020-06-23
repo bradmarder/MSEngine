@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace MSEngine.Core
 {
     public readonly struct Turn : IEquatable<Turn>
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Turn(int nodeIndex, NodeOperation operation)
         {
             Debug.Assert(nodeIndex >= 0);

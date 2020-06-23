@@ -128,7 +128,7 @@ namespace MSEngine.Tests
         {
             Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
             Span<Node> nodes = stackalloc Node[9];
-            Engine.Instance.FillCustomBoard(nodes, 0, 3);
+            Engine.FillCustomBoard(nodes, 0, 3);
 
             var actual = Utilities.AreNodesAdjacent(buffer, 9, 3, nodeIndexOne, nodeIndexTwo);
 

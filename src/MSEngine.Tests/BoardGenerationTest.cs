@@ -17,7 +17,7 @@ namespace MSEngine.Tests
             Span<int> mines = stackalloc int[expectedMineCount];
             mines.Scatter(nodes.Length);
 
-            Engine.Instance.FillCustomBoard(nodes, mines, 8);
+            Engine.FillCustomBoard(nodes, mines, 8);
 
             Assert.Equal(expectedMineCount, nodes.MineCount());
         }

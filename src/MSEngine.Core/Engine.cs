@@ -1,24 +1,33 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace MSEngine.Core
 {
-    public class Engine : IEngine
+    public static class Engine
     {
-        public static IEngine Instance { get; } = new Engine();
         public const byte MaxNodeEdges = 8;
 
-        public virtual void FillBeginnerBoard(Span<Node> nodes) => FillCustomBoard(nodes, 10, 9);
-        public virtual void FillIntermediateBoard(Span<Node> nodes) => FillCustomBoard(nodes, 40, 16);
-        public virtual void FillExpertBoard(Span<Node> nodes) => FillCustomBoard(nodes, 99, 30);
-        public virtual void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void FillBeginnerBoard(Span<Node> nodes) => FillCustomBoard(nodes, 10, 9);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void FillIntermediateBoard(Span<Node> nodes) => FillCustomBoard(nodes, 40, 16);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void FillExpertBoard(Span<Node> nodes) => FillCustomBoard(nodes, 99, 30);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns)
         {
             Span<int> mines = stackalloc int[mineCount];
             mines.Scatter(nodes.Length);
 
             FillCustomBoard(nodes, mines, columns);
         }
-        public virtual void FillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void FillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns)
         {
             Debug.Assert(columns > 0);
             Debug.Assert(nodes.Length > mines.Length);
@@ -35,7 +44,25 @@ namespace MSEngine.Core
             }
         }
 
-        public virtual void EnsureValidBoardConfiguration(Matrix<Node> matrix, Turn turn)
+        /// <summary>
+        /// Validates a board-turn configuration-operation.
+        /// Calling this method is optional - It's intended usage is only when building-testing a client
+        /// </summary>
+        /// <exception cref="InvalidGameStateException">
+        /// -Multiple nodes have matching coordinates
+        /// -Turns are not allowed if board status is completed/failed
+        /// -Turn has coordinates that are outside the board
+        /// -No more flags available
+        /// -Only chord operations are allowed on revealed nodes
+        /// -May not flag a node that is already flagged
+        /// -Impossible to remove flag from un-flagged node
+        /// -May only chord a revealed node
+        /// -May only chord a node that has adjacent mines
+        /// -May only chord a node when adjacent mine count equals adjacent node flag count
+        /// -May only chord a node that has hidden adjacent nodes
+        /// </exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void EnsureValidBoardConfiguration(Matrix<Node> matrix, Turn turn)
         {
             var nodes = matrix.Nodes;
             if (nodes.Status() == BoardStatus.Completed || nodes.Status() == BoardStatus.Failed)
@@ -95,9 +122,11 @@ namespace MSEngine.Core
                 }
             }
         }
-        public virtual void ComputeBoard(Matrix<Node> matrix, Turn turn)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ComputeBoard(Matrix<Node> matrix, Turn turn)
         {
-            var node = matrix.Nodes[turn.NodeIndex];
+            ref var node = ref matrix.Nodes[turn.NodeIndex];
 
             switch (turn.Operation)
             {
@@ -112,7 +141,7 @@ namespace MSEngine.Core
                     }
                     else
                     {
-                        matrix.Nodes[turn.NodeIndex] = new Node(node, NodeState.Revealed);
+                        node = new Node(node, NodeState.Revealed);
                         if (node.MineCount == 0)
                         {
                             TriggerChainReaction(matrix, turn.NodeIndex);
@@ -124,11 +153,10 @@ namespace MSEngine.Core
                     {
                         break;
                     }
-
-                    matrix.Nodes[turn.NodeIndex] = new Node(node, NodeState.Flagged);
+                    node = new Node(node, NodeState.Flagged);
                     break;
                 case NodeOperation.RemoveFlag:
-                    matrix.Nodes[turn.NodeIndex] = new Node(node, NodeState.Hidden);
+                    node = new Node(node, NodeState.Hidden);
                     break;
                 case NodeOperation.Chord:
                     Chord(matrix, turn.NodeIndex);
@@ -138,7 +166,9 @@ namespace MSEngine.Core
                     break;
             }
         }
-        internal void Chord(Matrix<Node> matrix, int nodeIndex)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static void Chord(Matrix<Node> matrix, int nodeIndex)
         {
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeIndex < matrix.Nodes.Length);
@@ -156,6 +186,7 @@ namespace MSEngine.Core
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void RevealHiddenMines(Span<Node> nodes)
         {
             foreach (ref var node in nodes)
@@ -167,6 +198,7 @@ namespace MSEngine.Core
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void TriggerChainReaction(Matrix<Node> matrix, int nodeIndex)
         {
             Debug.Assert(nodeIndex >= 0);
@@ -177,6 +209,7 @@ namespace MSEngine.Core
             VisitNode(matrix, nodeIndex, visitedIndexes, visitedIndexes.GetEnumerator());
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void VisitNode(Matrix<Node> matrix, int nodeIndex, ReadOnlySpan<int> visitedIndexes, Span<int>.Enumerator enumerator)
         {
             Debug.Assert(nodeIndex >= 0);
