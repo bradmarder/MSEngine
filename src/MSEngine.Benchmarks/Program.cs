@@ -12,7 +12,7 @@ namespace MSEngine.Benchmarks
     {
         static void Main(string[] args)
         {
-            BenchmarkRunner.Run<StaticBeginnerGame>();
+            BenchmarkRunner.Run<RandomSimulation>();
         }
     }
 
@@ -29,58 +29,40 @@ namespace MSEngine.Benchmarks
             Span<Turn> turns = stackalloc Turn[nodeCount];
             var matrix = new Matrix<Node>(nodes, columnCount);
 
-            Beginner(matrix, turns, firstTurnNodeIndex, difficulty);
+            Simulation(matrix, turns, firstTurnNodeIndex, difficulty);
         }
 
-        public void Beginner(Matrix<Node> matrix, Span<Turn> turns, int firstTurnNodeIndex, Difficulty difficulty)
+        public static void Simulation(Matrix<Node> matrix, Span<Turn> turns, int firstTurnNodeIndex, Difficulty difficulty)
         {
-            bool isFirstIteration = true;
+            switch (difficulty)
+            {
+                case Difficulty.Beginner:
+                    Engine.FillBeginnerBoard(matrix.Nodes, firstTurnNodeIndex);
+                    break;
+                case Difficulty.Intermediate:
+                    Engine.FillIntermediateBoard(matrix.Nodes, firstTurnNodeIndex);
+                    break;
+                case Difficulty.Expert:
+                    Engine.FillExpertBoard(matrix.Nodes, firstTurnNodeIndex);
+                    break;
+                default: throw new NotImplementedException();
+            }
+
+            var firstTurn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
+            Engine.ComputeBoard(matrix, firstTurn);
 
             while (true)
             {
-                if (isFirstIteration)
+                var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
+                if (turnCount == 0)
                 {
-                    switch (difficulty)
-                    {
-                        case Difficulty.Beginner:
-                            Engine.FillBeginnerBoard(matrix.Nodes);
-                            break;
-                        case Difficulty.Intermediate:
-                            Engine.FillIntermediateBoard(matrix.Nodes);
-                            break;
-                        case Difficulty.Expert:
-                            Engine.FillExpertBoard(matrix.Nodes);
-                            break;
-                        default: throw new NotImplementedException();
-                    }
-
-                    var turn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
-
-                    // Technically, computing the board *before* the check is redundant here, since we can just
-                    // inspect the node directly. We do this to maintain strict separation of clients
-                    // We could place this ComputeBoard method after the node inspection for perf
+                    turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
+                    if (turnCount == 0) { break; }
+                }
+                foreach (var turn in turns.Slice(0, turnCount))
+                {
                     Engine.ComputeBoard(matrix, turn);
-
-                    var node = matrix.Nodes[turn.NodeIndex];
-                    if (node.HasMine || node.MineCount > 0)
-                    {
-                        continue;
-                    }
                 }
-                else
-                {
-                    var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
-                    if (turnCount == 0)
-                    {
-                        turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
-                        if (turnCount == 0) { break; }
-                    }
-                    foreach (var turn in turns.Slice(0, turnCount))
-                    {
-                        Engine.ComputeBoard(matrix, turn);
-                    }
-                }
-                isFirstIteration = false;
             }
         }
     }

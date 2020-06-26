@@ -14,24 +14,25 @@ namespace MSEngine.ConsoleApp
         private static readonly object _lock = new object();
         private static int _wins = 0;
         private static int _gamesPlayedCount = 0;
-        private static Stopwatch? _watch;
+        private static Stopwatch _watch = Stopwatch.StartNew();
 
         static void Main(string[] args)
         {
-            _watch = Stopwatch.StartNew();
+            var difficulty = Enum.Parse<Difficulty>(args[0]);
+            var count = int.Parse(args[1]);
 
-            RunSimulations(100000);
+            RunSimulations(difficulty, count);
             //DisplayScore();
         }
 
-        private static void RunSimulations(int count)
+        private static void RunSimulations(Difficulty difficulty, int count)
         {
             if (count < 1) { throw new ArgumentOutOfRangeException(nameof(count)); }
 
             ParallelEnumerable
                 .Range(0, Environment.ProcessorCount)
                 //.WithDegreeOfParallelism(1)
-                .ForAll(_ => Master(count / Environment.ProcessorCount));
+                .ForAll(_ => Master(difficulty, count / Environment.ProcessorCount));
         }
 
         private static void DisplayScore()
@@ -41,89 +42,86 @@ namespace MSEngine.ConsoleApp
             Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio}%  {_watch!.ElapsedMilliseconds}ms");
         }
 
-        private static void Master(int count)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void Master(Difficulty difficulty, int count)
         {
-            //const Difficulty difficulty = Difficulty.Beginner; const int nodeCount = 9 * 9; const int columnCount = 9; const int firstTurnNodeIndex = 20; // 2:2 for beginner/int
-            //const int nodeCount = 16 * 16; const int columnCount = 16; const int firstTurnNodeIndex = 49; // 2:2
-            const Difficulty difficulty = Difficulty.Expert; const int nodeCount = 30 * 16;const int columnCount = 30; const int firstTurnNodeIndex = 93; // 3:3 for expert
+            var nodeCount = difficulty switch
+            {
+                Difficulty.Beginner => 81,
+                Difficulty.Intermediate => 16 * 16,
+                Difficulty.Expert => 30 * 16,
+                _ => throw new NotImplementedException()
+            };
+            var columnCount = difficulty switch
+            {
+                Difficulty.Beginner => 9,
+                Difficulty.Intermediate => 16,
+                Difficulty.Expert => 30,
+                _ => throw new NotImplementedException()
+            };
+            var firstTurnNodeIndex = difficulty switch
+            {
+                Difficulty.Beginner => 20,
+                Difficulty.Intermediate => 49,
+                Difficulty.Expert => 93,
+                _ => throw new NotImplementedException()
+            };
 
             Span<Node> nodes = stackalloc Node[nodeCount];
-            Span<Turn> turns = stackalloc Turn[nodeCount * 3];
+            Span<Turn> turns = stackalloc Turn[nodeCount];
             var matrix = new Matrix<Node>(nodes, columnCount);
 
             while (count > 0)
             {
-                ExecuteGame(matrix, turns, firstTurnNodeIndex, difficulty);
+                ApplyFirstTurn(matrix, firstTurnNodeIndex, difficulty);
+                ExecuteGame(matrix, turns);
                 count--;
             }
         }
 
-        private static void ExecuteGame(Matrix<Node> matrix, Span<Turn> turns, int firstTurnNodeIndex, Difficulty difficulty)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ApplyFirstTurn(Matrix<Node> matrix, int firstTurnNodeIndex, Difficulty difficulty)
         {
-            var iteration = 0;
+            switch (difficulty)
+            {
+                case Difficulty.Beginner:
+                    Engine.FillBeginnerBoard(matrix.Nodes, firstTurnNodeIndex);
+                    break;
+                case Difficulty.Intermediate:
+                    Engine.FillIntermediateBoard(matrix.Nodes, firstTurnNodeIndex);
+                    break;
+                case Difficulty.Expert:
+                    Engine.FillExpertBoard(matrix.Nodes, firstTurnNodeIndex);
+                    break;
+                default: throw new NotImplementedException();
+            }
+            var firstTurn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
+            Engine.ComputeBoard(matrix, firstTurn);
+        }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] 
+        private static void ExecuteGame(Matrix<Node> matrix, Span<Turn> turns)
+        {
             while (true)
             {
-                if (iteration == 0)
+                var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
+                if (turnCount == 0)
                 {
-                    switch (difficulty)
-                    {
-                        case Difficulty.Beginner:
-                            Engine.FillBeginnerBoard(matrix.Nodes);
-                            break;
-                        case Difficulty.Intermediate:
-                            Engine.FillIntermediateBoard(matrix.Nodes);
-                            break;
-                        case Difficulty.Expert:
-                            Engine.FillExpertBoard(matrix.Nodes);
-                            break;
-                        default: throw new NotImplementedException();
-                    }
-                    var turn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
-
-                    // Technically, computing the board *before* the check is redundant here, since we can just
-                    // inspect the node directly. We do this to maintain strict separation of clients
-                    // We could place this ComputeBoard method after the node inspection for perf
-                    Engine.ComputeBoard(matrix, turn);
-
-                    var node = matrix.Nodes[turn.NodeIndex];
-                    Debug.Assert(node.State == NodeState.Revealed);
-                    if (node.HasMine || node.MineCount > 0)
-                    {
-                        continue;
-                    }
+                    turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
                 }
-                else
-                {
-                    var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
-                    if (turnCount == 0)
-                    {
-                        turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
-                    }
-                    foreach (var turn in turns.Slice(0, turnCount))
-                    {
-                        var node = matrix.Nodes[turn.NodeIndex];
-                        if (node.HasMine)
-                        {
-                            Debug.Assert(turn.Operation == NodeOperation.Flag);
-                        }
-                        else
-                        {
-                            Debug.Assert(turn.Operation == NodeOperation.Reveal && node.State == NodeState.Hidden);
-                        }
-                    }
-                    foreach (var turn in turns.Slice(0, turnCount))
-                    {
-                        Engine.ComputeBoard(matrix, turn);
-                    }
-                    if (turnCount == 0)
-                    {
-                        Interlocked.Increment(ref _gamesPlayedCount);
-                        break;
-                    }
-                }
-                iteration++;
                 
+                foreach (var turn in turns.Slice(0, turnCount))
+                {
+                    Engine.ComputeBoard(matrix, turn);
+                }
+                if (turnCount == 0)
+                {
+                    Interlocked.Increment(ref _gamesPlayedCount);
+                    break;
+                }
+
+                ValidateTurns(matrix.Nodes, turns, turnCount);
+
                 var status = matrix.Nodes.Status();
                 if (status == BoardStatus.Pending)
                 {
@@ -143,6 +141,23 @@ namespace MSEngine.ConsoleApp
                 }
 
                 break;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ValidateTurns(ReadOnlySpan<Node> nodes, Span<Turn> turns, int turnCount)
+        {
+            foreach (var turn in turns.Slice(0, turnCount))
+            {
+                var node = nodes[turn.NodeIndex];
+                if (node.HasMine)
+                {
+                    Debug.Assert(turn.Operation == NodeOperation.Flag);
+                }
+                else
+                {
+                    Debug.Assert(turn.Operation == NodeOperation.Reveal && node.State == NodeState.Hidden);
+                }
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
@@ -29,7 +30,9 @@ namespace MSEngine.Core
             Debug.Assert(index >= 0);
             Debug.Assert(index < nodeCount);
             Debug.Assert(columnCount > 0);
-            Debug.Assert(indexes.Length == Engine.MaxNodeEdges);
+
+            // the "Engine.MaxNodeEdges + 1" case if for scattering mines and including the safe node
+            Debug.Assert(indexes.Length == Engine.MaxNodeEdges || indexes.Length == Engine.MaxNodeEdges + 1);
 
             var isTop = index < columnCount;
             var isLeftSide = index % columnCount == 0;
@@ -80,10 +83,34 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Scatter(this Span<int> mines, int nodeCount)
+        public static void ScatterMines(Span<int> mines, int nodeCount)
         {
             Debug.Assert(nodeCount > 0);
             Debug.Assert(nodeCount >= mines.Length);
+
+            ScatterMines(mines, nodeCount, ReadOnlySpan<int>.Empty);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ScatterMines(Span<int> mines, int nodeCount, int safeNodeIndex, int columnCount)
+        {
+            Debug.Assert(nodeCount > 0);
+            Debug.Assert(nodeCount >= mines.Length);
+            Debug.Assert(safeNodeIndex >= 0);
+            Debug.Assert(columnCount > 0);
+
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges + 1];
+            buffer.FillAdjacentNodeIndexes(nodeCount, safeNodeIndex, columnCount);
+            buffer[Engine.MaxNodeEdges] = safeNodeIndex;
+
+            ScatterMines(mines, nodeCount, buffer);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void ScatterMines(Span<int> mines, int nodeCount, ReadOnlySpan<int> ignore)
+        {
+            Debug.Assert(nodeCount > 0);
+            Debug.Assert(nodeCount >= mines.Length + ignore.ToArray().Count(x => x != -1));
 
             // we must fill the buffer with -1 because the default (0) is a valid index
             mines.Fill(-1);
@@ -95,7 +122,7 @@ namespace MSEngine.Core
                 do
                 {
                     m = RandomNumberGenerator.GetInt32(nodeCount);
-                } while (mines.Contains(m));
+                } while (mines.Contains(m) || ignore.Contains(m));
 
                 x = m;
             }

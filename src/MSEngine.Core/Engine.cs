@@ -9,19 +9,27 @@ namespace MSEngine.Core
         public const byte MaxNodeEdges = 8;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FillBeginnerBoard(Span<Node> nodes) => FillCustomBoard(nodes, 10, 9);
+        public static void FillBeginnerBoard(Span<Node> nodes, int? safeNodeIndex = null) => FillCustomBoard(nodes, 10, 9, safeNodeIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FillIntermediateBoard(Span<Node> nodes) => FillCustomBoard(nodes, 40, 16);
+        public static void FillIntermediateBoard(Span<Node> nodes, int? safeNodeIndex = null) => FillCustomBoard(nodes, 40, 16, safeNodeIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FillExpertBoard(Span<Node> nodes) => FillCustomBoard(nodes, 99, 30);
+        public static void FillExpertBoard(Span<Node> nodes, int? safeNodeIndex = null) => FillCustomBoard(nodes, 99, 30, safeNodeIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns)
+        public static void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns, int? safeNodeIndex = null)
         {
             Span<int> mines = stackalloc int[mineCount];
-            mines.Scatter(nodes.Length);
+
+            if (safeNodeIndex is null)
+            {
+                Utilities.ScatterMines(mines, nodes.Length);
+            }
+            else
+            {
+                Utilities.ScatterMines(mines, nodes.Length, (int)safeNodeIndex, columns);
+            }
 
             FillCustomBoard(nodes, mines, columns);
         }

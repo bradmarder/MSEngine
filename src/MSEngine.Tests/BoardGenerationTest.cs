@@ -11,15 +11,32 @@ namespace MSEngine.Tests
         [InlineData(0)]
         [InlineData(1)]
         [InlineData(63)]
-        public void Expected_mine_count_equals_actual_mine_count(byte expectedMineCount)
+        public void ExpectedMineCountEqualsActualMineCount(byte expectedMineCount)
         {
             Span<Node> nodes = stackalloc Node[64];
             Span<int> mines = stackalloc int[expectedMineCount];
-            mines.Scatter(nodes.Length);
+            Utilities.ScatterMines(mines, nodes.Length);
 
             Engine.FillCustomBoard(nodes, mines, 8);
 
             Assert.Equal(expectedMineCount, nodes.MineCount());
+        }
+
+        // 5x5 grid, always use max amount of mines
+        // we test the 4 corners and the center
+        [Theory]
+        [InlineData(0, 21, new int[] { 0, 1, 5, 6 })]
+        [InlineData(4, 21, new int[] { 3, 4, 8, 9 })]
+        [InlineData(20, 21, new int[] { 15, 16, 20, 21 })]
+        [InlineData(24, 21, new int[] { 18, 19, 23, 24 })]
+        [InlineData(12, 16, new int[] { 6, 7, 8, 11, 12, 13, 16, 17, 18 })]
+        public void ScatteringMinesConsidersSafeNodeIndex(int safeNodeIndex, int mineCount, int[] safeNodeIndexes)
+        {
+            Span<int> mines = stackalloc int[mineCount];
+
+            Utilities.ScatterMines(mines, 25, safeNodeIndex, 5);
+
+            Assert.True(mines.IndexOfAny(safeNodeIndexes) == -1);
         }
 
         [Theory]
@@ -29,7 +46,7 @@ namespace MSEngine.Tests
         {
             Span<int> mines = stackalloc int[mineCount];
 
-            mines.Scatter(mineCount);
+            Utilities.ScatterMines(mines, mineCount);
 
             var distinctCount = mines.ToArray().Distinct().Count();
             Assert.Equal(mineCount, distinctCount);
@@ -42,7 +59,7 @@ namespace MSEngine.Tests
         {
             Span<int> mines = stackalloc int[nodeCount];
 
-            mines.Scatter(nodeCount);
+            Utilities.ScatterMines(mines, nodeCount);
 
             foreach (var i in mines)
             {
@@ -60,8 +77,8 @@ namespace MSEngine.Tests
             Span<int> setOne = stackalloc int[10];
             Span<int> setTwo = stackalloc int[10];
 
-            setOne.Scatter(100);
-            setTwo.Scatter(100);
+            Utilities.ScatterMines(setOne, 100);
+            Utilities.ScatterMines(setTwo, 100);
 
             Assert.NotEqual(
                 setOne.ToArray().OrderBy(x => x),
