@@ -213,12 +213,13 @@ namespace MSEngine.Core
 
             Span<int> visitedIndexes = stackalloc int[matrix.Nodes.Length]; //  subtract nodes.MineCount() ?
             visitedIndexes.Fill(-1);
+            var enumerator = visitedIndexes.GetEnumerator();
 
-            VisitNode(matrix, nodeIndex, visitedIndexes, visitedIndexes.GetEnumerator());
+            VisitNode(matrix, nodeIndex, visitedIndexes, ref enumerator);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void VisitNode(Matrix<Node> matrix, int nodeIndex, ReadOnlySpan<int> visitedIndexes, Span<int>.Enumerator enumerator)
+        internal static void VisitNode(Matrix<Node> matrix, int nodeIndex, ReadOnlySpan<int> visitedIndexes, ref Span<int>.Enumerator enumerator)
         {
             Debug.Assert(nodeIndex >= 0);
 
@@ -244,7 +245,7 @@ namespace MSEngine.Core
 
                 if (node.MineCount == 0 && !visitedIndexes.Contains(i))
                 {
-                    VisitNode(matrix, i, visitedIndexes, enumerator);
+                    VisitNode(matrix, i, visitedIndexes, ref enumerator);
                 }
             }
         }
