@@ -14,10 +14,8 @@ namespace MSEngine.Tests
         public void ExpectedMineCountEqualsActualMineCount(byte expectedMineCount)
         {
             Span<Node> nodes = stackalloc Node[64];
-            Span<int> mines = stackalloc int[expectedMineCount];
-            Utilities.ScatterMines(mines, nodes.Length);
 
-            Engine.FillCustomBoard(nodes, mines, 8);
+            Engine.FillCustomBoard(nodes, expectedMineCount, 8);
 
             Assert.Equal(expectedMineCount, nodes.MineCount());
         }

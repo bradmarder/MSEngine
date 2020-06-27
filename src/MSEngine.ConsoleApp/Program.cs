@@ -12,9 +12,9 @@ namespace MSEngine.ConsoleApp
     class Program
     {
         private static readonly object _lock = new object();
+        private static readonly Stopwatch _watch = Stopwatch.StartNew();
         private static int _wins = 0;
         private static int _gamesPlayedCount = 0;
-        private static Stopwatch _watch = Stopwatch.StartNew();
 
         static void Main(string[] args)
         {
@@ -22,7 +22,7 @@ namespace MSEngine.ConsoleApp
             var count = int.Parse(args[1]);
 
             RunSimulations(difficulty, count);
-            //DisplayScore();
+            DisplayScore();
         }
 
         private static void RunSimulations(Difficulty difficulty, int count)
@@ -37,9 +37,12 @@ namespace MSEngine.ConsoleApp
 
         private static void DisplayScore()
         {
-            var winRatio = ((decimal)_wins / _gamesPlayedCount) * 100;
-            Console.SetCursorPosition(0, Console.CursorTop);
-            Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio}%  {_watch!.ElapsedMilliseconds}ms");
+            lock (_lock)
+            {
+                var winRatio = ((decimal)_wins / _gamesPlayedCount) * 100;
+                Console.SetCursorPosition(0, Console.CursorTop);
+                Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio:.0000}%  {_watch.ElapsedMilliseconds}ms");
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

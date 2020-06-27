@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using Xunit;
 using MSEngine.Core;
 
@@ -8,26 +7,14 @@ namespace MSEngine.Tests
     public class BoardComputationTest
     {
         [Fact]
-        public void Zero_mine_count_with_one_reveal_completes_board()
+        public void AllMinesRevealedIfMineExplodes()
         {
-            Span<Node> nodes = stackalloc Node[8 * 8];
-            var matrix = new Matrix<Node>(nodes, 8);
-            Engine.FillCustomBoard(nodes, Span<int>.Empty, 8);
-            var turn = new Turn(0, NodeOperation.Reveal);
-            Engine.ComputeBoard(matrix, turn);
-
-            Assert.Equal(BoardStatus.Completed, nodes.Status());
-        }
-
-        [Fact]
-        public void All_mines_revealed_if_game_fails()
-        {
-            Span<Node> nodes = stackalloc Node[2 * 2];
+            Span<Node> nodes = stackalloc Node[4];
             Span<int> mines = stackalloc int[] { 0 };
             var matrix = new Matrix<Node>(nodes, 2);
-
             Engine.FillCustomBoard(nodes, mines, 2);
             var turn = new Turn(0, NodeOperation.Reveal);
+
             Engine.ComputeBoard(matrix, turn);
 
             Assert.Equal(BoardStatus.Failed, nodes.Status());
@@ -37,106 +24,82 @@ namespace MSEngine.Tests
             }
         }
 
+        // 2x2 matrix, node 0 has mine and is flagged, node 1 is revealed.
+        // Chording Node 1 should reveal Node 2/3
         [Fact]
-        public void Flagging_node_only_flags_single_node()
+        public void ChordingNodeRevealsAdjacentNodes()
         {
-            Span<Node> nodes = stackalloc Node[2 * 2];
-            Span<int> mines = stackalloc int[] { 0 };
-            var matrix = new Matrix<Node>(nodes, 2);
-            Engine.FillCustomBoard(nodes, mines, 2);
-            var board = nodes.ToArray();
-            var turn = new Turn(0, NodeOperation.Flag);
-            Engine.ComputeBoard(matrix, turn);
-            var node = nodes[0];
-            var everyOtherNodeHasNotChanged = nodes.ToArray().All(x => x.Equals(node) || board.Contains(x));
-
-            Assert.Equal(NodeState.Flagged, node.State);
-            Assert.True(everyOtherNodeHasNotChanged);
-        }
-
-        [Fact]
-        public void Revealing_node_with_no_mine_and_has_adjacent_mines_only_reveals_single_node()
-        {
-            Span<Node> nodes = stackalloc Node[2 * 2];
-            Span<int> mines = stackalloc int[] { 0 };
-            var matrix = new Matrix<Node>(nodes, 2);
-            Engine.FillCustomBoard(nodes, mines, 2);
-            var board = nodes.ToArray();
-            var turn = new Turn(0, NodeOperation.Reveal);
-            Engine.ComputeBoard(matrix, turn);
-            var node = nodes[0];
-            var everyOtherNodeHasNotChanged = nodes.ToArray().All(x => x.Equals(node) || board.Contains(x));
-
-            Assert.Equal(NodeState.Revealed, node.State);
-            Assert.True(everyOtherNodeHasNotChanged);
-        }
-
-        [Fact]
-        public void Chording_node_reveals_surrounding_nodes()
-        {
-            Span<Node> nodes = stackalloc Node[2 * 2];
-            ReadOnlySpan<int> mines = stackalloc int[] { 0 };
-            var matrix = new Matrix<Node>(nodes, 2);
-            Engine.FillCustomBoard(nodes, mines, 2);
-            Span<Turn> turns = stackalloc Turn[3]
+            Span<Node> nodes = stackalloc Node[]
             {
-                new Turn(0, NodeOperation.Flag),
-                new Turn(3, NodeOperation.Reveal),
-                new Turn(3, NodeOperation.Chord)
+                new Node(0, true, 0, NodeState.Flagged),
+                new Node(1, false, 1, NodeState.Revealed),
+                new Node(2, false, 1, NodeState.Hidden),
+                new Node(3, false, 1, NodeState.Hidden)
             };
-            foreach (var x in turns)
-            {
-                Engine.ComputeBoard(matrix, x);
-            }
+            var matrix = new Matrix<Node>(nodes, 2);
+            var turn = new Turn(1, NodeOperation.Chord);
 
-            // 0,0 has the only mine, so we flag it
-            // revealing 1,1 shows a 1
-            // chording 1,1 should reveal 0,1 and 1,0 - thus completing the board
-            Assert.Equal(BoardStatus.Completed, nodes.Status());
-        }
-
-        [Fact]
-        public void Revealing_node_without_mine_and_zero_adjacent_mines_triggers_chain_reaction()
-        {
-            var mineIndex = 0;
-            Span<Node> nodes = stackalloc Node[3 * 3];
-            Span<int> mines = stackalloc int[] { mineIndex };
-            var matrix = new Matrix<Node>(nodes, 3);
-            Engine.FillCustomBoard(nodes, mines, 3);
-            var node = nodes[8];
-            var turn = new Turn(8, NodeOperation.Reveal);
             Engine.ComputeBoard(matrix, turn);
 
-            Assert.False(node.HasMine);
-            Assert.Equal(0, node.MineCount);
-            Assert.True(nodes[0].HasMine);
+            Assert.Equal(NodeState.Revealed, nodes[2].State);
+            Assert.Equal(NodeState.Revealed, nodes[3].State);
+        }
 
-            for (var i = 0; i < nodes.Length; i++)
+        // 3x3 matrix with zero mines, revealing the middle node should reveal entire matrix
+        [Fact]
+        public void RevealingNodeWithoutMineAndZeroAdjacentMinesTriggersChainReaction()
+        {
+            Span<Node> nodes = stackalloc Node[9];
+            var matrix = new Matrix<Node>(nodes, 3);
+            Engine.FillCustomBoard(nodes, Span<int>.Empty, 3);
+            var turn = new Turn(4, NodeOperation.Reveal);
+
+            Engine.ComputeBoard(matrix, turn);
+
+            foreach (var node in nodes)
             {
-                if (i == mineIndex) { continue; }
-                Assert.Equal(NodeState.Revealed, nodes[i].State);
+                Assert.Equal(NodeState.Revealed, node.State);
             }
         }
 
+        // 3x1 matrix, middle node is flagged (and does not have a mine), end nodes are hidden
         [Fact]
-        public void Chain_reaction_is_blocked_by_false_flag()
+        public void ChainReactionIsBlockedByFalseFlag()
         {
-            Span<Node> nodes = stackalloc Node[5 * 1];
-            var matrix = new Matrix<Node>(nodes, 5);
-            Engine.FillCustomBoard(nodes, Span<int>.Empty, 5);
-            Engine.ComputeBoard(matrix, new Turn(2, NodeOperation.Flag));
-            Engine.ComputeBoard(matrix, new Turn(4, NodeOperation.Reveal));
-
-            for (var i = 0; i < nodes.Length; i++)
+            Span<Node> nodes = stackalloc Node[]
             {
-                var nodeState = nodes[i].State;
-                var expectedState = i == 2 ? NodeState.Flagged
-                    : i < 2 ? NodeState.Hidden
-                    : NodeState.Revealed;
+                new Node(0, false, 0, NodeState.Hidden),
+                new Node(1, false, 0, NodeState.Flagged),
+                new Node(2, false, 0, NodeState.Hidden)
+            };
+            var matrix = new Matrix<Node>(nodes, 3);
+            var turn = new Turn(0, NodeOperation.Reveal);
 
-                Assert.Equal(expectedState, nodeState);
-            }
-            Assert.Equal(BoardStatus.Pending, nodes.Status());
+            Engine.ComputeBoard(matrix, turn);
+
+            Assert.Equal(NodeState.Revealed, nodes[0].State);
+            Assert.Equal(NodeState.Flagged, nodes[1].State);
+            Assert.Equal(NodeState.Hidden, nodes[2].State);
+        }
+
+        // 3x1 matrix, middle node is already revealed, end nodes are hidden
+        [Fact]
+        public void ChainReactionIsNotBlockedByRevealedNode()
+        {
+            Span<Node> nodes = stackalloc Node[]
+            {
+                new Node(0, false, 0, NodeState.Hidden),
+                new Node(1, false, 0, NodeState.Revealed),
+                new Node(2, false, 0, NodeState.Hidden)
+            };
+            var matrix = new Matrix<Node>(nodes, 3);
+            var turn = new Turn(0, NodeOperation.Reveal);
+
+            Engine.ComputeBoard(matrix, turn);
+
+            Assert.Equal(NodeState.Revealed, nodes[0].State);
+            Assert.Equal(NodeState.Revealed, nodes[1].State);
+            Assert.Equal(NodeState.Revealed, nodes[2].State);
         }
     }
 }
