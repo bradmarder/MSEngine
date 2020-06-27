@@ -35,13 +35,22 @@ namespace MSEngine.ConsoleApp
                 .ForAll(_ => Master(difficulty, count / Environment.ProcessorCount));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void DisplayScore()
         {
-            lock (_lock)
+            var x = _gamesPlayedCount;
+            var y = _wins;
+
+            // we only update the score every 1000 games(because doing so within a lock is expensive, and so are console commands)
+            if (x % 1000 == 0)
             {
-                var winRatio = ((decimal)_wins / _gamesPlayedCount) * 100;
-                Console.SetCursorPosition(0, Console.CursorTop);
-                Console.Write($"{_wins} of {_gamesPlayedCount} | {winRatio:.0000}%  {_watch.ElapsedMilliseconds}ms");
+                var winRatio = ((decimal)y / x) * 100;
+
+                lock (_lock)
+                {
+                    Console.SetCursorPosition(0, Console.CursorTop);
+                    Console.Write($"{y} of {x} | {winRatio:.0000}%  {_watch.ElapsedMilliseconds}ms");
+                }
             }
         }
 
@@ -78,6 +87,7 @@ namespace MSEngine.ConsoleApp
             {
                 ApplyFirstTurn(matrix, firstTurnNodeIndex, difficulty);
                 ExecuteGame(matrix, turns);
+                DisplayScore();
                 count--;
             }
         }
@@ -102,7 +112,7 @@ namespace MSEngine.ConsoleApp
             Engine.ComputeBoard(matrix, firstTurn);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)] 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void ExecuteGame(Matrix<Node> matrix, Span<Turn> turns)
         {
             while (true)
@@ -112,7 +122,7 @@ namespace MSEngine.ConsoleApp
                 {
                     turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
                 }
-                
+
                 foreach (var turn in turns.Slice(0, turnCount))
                 {
                     Engine.ComputeBoard(matrix, turn);
@@ -135,12 +145,6 @@ namespace MSEngine.ConsoleApp
                 if (status == BoardStatus.Completed)
                 {
                     Interlocked.Increment(ref _wins);
-                }
-
-                // we only update the score every 10000 games(because doing so within a lock is expensive, and so are console commands)
-                if (_gamesPlayedCount % 1000 == 0)
-                {
-                    DisplayScore();
                 }
 
                 break;
