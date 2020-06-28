@@ -20,10 +20,37 @@ namespace MSEngine.Benchmarks
     public class RandomSimulation
     {
         [Benchmark]
-        public void Master()
+        public void Beginner() => PrepareMatrix(Difficulty.Beginner);
+
+        [Benchmark]
+        public void Intermediate() => PrepareMatrix(Difficulty.Intermediate);
+
+        [Benchmark]
+        public void Expert() => PrepareMatrix(Difficulty.Expert);
+
+        public static void PrepareMatrix(Difficulty difficulty)
         {
-            const Difficulty difficulty = Difficulty.Beginner; const int nodeCount = 9 * 9; const int columnCount = 9; const int firstTurnNodeIndex = 20; // 2:2 for beginner/int
-            //const int nodeCount = 30 * 16;const int columnCount = 30; const int firstTurnNodeIndex = 93; // 3:3 for expert
+            var nodeCount = difficulty switch
+            {
+                Difficulty.Beginner => 81,
+                Difficulty.Intermediate => 16 * 16,
+                Difficulty.Expert => 30 * 16,
+                _ => throw new NotImplementedException()
+            };
+            var columnCount = difficulty switch
+            {
+                Difficulty.Beginner => 9,
+                Difficulty.Intermediate => 16,
+                Difficulty.Expert => 30,
+                _ => throw new NotImplementedException()
+            };
+            var firstTurnNodeIndex = difficulty switch
+            {
+                Difficulty.Beginner => 20,
+                Difficulty.Intermediate => 49,
+                Difficulty.Expert => 93,
+                _ => throw new NotImplementedException()
+            };
 
             Span<Node> nodes = stackalloc Node[nodeCount];
             Span<Turn> turns = stackalloc Turn[nodeCount];
