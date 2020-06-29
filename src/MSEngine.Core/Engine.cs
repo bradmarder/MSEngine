@@ -41,12 +41,10 @@ namespace MSEngine.Core
             Debug.Assert(nodes.Length > mines.Length);
             Debug.Assert(nodes.Length % columns == 0);
 
-            Span<int> buffer = stackalloc int[MaxNodeEdges];
-
             for (var i = 0; i < nodes.Length; i++)
             {
                 var hasMine = mines.Contains(i);
-                var mineCount = Utilities.GetAdjacentMineCount(mines, buffer, i, nodes.Length, columns);
+                var mineCount = Utilities.GetAdjacentMineCount(mines, i, nodes.Length, columns);
                 
                 nodes[i] = new Node(i, hasMine, mineCount);
             }
@@ -108,13 +106,10 @@ namespace MSEngine.Core
 
                 var nodeAdjacentFlagCount = 0;
                 var nodeAdjacentHiddenCount = 0;
-                Span<int> adjacentIndexes = stackalloc int[MaxNodeEdges];
-                adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, turn.NodeIndex, matrix.ColumnCount);
+                var buffer = Utilities.GetAdjacentNodeIndexes(turn.NodeIndex, matrix);
 
-                foreach (var i in adjacentIndexes)
+                foreach (var i in buffer)
                 {
-                    if (i == -1) { continue; }
-
                     var adjacentNode = nodes[i];
                     if (adjacentNode.State == NodeState.Flagged) { nodeAdjacentFlagCount++; }
                     if (adjacentNode.State == NodeState.Hidden) { nodeAdjacentHiddenCount++; }
@@ -181,12 +176,10 @@ namespace MSEngine.Core
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeIndex < matrix.Nodes.Length);
 
-            Span<int> buffer = stackalloc int[MaxNodeEdges];
-            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
+            var buffer = Utilities.GetAdjacentNodeIndexes(nodeIndex, matrix);
 
             foreach (var i in buffer)
             {
-                if (i == -1) { continue; }
                 if (matrix.Nodes[i].State != NodeState.Hidden) { continue; }
 
                 var turn = new Turn(i, NodeOperation.Reveal);
@@ -227,13 +220,10 @@ namespace MSEngine.Core
             Debug.Assert(pass);
             enumerator.Current = nodeIndex;
 
-            Span<int> buffer = stackalloc int[MaxNodeEdges];
-            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
+            var buffer = Utilities.GetAdjacentNodeIndexes(nodeIndex, matrix);
 
             foreach (var i in buffer)
             {
-                if (i == -1) { continue; }
-
                 ref var node = ref matrix.Nodes[i];
 
                 if (node.State == NodeState.Flagged) { continue; }

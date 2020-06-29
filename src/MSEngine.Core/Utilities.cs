@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -8,28 +9,52 @@ namespace MSEngine.Core
 {
     public static class Utilities
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool AreNodesAdjacent(Span<int> buffer, int nodeCount, int columnCount, int nodeIndexOne, int nodeIndexTwo)
+        private static readonly IReadOnlyDictionary<int, int[]> _keyToAdjacentNodeIndexesMap;
+
+        static Utilities()
         {
-            Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
+            var map = new Dictionary<int, int[]>(81);
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
+
+            //beginner
+            for (var i = 0; i < 81; i++)
+            {
+                buffer.FillBuffer(81, i, 9);
+
+                var values = buffer.ToArray().Where(x => x >= 0).ToArray();
+                map.Add(i, values);
+            }
+
+            //intermediate
+
+            //expert
+
+            _keyToAdjacentNodeIndexesMap = map;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool AreNodesAdjacent(int nodeCount, int columnCount, int nodeIndexOne, int nodeIndexTwo)
+        {
             Debug.Assert(nodeCount > 0);
             Debug.Assert(columnCount > 0);
             Debug.Assert(nodeIndexOne >= 0);
             Debug.Assert(nodeIndexTwo >= 0);
             Debug.Assert(nodeIndexOne != nodeIndexTwo);
+            Debug.Assert(nodeCount > nodeIndexOne);
+            Debug.Assert(nodeCount > nodeIndexTwo);
+            Debug.Assert(nodeCount % columnCount == 0);
 
-            buffer.FillAdjacentNodeIndexes(nodeCount, nodeIndexOne, columnCount);
-
-            return buffer.Contains(nodeIndexTwo);
+            return GetAdjacentNodeIndexes(nodeIndexOne, nodeCount, columnCount)
+                .Contains(nodeIndexTwo);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FillAdjacentNodeIndexes(this Span<int> indexes, int nodeCount, int index, int columnCount)
+        private static void FillBuffer(this Span<int> indexes, int nodeCount, int index, int columnCount)
         {
             Debug.Assert(nodeCount > 0);
             Debug.Assert(index >= 0);
             Debug.Assert(index < nodeCount);
             Debug.Assert(columnCount > 0);
+            Debug.Assert(nodeCount % columnCount == 0);
 
             // the "Engine.MaxNodeEdges + 1" case if for scattering mines and including the safe node
             Debug.Assert(indexes.Length == Engine.MaxNodeEdges || indexes.Length == Engine.MaxNodeEdges + 1);
@@ -83,6 +108,31 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int[] GetAdjacentNodeIndexes(int nodeIndex, Matrix<Node> matrix)
+            => GetAdjacentNodeIndexes(nodeIndex, matrix.Nodes.Length, matrix.ColumnCount);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int[] GetAdjacentNodeIndexes(int nodeIndex, int nodeCount, int columnCount)
+        {
+            Debug.Assert(nodeIndex >= 0);
+            Debug.Assert(nodeIndex < nodeCount);
+            Debug.Assert(nodeCount % columnCount == 0);
+
+            if (nodeCount == 81 && columnCount == 9)
+            {
+                return _keyToAdjacentNodeIndexesMap[nodeIndex];
+            }
+
+            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
+            buffer.FillBuffer(nodeCount, nodeIndex, columnCount);
+
+            return buffer
+                .ToArray()
+                .Where(x => x >= 0)
+                .ToArray();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ScatterMines(Span<int> mines, int nodeCount)
         {
             Debug.Assert(nodeCount > 0);
@@ -99,9 +149,10 @@ namespace MSEngine.Core
             Debug.Assert(safeNodeIndex >= 0);
             Debug.Assert(columnCount > 0);
 
-            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges + 1];
-            buffer.FillAdjacentNodeIndexes(nodeCount, safeNodeIndex, columnCount);
-            buffer[Engine.MaxNodeEdges] = safeNodeIndex;
+            var items = GetAdjacentNodeIndexes(safeNodeIndex, nodeCount, columnCount);
+            Span<int> buffer = stackalloc int[items.Length + 1];
+            items.CopyTo(buffer);
+            buffer[items.Length] = safeNodeIndex;
 
             ScatterMines(mines, nodeCount, buffer);
         }
@@ -110,7 +161,8 @@ namespace MSEngine.Core
         public static void ScatterMines(Span<int> mines, int nodeCount, ReadOnlySpan<int> ignore)
         {
             Debug.Assert(nodeCount > 0);
-            Debug.Assert(nodeCount >= mines.Length + ignore.ToArray().Count(x => x != -1));
+            Debug.Assert(nodeCount >= mines.Length);
+            // Debug.Assert(nodeCount >= mines.Length + ignore.Length);
 
             // we must fill the buffer with -1 because the default (0) is a valid index
             mines.Fill(-1);
@@ -129,20 +181,19 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static byte GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columns)
+        internal static byte GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, int nodeIndex, int nodeCount, int columns)
         {
-            Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeCount > 0);
             Debug.Assert(columns > 0);
             Debug.Assert(nodeIndex < nodeCount);
 
-            buffer.FillAdjacentNodeIndexes(nodeCount, nodeIndex, columns);
+            var buffer = GetAdjacentNodeIndexes(nodeIndex, nodeCount, columns);
 
             byte n = 0;
             foreach (var i in buffer)
             {
-                if (i != -1 && mineIndexes.Contains(i))
+                if (mineIndexes.Contains(i))
                 {
                     n++;
                 }
@@ -151,18 +202,17 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte GetAdjacentFlaggedNodeCount(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
+        public static byte GetAdjacentFlaggedNodeCount(Matrix<Node> matrix, int nodeIndex)
         {
             Debug.Assert(matrix.Nodes.Length > nodeIndex);
-            Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
             Debug.Assert(nodeIndex >= 0);
 
-            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
+            var buffer = GetAdjacentNodeIndexes(nodeIndex, matrix);
 
             byte n = 0;
             foreach (var i in buffer)
             {
-                if (i != -1 && matrix.Nodes[i].State == NodeState.Flagged)
+                if (matrix.Nodes[i].State == NodeState.Flagged)
                 {
                     n++;
                 }
@@ -171,17 +221,16 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool HasHiddenAdjacentNodes(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
+        public static bool HasHiddenAdjacentNodes(Matrix<Node> matrix, int nodeIndex)
         {
             Debug.Assert(matrix.Nodes.Length > nodeIndex);
             Debug.Assert(nodeIndex >= 0);
-            Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
 
-            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
+            var buffer = GetAdjacentNodeIndexes(nodeIndex, matrix);
 
             foreach (var x in buffer)
             {
-                if (x != -1 && matrix.Nodes[x].State == NodeState.Hidden)
+                if (matrix.Nodes[x].State == NodeState.Hidden)
                 {
                     return true;
                 }

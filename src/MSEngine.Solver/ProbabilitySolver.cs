@@ -13,7 +13,6 @@ namespace MSEngine.Solver
             var nodes = nodeMatrix.Nodes;
             Debug.Assert(nodes.Length > 0);
 
-            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
             Span<int> revealedAMCNodes = stackalloc int[nodes.Length];
             Span<int> hiddenNodes = stackalloc int[nodes.Length];
 
@@ -22,7 +21,7 @@ namespace MSEngine.Solver
             var revealedAMCNodeCount = 0;
             foreach (var node in nodes)
             {
-                if (node.State == NodeState.Revealed && node.MineCount > 0 && Utilities.HasHiddenAdjacentNodes(nodeMatrix, buffer, node.Index))
+                if (node.State == NodeState.Revealed && node.MineCount > 0 && Utilities.HasHiddenAdjacentNodes(nodeMatrix, node.Index))
                 {
                     revealedAMCNodes[revealedAMCNodeCount] = node.Index;
                     revealedAMCNodeCount++;
@@ -42,12 +41,10 @@ namespace MSEngine.Solver
                 if (node.State != NodeState.Hidden) { continue; }
 
                 var hasAHC = false;
-                buffer.FillAdjacentNodeIndexes(nodes.Length, node.Index, nodeMatrix.ColumnCount);
+                var buffer = Utilities.GetAdjacentNodeIndexes(node.Index, nodeMatrix);
 
                 foreach (var x in buffer)
                 {
-                    if (x == -1) { continue; }
-
                     var adjNode = nodes[x];
                     if (adjNode.State == NodeState.Revealed && adjNode.MineCount > 0)
                     {
@@ -90,9 +87,9 @@ namespace MSEngine.Solver
                 {
                     if (column == columns - 1)
                     {
-                        augments[row] = nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex);
+                        augments[row] = nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, nodeIndex);
                     }
-                    if (Utilities.AreNodesAdjacent(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]))
+                    if (Utilities.AreNodesAdjacent(nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]))
                     {
                         vectors[row] |= (ulong)1 << column;
                     }
@@ -113,8 +110,8 @@ namespace MSEngine.Solver
                     var isAugmentedColumn = column == columns;
 
                     matrix[row, column] = isAugmentedColumn
-                        ? nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex)
-                        : Utilities.AreNodesAdjacent(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]) ? 1 : 0;
+                        ? nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, nodeIndex)
+                        : Utilities.AreNodesAdjacent(nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]) ? 1 : 0;
                 }
             }
 
