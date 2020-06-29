@@ -9,27 +9,44 @@ namespace MSEngine.Core
 {
     public static class Utilities
     {
-        private static readonly IReadOnlyDictionary<int, int[]> _keyToAdjacentNodeIndexesMap;
+        private static readonly IReadOnlyDictionary<int, int[]> _beginnerKeyToAdjacentNodeIndexesMap;
+        private static readonly IReadOnlyDictionary<int, int[]> _intermediateKeyToAdjacentNodeIndexesMap;
+        private static readonly IReadOnlyDictionary<int, int[]> _expertKeyToAdjacentNodeIndexesMap;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int[] ExcludeNegativeIndexes(this Span<int> buffer)
+            => buffer
+                .ToArray()
+                .Where(x => x >= 0)
+                .ToArray();
 
         static Utilities()
         {
-            var map = new Dictionary<int, int[]>(81);
             Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 
-            //beginner
+            var beginnerMap = new Dictionary<int, int[]>(81);
             for (var i = 0; i < 81; i++)
             {
                 buffer.FillBuffer(81, i, 9);
-
-                var values = buffer.ToArray().Where(x => x >= 0).ToArray();
-                map.Add(i, values);
+                beginnerMap.Add(i, buffer.ExcludeNegativeIndexes());
             }
+            _beginnerKeyToAdjacentNodeIndexesMap = beginnerMap;
 
-            //intermediate
+            var intermediateMap = new Dictionary<int, int[]>(256);
+            for (var i = 0; i < 256; i++)
+            {
+                buffer.FillBuffer(256, i, 16);
+                intermediateMap.Add(i, buffer.ExcludeNegativeIndexes());
+            }
+            _intermediateKeyToAdjacentNodeIndexesMap = intermediateMap;
 
-            //expert
-
-            _keyToAdjacentNodeIndexesMap = map;
+            var expertMap = new Dictionary<int, int[]>(480);
+            for (var i = 0; i < 480; i++)
+            {
+                buffer.FillBuffer(480, i, 30);
+                expertMap.Add(i, buffer.ExcludeNegativeIndexes());
+            }
+            _expertKeyToAdjacentNodeIndexesMap = expertMap;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -48,6 +65,7 @@ namespace MSEngine.Core
                 .Contains(nodeIndexTwo);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void FillBuffer(this Span<int> indexes, int nodeCount, int index, int columnCount)
         {
             Debug.Assert(nodeCount > 0);
@@ -120,16 +138,21 @@ namespace MSEngine.Core
 
             if (nodeCount == 81 && columnCount == 9)
             {
-                return _keyToAdjacentNodeIndexesMap[nodeIndex];
+                return _beginnerKeyToAdjacentNodeIndexesMap[nodeIndex];
+            }
+            if (nodeCount == 256 && columnCount == 16)
+            {
+                return _intermediateKeyToAdjacentNodeIndexesMap[nodeIndex];
+            }
+            if (nodeCount == 480 && columnCount == 30)
+            {
+                return _expertKeyToAdjacentNodeIndexesMap[nodeIndex];
             }
 
             Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
             buffer.FillBuffer(nodeCount, nodeIndex, columnCount);
 
-            return buffer
-                .ToArray()
-                .Where(x => x >= 0)
-                .ToArray();
+            return buffer.ExcludeNegativeIndexes();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -138,7 +161,7 @@ namespace MSEngine.Core
             Debug.Assert(nodeCount > 0);
             Debug.Assert(nodeCount >= mines.Length);
 
-            ScatterMines(mines, nodeCount, ReadOnlySpan<int>.Empty);
+            ScatterMines(mines, nodeCount, ReadOnlySpan<int>.Empty, -1);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -150,15 +173,12 @@ namespace MSEngine.Core
             Debug.Assert(columnCount > 0);
 
             var items = GetAdjacentNodeIndexes(safeNodeIndex, nodeCount, columnCount);
-            Span<int> buffer = stackalloc int[items.Length + 1];
-            items.CopyTo(buffer);
-            buffer[items.Length] = safeNodeIndex;
 
-            ScatterMines(mines, nodeCount, buffer);
+            ScatterMines(mines, nodeCount, items, safeNodeIndex);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ScatterMines(Span<int> mines, int nodeCount, ReadOnlySpan<int> ignore)
+        public static void ScatterMines(Span<int> mines, int nodeCount, ReadOnlySpan<int> ignore, int safeNodeIndex)
         {
             Debug.Assert(nodeCount > 0);
             Debug.Assert(nodeCount >= mines.Length);
@@ -174,7 +194,7 @@ namespace MSEngine.Core
                 do
                 {
                     m = RandomNumberGenerator.GetInt32(nodeCount);
-                } while (mines.Contains(m) || ignore.Contains(m));
+                } while (mines.Contains(m) || ignore.Contains(m) || m == safeNodeIndex);
 
                 x = m;
             }

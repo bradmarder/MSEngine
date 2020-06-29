@@ -37,6 +37,7 @@ namespace MSEngine.Solver
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ReduceMatrix(
             Matrix<Node> nodeMatrix,
             Matrix<float> matrix,
@@ -117,6 +118,7 @@ namespace MSEngine.Solver
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int CalculateTurns(Matrix<Node> nodeMatrix, Span<Turn> turns, bool useAllHiddenNodes)
         {
             var nodes = nodeMatrix.Nodes;
@@ -188,8 +190,9 @@ namespace MSEngine.Solver
             var rows = revealedAMCNodeCount + (useAllHiddenNodes ? 1 : 0);
             var columns = ahcCount + 1;
 
-            Span<float> nodeBuffer = stackalloc float[rows * columns];
-            var matrix = new Matrix<float>(nodeBuffer, columns);
+            var matrix = new Matrix<float>(
+                stackalloc float[rows * columns],
+                columns);
 
             for (var row = 0; row < rows; row++)
             {

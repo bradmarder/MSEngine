@@ -123,17 +123,18 @@ namespace MSEngine.ConsoleApp
                     turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
                 }
 
-                foreach (var turn in turns.Slice(0, turnCount))
-                {
-                    Engine.ComputeBoard(matrix, turn);
-                }
                 if (turnCount == 0)
                 {
                     Interlocked.Increment(ref _gamesPlayedCount);
                     break;
                 }
 
-                ValidateTurns(matrix.Nodes, turns, turnCount);
+                ValidateTurns(matrix.Nodes, turns, turnCount, matrix);
+
+                foreach (var turn in turns.Slice(0, turnCount))
+                {
+                    Engine.ComputeBoard(matrix, turn);
+                }
 
                 var status = matrix.Nodes.Status();
                 if (status == BoardStatus.Pending)
@@ -152,7 +153,7 @@ namespace MSEngine.ConsoleApp
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ValidateTurns(ReadOnlySpan<Node> nodes, Span<Turn> turns, int turnCount)
+        private static void ValidateTurns(ReadOnlySpan<Node> nodes, Span<Turn> turns, int turnCount, Matrix<Node> matrix)
         {
             foreach (var turn in turns.Slice(0, turnCount))
             {
