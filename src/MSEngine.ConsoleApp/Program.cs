@@ -123,10 +123,6 @@ namespace MSEngine.ConsoleApp
                     turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
                 }
 
-                foreach (var turn in turns.Slice(0, turnCount))
-                {
-                    Engine.ComputeBoard(matrix, turn);
-                }
                 if (turnCount == 0)
                 {
                     Interlocked.Increment(ref _gamesPlayedCount);
@@ -134,6 +130,11 @@ namespace MSEngine.ConsoleApp
                 }
 
                 ValidateTurns(matrix.Nodes, turns, turnCount);
+
+                foreach (var turn in turns.Slice(0, turnCount))
+                {
+                    Engine.ComputeBoard(matrix, turn);
+                }
 
                 var status = matrix.Nodes.Status();
                 if (status == BoardStatus.Pending)

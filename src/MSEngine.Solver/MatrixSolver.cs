@@ -192,9 +192,9 @@ namespace MSEngine.Solver
 
             var rows = revealedAMCNodeCount + (useAllHiddenNodes ? 1 : 0);
             var columns = ahcCount + 1;
-
-            Span<float> nodeBuffer = stackalloc float[rows * columns];
-            var matrix = new Matrix<float>(nodeBuffer, columns);
+            var matrix = new Matrix<float>(
+                stackalloc float[rows * columns],
+                columns);
 
             for (var row = 0; row < rows; row++)
             {

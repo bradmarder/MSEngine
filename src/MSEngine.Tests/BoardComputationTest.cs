@@ -62,7 +62,7 @@ namespace MSEngine.Tests
             }
         }
 
-        // 3x1 matrix, middle node is flagged (and does not have a mine), end nodes are hidden
+        // 1x3 matrix, middle node is flagged (and does not have a mine), end nodes are hidden
         [Fact]
         public void ChainReactionIsBlockedByFalseFlag()
         {
@@ -82,7 +82,7 @@ namespace MSEngine.Tests
             Assert.Equal(NodeState.Hidden, nodes[2].State);
         }
 
-        // 3x1 matrix, middle node is already revealed, end nodes are hidden
+        // 1x3 matrix, middle node is already revealed, end nodes are hidden
         [Fact]
         public void ChainReactionIsNotBlockedByRevealedNode()
         {
@@ -97,9 +97,10 @@ namespace MSEngine.Tests
 
             Engine.ComputeBoard(matrix, turn);
 
-            Assert.Equal(NodeState.Revealed, nodes[0].State);
-            Assert.Equal(NodeState.Revealed, nodes[1].State);
-            Assert.Equal(NodeState.Revealed, nodes[2].State);
+            foreach (var node in nodes)
+            {
+                Assert.Equal(NodeState.Revealed, node.State);
+            }
         }
     }
 }

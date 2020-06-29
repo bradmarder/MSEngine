@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
@@ -17,6 +16,9 @@ namespace MSEngine.Core
             Debug.Assert(nodeIndexOne >= 0);
             Debug.Assert(nodeIndexTwo >= 0);
             Debug.Assert(nodeIndexOne != nodeIndexTwo);
+            Debug.Assert(nodeCount > nodeIndexOne);
+            Debug.Assert(nodeCount > nodeIndexTwo);
+            Debug.Assert(nodeCount % columnCount == 0);
 
             buffer.FillAdjacentNodeIndexes(nodeCount, nodeIndexOne, columnCount);
 
@@ -30,6 +32,7 @@ namespace MSEngine.Core
             Debug.Assert(index >= 0);
             Debug.Assert(index < nodeCount);
             Debug.Assert(columnCount > 0);
+            Debug.Assert(nodeCount % columnCount == 0);
 
             // the "Engine.MaxNodeEdges + 1" case if for scattering mines and including the safe node
             Debug.Assert(indexes.Length == Engine.MaxNodeEdges || indexes.Length == Engine.MaxNodeEdges + 1);
@@ -98,6 +101,7 @@ namespace MSEngine.Core
             Debug.Assert(nodeCount >= mines.Length);
             Debug.Assert(safeNodeIndex >= 0);
             Debug.Assert(columnCount > 0);
+            Debug.Assert(nodeCount % columnCount == 0);
 
             Span<int> buffer = stackalloc int[Engine.MaxNodeEdges + 1];
             buffer.FillAdjacentNodeIndexes(nodeCount, safeNodeIndex, columnCount);
@@ -110,7 +114,7 @@ namespace MSEngine.Core
         public static void ScatterMines(Span<int> mines, int nodeCount, ReadOnlySpan<int> ignore)
         {
             Debug.Assert(nodeCount > 0);
-            Debug.Assert(nodeCount >= mines.Length + ignore.ToArray().Count(x => x != -1));
+            Debug.Assert(nodeCount >= mines.Length);
 
             // we must fill the buffer with -1 because the default (0) is a valid index
             mines.Fill(-1);
@@ -129,15 +133,16 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static byte GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columns)
+        internal static byte GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columnCount)
         {
             Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeCount > 0);
-            Debug.Assert(columns > 0);
+            Debug.Assert(columnCount > 0);
             Debug.Assert(nodeIndex < nodeCount);
+            Debug.Assert(nodeCount % columnCount == 0);
 
-            buffer.FillAdjacentNodeIndexes(nodeCount, nodeIndex, columns);
+            buffer.FillAdjacentNodeIndexes(nodeCount, nodeIndex, columnCount);
 
             byte n = 0;
             foreach (var i in buffer)
