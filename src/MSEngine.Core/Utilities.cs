@@ -42,14 +42,11 @@ namespace MSEngine.Core
             var isRightSide = (index + 1) % columnCount == 0;
             var isBottom = index >= nodeCount - columnCount;
 
-            indexes.Fill(-1);
-
-            // ignore indexes 0/1/2 if isTop is true
-            // ignore indexes 0/3/5 isLeftSide is true
-            // ignore indexes 2/4/7 isRightSide is true
-            // ignore indexes 5/6/7 if isBottom is true
-
-            if (!isTop)
+            if (isTop)
+            {
+                indexes[0] = indexes[1] = indexes[2] = -1;
+            }
+            else
             {
                 var val = index - columnCount;
                 if (!isLeftSide)
@@ -62,15 +59,30 @@ namespace MSEngine.Core
                     indexes[2] = val + 1;
                 }
             }
-            if (!isLeftSide)
+
+            if (isLeftSide)
+            {
+                indexes[0] = indexes[3] = indexes[5] = -1;
+            }
+            else
             {
                 indexes[3] = index - 1;
             }
-            if (!isRightSide)
+
+            if (isRightSide)
+            {
+                indexes[2] = indexes[4] = indexes[7] = -1;
+            }
+            else
             {
                 indexes[4] = index + 1;
             }
-            if (!isBottom)
+
+            if (isBottom)
+            {
+                indexes[5] = indexes[6] = indexes[7] = -1;
+            }
+            else
             {
                 var val = index + columnCount;
                 if (!isLeftSide)
