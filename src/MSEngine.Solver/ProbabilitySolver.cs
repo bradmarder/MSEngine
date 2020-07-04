@@ -42,7 +42,7 @@ namespace MSEngine.Solver
                 if (node.State != NodeState.Hidden) { continue; }
 
                 var hasAHC = false;
-                buffer.FillAdjacentNodeIndexes(nodes.Length, node.Index, nodeMatrix.ColumnCount);
+                buffer.FillAdjacentNodeIndexes(nodeMatrix, node.Index);
 
                 foreach (var x in buffer)
                 {

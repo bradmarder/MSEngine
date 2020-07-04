@@ -26,6 +26,10 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void FillAdjacentNodeIndexes(this Span<int> indexes, Matrix<Node> matrix, int index)
+            => indexes.FillAdjacentNodeIndexes(matrix.Nodes.Length, index, matrix.ColumnCount);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void FillAdjacentNodeIndexes(this Span<int> indexes, int nodeCount, int index, int columnCount)
         {
             Debug.Assert(nodeCount > 0);
@@ -37,9 +41,10 @@ namespace MSEngine.Core
             // the "Engine.MaxNodeEdges + 1" case if for scattering mines and including the safe node
             Debug.Assert(indexes.Length == Engine.MaxNodeEdges || indexes.Length == Engine.MaxNodeEdges + 1);
 
+            var indexPlusOne = index + 1;
             var isTop = index < columnCount;
             var isLeftSide = index % columnCount == 0;
-            var isRightSide = (index + 1) % columnCount == 0;
+            var isRightSide = indexPlusOne % columnCount == 0;
             var isBottom = index >= nodeCount - columnCount;
 
             if (isTop)
@@ -75,7 +80,7 @@ namespace MSEngine.Core
             }
             else
             {
-                indexes[4] = index + 1;
+                indexes[4] = indexPlusOne;
             }
 
             if (isBottom)
@@ -174,7 +179,7 @@ namespace MSEngine.Core
             Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
             Debug.Assert(nodeIndex >= 0);
 
-            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
+            buffer.FillAdjacentNodeIndexes(matrix, nodeIndex);
 
             byte n = 0;
             foreach (var i in buffer)
@@ -194,7 +199,7 @@ namespace MSEngine.Core
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
 
-            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
+            buffer.FillAdjacentNodeIndexes(matrix, nodeIndex);
 
             foreach (var x in buffer)
             {

@@ -92,7 +92,7 @@ namespace MSEngine.Solver
                                 ZeroifyColumn(matrix, c);
                                 hasReduced = true;
 
-                                buffer.FillAdjacentNodeIndexes(nodeMatrix.Nodes.Length, index, nodeMatrix.ColumnCount);
+                                buffer.FillAdjacentNodeIndexes(nodeMatrix, index);
 
                                 foreach (var i in buffer)
                                 {
@@ -162,7 +162,7 @@ namespace MSEngine.Solver
                 var hasAHC = false;
                 if (!useAllHiddenNodes)
                 {
-                    buffer.FillAdjacentNodeIndexes(nodes.Length, node.Index, nodeMatrix.ColumnCount);
+                    buffer.FillAdjacentNodeIndexes(nodeMatrix, node.Index);
 
                     foreach (var x in buffer)
                     {

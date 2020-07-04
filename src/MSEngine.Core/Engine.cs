@@ -109,7 +109,7 @@ namespace MSEngine.Core
                 var nodeAdjacentFlagCount = 0;
                 var nodeAdjacentHiddenCount = 0;
                 Span<int> adjacentIndexes = stackalloc int[MaxNodeEdges];
-                adjacentIndexes.FillAdjacentNodeIndexes(nodes.Length, turn.NodeIndex, matrix.ColumnCount);
+                adjacentIndexes.FillAdjacentNodeIndexes(matrix, turn.NodeIndex);
 
                 foreach (var i in adjacentIndexes)
                 {
@@ -182,7 +182,7 @@ namespace MSEngine.Core
             Debug.Assert(nodeIndex < matrix.Nodes.Length);
 
             Span<int> buffer = stackalloc int[MaxNodeEdges];
-            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
+            buffer.FillAdjacentNodeIndexes(matrix, nodeIndex);
 
             foreach (var i in buffer)
             {
@@ -222,13 +222,14 @@ namespace MSEngine.Core
         internal static void VisitNode(Matrix<Node> matrix, int nodeIndex, ReadOnlySpan<int> visitedIndexes, ref Span<int>.Enumerator enumerator)
         {
             Debug.Assert(nodeIndex >= 0);
+            Debug.Assert(nodeIndex < matrix.Nodes.Length);
 
             var pass = enumerator.MoveNext();
             Debug.Assert(pass);
             enumerator.Current = nodeIndex;
 
             Span<int> buffer = stackalloc int[MaxNodeEdges];
-            buffer.FillAdjacentNodeIndexes(matrix.Nodes.Length, nodeIndex, matrix.ColumnCount);
+            buffer.FillAdjacentNodeIndexes(matrix, nodeIndex);
 
             foreach (var i in buffer)
             {
