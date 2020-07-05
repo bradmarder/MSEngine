@@ -64,7 +64,7 @@ namespace MSEngine.ConsoleApp
                 Difficulty.Expert => 30 * 16,
                 _ => throw new NotImplementedException()
             };
-            var columnCount = difficulty switch
+            byte columnCount = difficulty switch
             {
                 Difficulty.Beginner => 9,
                 Difficulty.Intermediate => 16,
@@ -78,42 +78,41 @@ namespace MSEngine.ConsoleApp
                 Difficulty.Expert => 93,
                 _ => throw new NotImplementedException()
             };
+            var mineCount = difficulty switch
+            {
+                Difficulty.Beginner => 10,
+                Difficulty.Intermediate => 40,
+                Difficulty.Expert => 99,
+                _ => throw new NotImplementedException()
+            };
 
             Span<Node> nodes = stackalloc Node[nodeCount];
             Span<Turn> turns = stackalloc Turn[nodeCount];
+            Span<int> mines = stackalloc int[mineCount];
+            Span<int> visitedIndexes = stackalloc int[nodeCount - mineCount];
+
             var matrix = new Matrix<Node>(nodes, columnCount);
 
             while (count > 0)
             {
-                ApplyFirstTurn(matrix, firstTurnNodeIndex, difficulty);
-                ExecuteGame(matrix, turns);
+                ApplyFirstTurn(matrix, mines, columnCount, firstTurnNodeIndex, visitedIndexes);
+                ExecuteGame(matrix, turns, visitedIndexes);
                 DisplayScore();
                 count--;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ApplyFirstTurn(Matrix<Node> matrix, int firstTurnNodeIndex, Difficulty difficulty)
+        private static void ApplyFirstTurn(Matrix<Node> matrix, Span<int> mines, byte columnCount, int firstTurnNodeIndex, Span<int> visitedIndexes)
         {
-            switch (difficulty)
-            {
-                case Difficulty.Beginner:
-                    Engine.FillBeginnerBoard(matrix.Nodes, firstTurnNodeIndex);
-                    break;
-                case Difficulty.Intermediate:
-                    Engine.FillIntermediateBoard(matrix.Nodes, firstTurnNodeIndex);
-                    break;
-                case Difficulty.Expert:
-                    Engine.FillExpertBoard(matrix.Nodes, firstTurnNodeIndex);
-                    break;
-                default: throw new NotImplementedException();
-            }
             var firstTurn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
-            Engine.ComputeBoard(matrix, firstTurn);
+
+            Engine.FillCustomBoard(matrix, mines, columnCount, firstTurnNodeIndex);
+            Engine.ComputeBoard(matrix, firstTurn, visitedIndexes);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ExecuteGame(Matrix<Node> matrix, Span<Turn> turns)
+        private static void ExecuteGame(Matrix<Node> matrix, Span<Turn> turns, Span<int> visitedIndexes)
         {
             while (true)
             {
@@ -133,20 +132,16 @@ namespace MSEngine.ConsoleApp
 
                 foreach (var turn in turns.Slice(0, turnCount))
                 {
-                    Engine.ComputeBoard(matrix, turn);
+                    Engine.ComputeBoard(matrix, turn, visitedIndexes);
                 }
 
-                var status = matrix.Nodes.Status();
-                if (status == BoardStatus.Pending)
+                if (!matrix.Nodes.IsComplete())
                 {
                     continue;
                 }
 
                 Interlocked.Increment(ref _gamesPlayedCount);
-                if (status == BoardStatus.Completed)
-                {
-                    Interlocked.Increment(ref _wins);
-                }
+                Interlocked.Increment(ref _wins);
 
                 break;
             }

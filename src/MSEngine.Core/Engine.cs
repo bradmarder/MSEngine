@@ -8,47 +8,38 @@ namespace MSEngine.Core
     {
         public const byte MaxNodeEdges = 8;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FillBeginnerBoard(Span<Node> nodes, int? safeNodeIndex = null) => FillCustomBoard(nodes, 10, 9, safeNodeIndex);
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public static void FillBeginnerBoard(Span<Node> nodes, Span<int> mines, int? safeNodeIndex = null)
+        //    => FillCustomBoard(nodes, mines, 9, safeNodeIndex);
+
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public static void FillIntermediateBoard(Span<Node> nodes, Span<int> mines, int? safeNodeIndex = null)
+        //    => FillCustomBoard(nodes, mines, 16, safeNodeIndex);
+
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public static void FillExpertBoard(Span<Node> nodes, Span<int> mines, int? safeNodeIndex = null)
+        //    => FillCustomBoard(nodes, mines, 30, safeNodeIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FillIntermediateBoard(Span<Node> nodes, int? safeNodeIndex = null) => FillCustomBoard(nodes, 40, 16, safeNodeIndex);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FillExpertBoard(Span<Node> nodes, int? safeNodeIndex = null) => FillCustomBoard(nodes, 99, 30, safeNodeIndex);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FillCustomBoard(Span<Node> nodes, int mineCount, byte columns, int? safeNodeIndex = null)
+        public static void FillCustomBoard(Matrix<Node> matrix, Span<int> mines, byte columns, int? safeNodeIndex = null)
         {
-            Span<int> mines = stackalloc int[mineCount];
-
             if (safeNodeIndex is null)
             {
-                Utilities.ScatterMines(mines, nodes.Length);
+                Utilities.ScatterMines(mines, matrix.Nodes.Length);
             }
             else
             {
-                Utilities.ScatterMines(mines, nodes.Length, (int)safeNodeIndex, columns);
+                Utilities.ScatterMines(mines, matrix.Nodes.Length, (int)safeNodeIndex, columns);
             }
-
-            FillCustomBoard(nodes, mines, columns);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FillCustomBoard(Span<Node> nodes, ReadOnlySpan<int> mines, byte columns)
-        {
-            Debug.Assert(columns > 0);
-            Debug.Assert(nodes.Length > mines.Length);
-            Debug.Assert(nodes.Length % columns == 0);
 
             Span<int> buffer = stackalloc int[MaxNodeEdges];
 
-            for (var i = 0; i < nodes.Length; i++)
+            for (var i = 0; i < matrix.Nodes.Length; i++)
             {
                 var hasMine = mines.Contains(i);
-                var mineCount = Utilities.GetAdjacentMineCount(mines, buffer, i, nodes.Length, columns);
-                
-                nodes[i] = new Node(i, hasMine, mineCount);
+                var mineCount = hasMine ? byte.MinValue : Utilities.GetAdjacentMineCount(mines, i, matrix, buffer);
+
+                matrix.Nodes[i] = new Node(i, hasMine, mineCount);
             }
         }
 
@@ -132,7 +123,7 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ComputeBoard(Matrix<Node> matrix, Turn turn)
+        public static void ComputeBoard(Matrix<Node> matrix, Turn turn, Span<int> visitedIndexes)
         {
             ref var node = ref matrix.Nodes[turn.NodeIndex];
 
@@ -152,7 +143,7 @@ namespace MSEngine.Core
                         node = new Node(node, NodeState.Revealed);
                         if (node.MineCount == 0)
                         {
-                            TriggerChainReaction(matrix, turn.NodeIndex);
+                            TriggerChainReaction(matrix, turn.NodeIndex, visitedIndexes);
                         }
                     }
                     break;
@@ -167,7 +158,7 @@ namespace MSEngine.Core
                     node = new Node(node, NodeState.Hidden);
                     break;
                 case NodeOperation.Chord:
-                    Chord(matrix, turn.NodeIndex);
+                    Chord(matrix, turn.NodeIndex, visitedIndexes);
                     break;
                 default:
                     Debug.Fail(turn.Operation.ToString());
@@ -176,7 +167,7 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void Chord(Matrix<Node> matrix, int nodeIndex)
+        internal static void Chord(Matrix<Node> matrix, int nodeIndex, Span<int> visitedIndexes)
         {
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeIndex < matrix.Nodes.Length);
@@ -190,7 +181,7 @@ namespace MSEngine.Core
                 if (matrix.Nodes[i].State != NodeState.Hidden) { continue; }
 
                 var turn = new Turn(i, NodeOperation.Reveal);
-                ComputeBoard(matrix, turn);
+                ComputeBoard(matrix, turn, visitedIndexes);
             }
         }
 
@@ -207,11 +198,10 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void TriggerChainReaction(Matrix<Node> matrix, int nodeIndex)
+        internal static void TriggerChainReaction(Matrix<Node> matrix, int nodeIndex, Span<int> visitedIndexes)
         {
             Debug.Assert(nodeIndex >= 0);
 
-            Span<int> visitedIndexes = stackalloc int[matrix.Nodes.Length]; //  subtract nodes.MineCount() ?
             visitedIndexes.Fill(-1);
             var enumerator = visitedIndexes.GetEnumerator();
 

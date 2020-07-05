@@ -26,6 +26,17 @@ namespace MSEngine.Core
             }
             return complete ? BoardStatus.Completed : BoardStatus.Pending;
         }
+        public static bool IsComplete(this Span<Node> nodes)
+        {
+            foreach (var node in nodes)
+            {
+                if (!node.HasMine && node.State != NodeState.Revealed)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
         public static int FlagsAvailable(this ReadOnlySpan<Node> nodes) => nodes.MineCount() - nodes.FlaggedNodesCount();
         public static int MineCount(this ReadOnlySpan<Node> nodes)
         {

@@ -150,21 +150,17 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static byte GetAdjacentMineCount(ReadOnlySpan<int> mineIndexes, Span<int> buffer, int nodeIndex, int nodeCount, int columnCount)
+        internal static byte GetAdjacentMineCount(ReadOnlySpan<int> mines, int nodeIndex, Matrix<Node> matrix, Span<int> buffer)
         {
-            Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
             Debug.Assert(nodeIndex >= 0);
-            Debug.Assert(nodeCount > 0);
-            Debug.Assert(columnCount > 0);
-            Debug.Assert(nodeIndex < nodeCount);
-            Debug.Assert(nodeCount % columnCount == 0);
+            Debug.Assert(nodeIndex < matrix.Nodes.Length);
 
-            buffer.FillAdjacentNodeIndexes(nodeCount, nodeIndex, columnCount);
+            buffer.FillAdjacentNodeIndexes(matrix, nodeIndex);
 
             byte n = 0;
             foreach (var i in buffer)
             {
-                if (i != -1 && mineIndexes.Contains(i))
+                if (i != -1 && mines.Contains(i))
                 {
                     n++;
                 }
