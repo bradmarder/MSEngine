@@ -21,7 +21,7 @@ namespace MSEngine.Core
         //    => FillCustomBoard(nodes, mines, 30, safeNodeIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FillCustomBoard(in Matrix<Node> matrix, Span<int> mines, byte columns, int? safeNodeIndex = null)
+        public static void FillCustomBoard(in Matrix<Node> matrix, Span<int> mines, int? safeNodeIndex = null)
         {
             if (safeNodeIndex is null)
             {
@@ -29,7 +29,7 @@ namespace MSEngine.Core
             }
             else
             {
-                Utilities.ScatterMines(mines, matrix.Nodes.Length, (int)safeNodeIndex, columns);
+                Utilities.ScatterMines(mines, matrix.Nodes.Length, (int)safeNodeIndex, matrix.ColumnCount);
             }
 
             Span<int> buffer = stackalloc int[MaxNodeEdges];

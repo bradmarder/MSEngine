@@ -43,8 +43,9 @@ namespace MSEngine.Tests
         {
             Span<int> mines = stackalloc int[] { 0, 2, 6, 8 };
             Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
+            var matrix = new Matrix<Node>(stackalloc Node[9], 3);
 
-            var actualMineCount = Utilities.GetAdjacentMineCount(mines, buffer, nodeIndex, 9, 3);
+            var actualMineCount = Utilities.GetAdjacentMineCount(mines, nodeIndex, matrix, buffer);
 
             Assert.Equal(expectedMineCount, actualMineCount);
         }
@@ -128,7 +129,8 @@ namespace MSEngine.Tests
         {
             Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
             Span<Node> nodes = stackalloc Node[9];
-            Engine.FillCustomBoard(nodes, 0, 3);
+            var matrix = new Matrix<Node>(stackalloc Node[9], 3);
+            Engine.FillCustomBoard(matrix, Span<int>.Empty);
 
             var actual = Utilities.AreNodesAdjacent(buffer, 9, 3, nodeIndexOne, nodeIndexTwo);
 

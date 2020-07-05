@@ -17,10 +17,10 @@ namespace MSEngine.Tests
             {
                 Span<Node> nodes = stackalloc Node[8 * 8];
                 var matrix = new Matrix<Node>(nodes, 8);
-                Engine.FillCustomBoard(nodes, Span<int>.Empty, 8);
+                Engine.FillCustomBoard(matrix, Span<int>.Empty);
                 var firstTurn = new Turn(0, NodeOperation.Reveal);
                 var secondTurn = new Turn(1, operation);
-                Engine.ComputeBoard(matrix, firstTurn);
+                Engine.ComputeBoard(matrix, firstTurn, stackalloc int[64]);
 
                 Assert.Equal(BoardStatus.Completed, nodes.Status());
                 Engine.EnsureValidBoardConfiguration(matrix, secondTurn);
@@ -37,15 +37,12 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Node> nodes = stackalloc Node[8 * 8];
-                Span<int> mines = stackalloc int[] { 0 };
+                nodes[0] = new Node(0, true, 0, NodeState.Revealed);
                 var matrix = new Matrix<Node>(nodes, 8);
-                Engine.FillCustomBoard(nodes, mines, 8);
-                var firstTurn = new Turn(0, NodeOperation.Reveal);
-                var secondTurn = new Turn(1, operation);
-                Engine.ComputeBoard(matrix, firstTurn);
+                var turn = new Turn(0, operation);
 
                 Assert.Equal(BoardStatus.Failed, nodes.Status());
-                Engine.EnsureValidBoardConfiguration(matrix, secondTurn);
+                Engine.EnsureValidBoardConfiguration(matrix, turn);
             });
         }
 
@@ -59,9 +56,9 @@ namespace MSEngine.Tests
                 Span<Node> nodes = stackalloc Node[2 * 2];
                 Span<int> mines = stackalloc int[] { 0 };
                 var matrix = new Matrix<Node>(nodes, 2);
-                Engine.FillCustomBoard(nodes, mines, 2);
+                Engine.FillCustomBoard(matrix, mines);
                 var firstTurn = new Turn(3, NodeOperation.Reveal);
-                Engine.ComputeBoard(matrix, firstTurn);
+                Engine.ComputeBoard(matrix, firstTurn, Span<int>.Empty);
                 var secondTurn = new Turn(3, operation);
                 Engine.EnsureValidBoardConfiguration(matrix, secondTurn);
             });
@@ -74,7 +71,7 @@ namespace MSEngine.Tests
             {
                 Span<Node> nodes = stackalloc Node[1 * 1];
                 var matrix = new Matrix<Node>(nodes, 1);
-                Engine.FillCustomBoard(nodes, Span<int>.Empty, 1);
+                Engine.FillCustomBoard(matrix, Span<int>.Empty);
                 var turn = new Turn(1, NodeOperation.Reveal);
 
                 Engine.EnsureValidBoardConfiguration(matrix, turn);
@@ -88,7 +85,7 @@ namespace MSEngine.Tests
             {
                 Span<Node> nodes = stackalloc Node[1 * 1];
                 var matrix = new Matrix<Node>(nodes, 1);
-                Engine.FillCustomBoard(nodes, Span<int>.Empty, 1);
+                Engine.FillCustomBoard(matrix, Span<int>.Empty);
                 var turn = new Turn(0, NodeOperation.Flag);
 
                 Engine.EnsureValidBoardConfiguration(matrix, turn);
@@ -103,9 +100,9 @@ namespace MSEngine.Tests
                 Span<Node> nodes = stackalloc Node[1 * 2];
                 Span<int> mines = stackalloc int[] { 0 };
                 var matrix = new Matrix<Node>(nodes, 1);
-                Engine.FillCustomBoard(nodes, mines, 1);
+                Engine.FillCustomBoard(matrix, mines);
                 var turn = new Turn(0, NodeOperation.Flag);
-                Engine.ComputeBoard(matrix, turn);
+                Engine.ComputeBoard(matrix, turn, Span<int>.Empty);
 
                 Assert.Equal(BoardStatus.Pending, nodes.Status());
                 Engine.EnsureValidBoardConfiguration(matrix, turn);
@@ -120,7 +117,7 @@ namespace MSEngine.Tests
                 Span<Node> nodes = stackalloc Node[2 * 2];
                 Span<int> mines = stackalloc int[] { 0, 1 };
                 var matrix = new Matrix<Node>(nodes, 2);
-                Engine.FillCustomBoard(nodes, mines, 2);
+                Engine.FillCustomBoard(matrix, mines);
                 var turn = new Turn(0, NodeOperation.RemoveFlag);
 
                 Engine.EnsureValidBoardConfiguration(matrix, turn);
@@ -134,7 +131,7 @@ namespace MSEngine.Tests
             {
                 Span<Node> nodes = stackalloc Node[1 * 1];
                 var matrix = new Matrix<Node>(nodes, 1);
-                Engine.FillCustomBoard(nodes, Span<int>.Empty, 1);
+                Engine.FillCustomBoard(matrix, Span<int>.Empty);
                 var turn = new Turn(0, NodeOperation.Chord);
 
                 Engine.EnsureValidBoardConfiguration(matrix, turn);
@@ -148,11 +145,12 @@ namespace MSEngine.Tests
             {
                 Span<Node> nodes = stackalloc Node[3 * 3];
                 Span<int> mines = stackalloc int[] { 0 };
+                nodes[0] = new Node(0, true, 0, NodeState.Hidden);
                 var matrix = new Matrix<Node>(nodes, 3);
-                Engine.FillCustomBoard(nodes, mines, 3);
+                Engine.FillCustomBoard(matrix, mines);
                 var firstTurn = new Turn(8, NodeOperation.Reveal);
                 var secondTurn = new Turn(8, NodeOperation.Chord);
-                Engine.ComputeBoard(matrix, firstTurn);
+                Engine.ComputeBoard(matrix, firstTurn, stackalloc int[9]);
                 var node = nodes[8];
 
                 Assert.Equal(NodeState.Revealed, node.State);
@@ -168,15 +166,15 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Node> nodes = stackalloc Node[2 * 2];
-                ReadOnlySpan<int> mines = stackalloc int[] { 0, 1, 2 };
+                Span<int> mines = stackalloc int[] { 0, 1, 2 };
                 var matrix = new Matrix<Node>(nodes, 2);
-                Engine.FillCustomBoard(nodes, mines, 2);
+                Engine.FillCustomBoard(matrix, mines);
                 var firstTurn = new Turn(0, NodeOperation.Flag);
                 var secondTurn = new Turn(3, NodeOperation.Reveal);
                 var thirdTurn = new Turn(3, NodeOperation.Chord);
 
-                Engine.ComputeBoard(matrix, firstTurn);
-                Engine.ComputeBoard(matrix, secondTurn);
+                Engine.ComputeBoard(matrix, firstTurn, Span<int>.Empty);
+                Engine.ComputeBoard(matrix, secondTurn, Span<int>.Empty);
                 Engine.EnsureValidBoardConfiguration(matrix, thirdTurn);
             });
         }

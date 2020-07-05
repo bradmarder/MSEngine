@@ -9,19 +9,16 @@ namespace MSEngine.Tests
         [Fact]
         public void AllMinesRevealedIfMineExplodes()
         {
-            Span<Node> nodes = stackalloc Node[4];
-            Span<int> mines = stackalloc int[] { 0 };
-            var matrix = new Matrix<Node>(nodes, 2);
-            Engine.FillCustomBoard(nodes, mines, 2);
-            var turn = new Turn(0, NodeOperation.Reveal);
-
-            Engine.ComputeBoard(matrix, turn);
-
-            Assert.Equal(BoardStatus.Failed, nodes.Status());
-            foreach (var node in nodes)
+            Span<Node> nodes = stackalloc Node[]
             {
-                Assert.True(!node.HasMine || node.State == NodeState.Revealed);
-            }
+                new Node(0, true, 0, NodeState.Flagged),
+                new Node(1, true, 1, NodeState.Hidden)
+            };
+
+            Engine.RevealHiddenMines(nodes);
+
+            Assert.Equal(NodeState.Flagged, nodes[0].State);
+            Assert.Equal(NodeState.Revealed, nodes[1].State);
         }
 
         // 2x2 matrix, node 0 has mine and is flagged, node 1 is revealed.
@@ -39,7 +36,7 @@ namespace MSEngine.Tests
             var matrix = new Matrix<Node>(nodes, 2);
             var turn = new Turn(1, NodeOperation.Chord);
 
-            Engine.ComputeBoard(matrix, turn);
+            Engine.ComputeBoard(matrix, turn, Span<int>.Empty);
 
             Assert.Equal(NodeState.Revealed, nodes[2].State);
             Assert.Equal(NodeState.Revealed, nodes[3].State);
@@ -51,10 +48,10 @@ namespace MSEngine.Tests
         {
             Span<Node> nodes = stackalloc Node[9];
             var matrix = new Matrix<Node>(nodes, 3);
-            Engine.FillCustomBoard(nodes, Span<int>.Empty, 3);
+            Engine.FillCustomBoard(matrix, stackalloc int[9]);
             var turn = new Turn(4, NodeOperation.Reveal);
 
-            Engine.ComputeBoard(matrix, turn);
+            Engine.ComputeBoard(matrix, turn, Span<int>.Empty);
 
             foreach (var node in nodes)
             {
@@ -75,7 +72,7 @@ namespace MSEngine.Tests
             var matrix = new Matrix<Node>(nodes, 3);
             var turn = new Turn(0, NodeOperation.Reveal);
 
-            Engine.ComputeBoard(matrix, turn);
+            Engine.ComputeBoard(matrix, turn, stackalloc int[3]);
 
             Assert.Equal(NodeState.Revealed, nodes[0].State);
             Assert.Equal(NodeState.Flagged, nodes[1].State);
@@ -95,7 +92,7 @@ namespace MSEngine.Tests
             var matrix = new Matrix<Node>(nodes, 3);
             var turn = new Turn(0, NodeOperation.Reveal);
 
-            Engine.ComputeBoard(matrix, turn);
+            Engine.ComputeBoard(matrix, turn, stackalloc int[9]);
 
             foreach (var node in nodes)
             {

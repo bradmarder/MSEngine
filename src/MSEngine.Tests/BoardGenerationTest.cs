@@ -14,8 +14,9 @@ namespace MSEngine.Tests
         public void ExpectedMineCountEqualsActualMineCount(byte expectedMineCount)
         {
             Span<Node> nodes = stackalloc Node[64];
+            var matrix = new Matrix<Node>(nodes, 8);
 
-            Engine.FillCustomBoard(nodes, expectedMineCount, 8);
+            Engine.FillCustomBoard(matrix, stackalloc int[expectedMineCount]);
 
             Assert.Equal(expectedMineCount, nodes.MineCount());
         }

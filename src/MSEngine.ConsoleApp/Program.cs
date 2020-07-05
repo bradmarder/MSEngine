@@ -98,7 +98,7 @@ namespace MSEngine.ConsoleApp
 
             while (count > 0)
             {
-                Engine.FillCustomBoard(matrix, mines, columnCount, firstTurnNodeIndex);
+                Engine.FillCustomBoard(matrix, mines, firstTurnNodeIndex);
                 Engine.ComputeBoard(matrix, firstTurn, visitedIndexes);
                 ExecuteGame(matrix, turns, visitedIndexes);
                 DisplayScore();
