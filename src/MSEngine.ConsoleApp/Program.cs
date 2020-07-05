@@ -31,7 +31,9 @@ namespace MSEngine.ConsoleApp
 
             ParallelEnumerable
                 .Range(0, Environment.ProcessorCount)
-                //.WithDegreeOfParallelism(1)
+#if DEBUG
+                .WithDegreeOfParallelism(1)
+#endif
                 .ForAll(_ => Master(difficulty, count / Environment.ProcessorCount));
         }
 
@@ -41,8 +43,8 @@ namespace MSEngine.ConsoleApp
             var x = _gamesPlayedCount;
             var y = _wins;
 
-            // we only update the score every 1000 games(because doing so within a lock is expensive, and so are console commands)
-            if (x % 1000 == 0)
+            // we only update the score every 10000 games(because doing so within a lock is expensive, and so are console commands)
+            if (x % 10000 == 0)
             {
                 var winRatio = ((decimal)y / x) * 100;
 
@@ -92,10 +94,12 @@ namespace MSEngine.ConsoleApp
             Span<int> visitedIndexes = stackalloc int[nodeCount - mineCount];
 
             var matrix = new Matrix<Node>(nodes, columnCount);
+            var firstTurn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
 
             while (count > 0)
             {
-                ApplyFirstTurn(matrix, mines, columnCount, firstTurnNodeIndex, visitedIndexes);
+                Engine.FillCustomBoard(matrix, mines, columnCount, firstTurnNodeIndex);
+                Engine.ComputeBoard(matrix, firstTurn, visitedIndexes);
                 ExecuteGame(matrix, turns, visitedIndexes);
                 DisplayScore();
                 count--;
@@ -103,20 +107,12 @@ namespace MSEngine.ConsoleApp
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ApplyFirstTurn(Matrix<Node> matrix, Span<int> mines, byte columnCount, int firstTurnNodeIndex, Span<int> visitedIndexes)
+        private static void ExecuteGame(in Matrix<Node> matrix, Span<Turn> turns, Span<int> visitedIndexes)
         {
-            var firstTurn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
-
-            Engine.FillCustomBoard(matrix, mines, columnCount, firstTurnNodeIndex);
-            Engine.ComputeBoard(matrix, firstTurn, visitedIndexes);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ExecuteGame(Matrix<Node> matrix, Span<Turn> turns, Span<int> visitedIndexes)
-        {
+            var turnCount = 0;
             while (true)
             {
-                var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
+                turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
                 if (turnCount == 0)
                 {
                     turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
@@ -128,9 +124,13 @@ namespace MSEngine.ConsoleApp
                     break;
                 }
 
-                ValidateTurns(matrix.Nodes, turns, turnCount);
+                var slicedTurns = turns.Slice(0, turnCount);
 
-                foreach (var turn in turns.Slice(0, turnCount))
+#if DEBUG
+                ValidateTurns(matrix.Nodes, slicedTurns);
+#endif
+
+                foreach (var turn in slicedTurns)
                 {
                     Engine.ComputeBoard(matrix, turn, visitedIndexes);
                 }
@@ -148,9 +148,9 @@ namespace MSEngine.ConsoleApp
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ValidateTurns(ReadOnlySpan<Node> nodes, Span<Turn> turns, int turnCount)
+        private static void ValidateTurns(ReadOnlySpan<Node> nodes, ReadOnlySpan<Turn> turns)
         {
-            foreach (var turn in turns.Slice(0, turnCount))
+            foreach (var turn in turns)
             {
                 var node = nodes[turn.NodeIndex];
                 if (node.HasMine)

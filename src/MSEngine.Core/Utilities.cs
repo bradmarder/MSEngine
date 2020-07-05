@@ -169,7 +169,7 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static byte GetAdjacentFlaggedNodeCount(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
+        public static byte GetAdjacentFlaggedNodeCount(in Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
         {
             Debug.Assert(matrix.Nodes.Length > nodeIndex);
             Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
@@ -189,7 +189,7 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool HasHiddenAdjacentNodes(Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
+        public static bool HasHiddenAdjacentNodes(in Matrix<Node> matrix, Span<int> buffer, int nodeIndex)
         {
             Debug.Assert(matrix.Nodes.Length > nodeIndex);
             Debug.Assert(nodeIndex >= 0);
@@ -228,7 +228,7 @@ namespace MSEngine.Core
 #endif
         }
 
-        public static string Log(Matrix<Node> matrix)
+        public static string Log(in Matrix<Node> matrix)
         {
             var sb = new System.Text.StringBuilder();
             foreach (var node in matrix.Nodes)

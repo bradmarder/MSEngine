@@ -17,11 +17,11 @@ namespace MSEngine.Core
             RowCount = nodes.Length / columnCount;
         }
 
-        public readonly Span<T> Nodes;
-        public readonly int ColumnCount { get; }
-        public readonly int RowCount { get; }
+        public Span<T> Nodes { get; }
+        public int ColumnCount { get; }
+        public int RowCount { get; }
 
-        public readonly ref T this[int row, int column]
+        public ref T this[int row, int column]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
@@ -33,7 +33,7 @@ namespace MSEngine.Core
             }
         }
 
-        public Enumerator GetEnumerator() => new Enumerator(Nodes, ColumnCount, RowCount);
+        public Enumerator GetEnumerator() => new Enumerator(this);
 
         public override string ToString()
         {
@@ -53,18 +53,18 @@ namespace MSEngine.Core
 
         public ref struct Enumerator
         {
+            private int _row;
             private readonly Span<T> _span;
             private readonly int _columnCount;
             private readonly int _rowCount;
-            private int _row;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            internal Enumerator(Span<T> span, int columnCount, int rowCount)
+            internal Enumerator(in Matrix<T> matrix)
             {
-                _span = span;
                 _row = -1;
-                _columnCount = columnCount;
-                _rowCount = rowCount;
+                _span = matrix.Nodes;
+                _columnCount = matrix.ColumnCount;
+                _rowCount = matrix.RowCount;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -80,7 +80,7 @@ namespace MSEngine.Core
                 return false;
             }
 
-            public Span<T> Current
+            public readonly Span<T> Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 get => _span.Slice(_row * _columnCount, _columnCount);

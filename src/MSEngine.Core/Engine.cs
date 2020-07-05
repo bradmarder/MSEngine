@@ -21,7 +21,7 @@ namespace MSEngine.Core
         //    => FillCustomBoard(nodes, mines, 30, safeNodeIndex);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FillCustomBoard(Matrix<Node> matrix, Span<int> mines, byte columns, int? safeNodeIndex = null)
+        public static void FillCustomBoard(in Matrix<Node> matrix, Span<int> mines, byte columns, int? safeNodeIndex = null)
         {
             if (safeNodeIndex is null)
             {
@@ -61,7 +61,7 @@ namespace MSEngine.Core
         /// -May only chord a node that has hidden adjacent nodes
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void EnsureValidBoardConfiguration(Matrix<Node> matrix, Turn turn)
+        public static void EnsureValidBoardConfiguration(in Matrix<Node> matrix, Turn turn)
         {
             var nodes = matrix.Nodes;
             if (nodes.Status() == BoardStatus.Completed || nodes.Status() == BoardStatus.Failed)
@@ -123,7 +123,7 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void ComputeBoard(Matrix<Node> matrix, Turn turn, Span<int> visitedIndexes)
+        public static void ComputeBoard(in Matrix<Node> matrix, Turn turn, Span<int> visitedIndexes)
         {
             ref var node = ref matrix.Nodes[turn.NodeIndex];
 
@@ -167,7 +167,7 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void Chord(Matrix<Node> matrix, int nodeIndex, Span<int> visitedIndexes)
+        internal static void Chord(in Matrix<Node> matrix, int nodeIndex, Span<int> visitedIndexes)
         {
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeIndex < matrix.Nodes.Length);
@@ -198,7 +198,7 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void TriggerChainReaction(Matrix<Node> matrix, int nodeIndex, Span<int> visitedIndexes)
+        internal static void TriggerChainReaction(in Matrix<Node> matrix, int nodeIndex, Span<int> visitedIndexes)
         {
             Debug.Assert(nodeIndex >= 0);
 
@@ -209,7 +209,7 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void VisitNode(Matrix<Node> matrix, int nodeIndex, ReadOnlySpan<int> visitedIndexes, ref Span<int>.Enumerator enumerator)
+        internal static void VisitNode(in Matrix<Node> matrix, int nodeIndex, ReadOnlySpan<int> visitedIndexes, ref Span<int>.Enumerator enumerator)
         {
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeIndex < matrix.Nodes.Length);
