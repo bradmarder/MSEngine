@@ -92,6 +92,9 @@ namespace MSEngine.ConsoleApp
             Span<Turn> turns = stackalloc Turn[nodeCount];
             Span<int> mines = stackalloc int[mineCount];
             Span<int> visitedIndexes = stackalloc int[nodeCount - mineCount];
+            Span<int> revealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount];
+            Span<int> adjacentHiddenNodeIndexes = stackalloc int[nodeCount];
+            Span<float> grid = stackalloc float[revealedMineCountNodeIndexes.Length * adjacentHiddenNodeIndexes.Length];
 
             var matrix = new Matrix<Node>(nodes, columnCount);
             var firstTurn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
@@ -100,22 +103,22 @@ namespace MSEngine.ConsoleApp
             {
                 Engine.FillCustomBoard(matrix, mines, firstTurnNodeIndex);
                 Engine.ComputeBoard(matrix, firstTurn, visitedIndexes);
-                ExecuteGame(matrix, turns, visitedIndexes);
+                ExecuteGame(matrix, turns, visitedIndexes, revealedMineCountNodeIndexes, adjacentHiddenNodeIndexes, grid);
                 DisplayScore();
                 count--;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void ExecuteGame(in Matrix<Node> matrix, Span<Turn> turns, Span<int> visitedIndexes)
+        private static void ExecuteGame(in Matrix<Node> matrix, Span<Turn> turns, Span<int> visitedIndexes, Span<int> revealedMineCountNodeIndexes, Span<int> adjacentHiddenNodeIndexes, Span<float> grid)
         {
             var turnCount = 0;
             while (true)
             {
-                turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
+                turnCount = MatrixSolver.CalculateTurns(matrix, turns, false, revealedMineCountNodeIndexes, adjacentHiddenNodeIndexes, grid);
                 if (turnCount == 0)
                 {
-                    turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
+                    turnCount = MatrixSolver.CalculateTurns(matrix, turns, true, revealedMineCountNodeIndexes, adjacentHiddenNodeIndexes, grid);
                 }
 
                 if (turnCount == 0)

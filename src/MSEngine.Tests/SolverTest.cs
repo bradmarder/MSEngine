@@ -50,9 +50,12 @@ namespace MSEngine.Tests
                 new Node(24, false, 0, NodeState.Hidden)
             };
             Span<Turn> turns = stackalloc Turn[nodes.Length];
+            Span<int> revealedMineCountNodeIndexes = stackalloc int[nodes.Length];
+            Span<int> adjacentHiddenNodeIndexes = stackalloc int[nodes.Length];
+            Span<float> grid = stackalloc float[revealedMineCountNodeIndexes.Length * adjacentHiddenNodeIndexes.Length];
             var matrix = new Matrix<Node>(nodes, 5);
 
-            var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
+            var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false, revealedMineCountNodeIndexes, adjacentHiddenNodeIndexes, grid);
 
             Assert.Equal(3, turnCount);
             Assert.Equal(new Turn(3, NodeOperation.Reveal), turns[0]);
@@ -148,9 +151,12 @@ namespace MSEngine.Tests
                 new Node(63, false, 0, NodeState.Hidden)
             };
             Span<Turn> turns = stackalloc Turn[nodes.Length];
+            Span<int> revealedMineCountNodeIndexes = stackalloc int[nodes.Length];
+            Span<int> adjacentHiddenNodeIndexes = stackalloc int[nodes.Length];
+            Span<float> grid = stackalloc float[revealedMineCountNodeIndexes.Length * adjacentHiddenNodeIndexes.Length];
             var matrix = new Matrix<Node>(nodes, 8);
 
-            var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
+            var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false, revealedMineCountNodeIndexes, adjacentHiddenNodeIndexes, grid);
 
             Assert.Equal(2, turnCount);
             Assert.Equal(new Turn(46, NodeOperation.Flag), turns[0]);
@@ -238,9 +244,12 @@ namespace MSEngine.Tests
                 new Node(63, false, 1, NodeState.Hidden)
             };
             Span<Turn> turns = stackalloc Turn[nodes.Length];
+            Span<int> revealedMineCountNodeIndexes = stackalloc int[nodes.Length];
+            Span<int> adjacentHiddenNodeIndexes = stackalloc int[nodes.Length];
+            Span<float> grid = stackalloc float[revealedMineCountNodeIndexes.Length * adjacentHiddenNodeIndexes.Length];
             var matrix = new Matrix<Node>(nodes, 8);
 
-            var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
+            var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false, revealedMineCountNodeIndexes, adjacentHiddenNodeIndexes, grid);
 
             Assert.Equal(2, turnCount);
 
@@ -333,10 +342,13 @@ namespace MSEngine.Tests
                 new Node(63, false, 0, NodeState.Revealed),
             };
             Span<Turn> turns = stackalloc Turn[nodes.Length];
+            Span<int> revealedMineCountNodeIndexes = stackalloc int[nodes.Length];
+            Span<int> adjacentHiddenNodeIndexes = stackalloc int[nodes.Length];
+            Span<float> grid = stackalloc float[revealedMineCountNodeIndexes.Length * adjacentHiddenNodeIndexes.Length];
             var matrix = new Matrix<Node>(nodes, 8);
 
-            var partialHiddenNodeTurnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
-            var fullHiddenNodeTurnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
+            var partialHiddenNodeTurnCount = MatrixSolver.CalculateTurns(matrix, turns, false, revealedMineCountNodeIndexes, adjacentHiddenNodeIndexes, grid);
+            var fullHiddenNodeTurnCount = MatrixSolver.CalculateTurns(matrix, turns, true, revealedMineCountNodeIndexes, adjacentHiddenNodeIndexes, grid);
 
             Assert.Equal(0, partialHiddenNodeTurnCount);
             Assert.Equal(2, fullHiddenNodeTurnCount);

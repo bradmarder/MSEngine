@@ -9,7 +9,7 @@ namespace MSEngine.Solver
     {
         // zero'ify this column from all rows in the matrix
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static void ZeroifyColumn(Matrix<float> matrix, int column)
+        internal static void ZeroifyColumn(in Matrix<float> matrix, int column)
         {
             Debug.Assert(column >= 0);
             Debug.Assert(column < matrix.ColumnCount);
@@ -38,8 +38,8 @@ namespace MSEngine.Solver
         }
 
         internal static void ReduceMatrix(
-            Matrix<Node> nodeMatrix,
-            Matrix<float> matrix,
+            in Matrix<Node> nodeMatrix,
+            in Matrix<float> matrix,
             ReadOnlySpan<int> adjacentHiddenNodeIndexes,
             ReadOnlySpan<int> revealedAMCNodes,
             Span<Turn> turns,
@@ -119,12 +119,17 @@ namespace MSEngine.Solver
             }
         }
 
-        public static int CalculateTurns(Matrix<Node> nodeMatrix, Span<Turn> turns, bool useAllHiddenNodes)
+        public static int CalculateTurns(
+            in Matrix<Node> nodeMatrix,
+            Span<Turn> turns,
+            bool useAllHiddenNodes,
+            Span<int> revealedAMCNodes,
+            Span<int> adjacentHiddenNodeIndexes,
+            Span<float> grid)
         {
             var nodes = nodeMatrix.Nodes;
 
             Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
-            Span<int> revealedAMCNodes = stackalloc int[nodes.Length];
 
             #region Revealed Nodes with AMC > 0
 
@@ -153,7 +158,6 @@ namespace MSEngine.Solver
             #region Adjacent Hidden Node Indexes
 
             var ahcCount = 0;
-            Span<int> adjacentHiddenNodeIndexes = stackalloc int[nodes.Length];
 
             foreach (var node in nodes)
             {
@@ -192,9 +196,8 @@ namespace MSEngine.Solver
 
             var rows = revealedAMCNodeCount + (useAllHiddenNodes ? 1 : 0);
             var columns = ahcCount + 1;
-            var matrix = new Matrix<float>(
-                stackalloc float[rows * columns],
-                columns);
+            var grids = grid.Slice(0, rows * columns);
+            var matrix = new Matrix<float>(grids, columns);
 
             for (var row = 0; row < rows; row++)
             {
