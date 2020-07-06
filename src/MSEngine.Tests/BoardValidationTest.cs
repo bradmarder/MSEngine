@@ -147,12 +147,11 @@ namespace MSEngine.Tests
                 Span<int> mines = stackalloc int[] { 0 };
                 nodes[0] = new Node(0, true, 0, NodeState.Hidden);
                 var matrix = new Matrix<Node>(nodes, 3);
-                Engine.FillCustomBoard(matrix, mines);
                 var firstTurn = new Turn(8, NodeOperation.Reveal);
                 var secondTurn = new Turn(8, NodeOperation.Chord);
                 Engine.ComputeBoard(matrix, firstTurn, stackalloc int[9]);
-                var node = nodes[8];
 
+                var node = nodes[8];
                 Assert.Equal(NodeState.Revealed, node.State);
                 Assert.Equal(0, node.MineCount);
 

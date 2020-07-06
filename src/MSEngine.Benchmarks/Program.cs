@@ -51,32 +51,30 @@ namespace MSEngine.Benchmarks
                 Difficulty.Expert => 93,
                 _ => throw new NotImplementedException()
             };
+            var mineCount = difficulty switch
+            {
+                Difficulty.Beginner => 10,
+                Difficulty.Intermediate => 40,
+                Difficulty.Expert => 99,
+                _ => throw new NotImplementedException()
+            };
 
             Span<Node> nodes = stackalloc Node[nodeCount];
             Span<Turn> turns = stackalloc Turn[nodeCount];
             var matrix = new Matrix<Node>(nodes, columnCount);
 
-            Simulation(matrix, turns, firstTurnNodeIndex, difficulty);
+            Simulation(matrix, turns, firstTurnNodeIndex, mineCount);
         }
 
-        public static void Simulation(Matrix<Node> matrix, Span<Turn> turns, int firstTurnNodeIndex, Difficulty difficulty)
+        public static void Simulation(Matrix<Node> matrix, Span<Turn> turns, int firstTurnNodeIndex, int mineCount)
         {
-            switch (difficulty)
-            {
-                case Difficulty.Beginner:
-                    Engine.FillBeginnerBoard(matrix.Nodes, firstTurnNodeIndex);
-                    break;
-                case Difficulty.Intermediate:
-                    Engine.FillIntermediateBoard(matrix.Nodes, firstTurnNodeIndex);
-                    break;
-                case Difficulty.Expert:
-                    Engine.FillExpertBoard(matrix.Nodes, firstTurnNodeIndex);
-                    break;
-                default: throw new NotImplementedException();
-            }
+            Span<int> mines = stackalloc int[mineCount];
+            Span<int> visitedIndexes = stackalloc int[matrix.Nodes.Length];
+            
+            Engine.FillCustomBoard(matrix, mines, firstTurnNodeIndex);
 
             var firstTurn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
-            Engine.ComputeBoard(matrix, firstTurn);
+            Engine.ComputeBoard(matrix, firstTurn, visitedIndexes);
 
             while (true)
             {
@@ -88,7 +86,7 @@ namespace MSEngine.Benchmarks
                 }
                 foreach (var turn in turns.Slice(0, turnCount))
                 {
-                    Engine.ComputeBoard(matrix, turn);
+                    Engine.ComputeBoard(matrix, turn, visitedIndexes);
                 }
             }
         }

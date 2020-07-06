@@ -92,10 +92,11 @@ namespace MSEngine.Benchmarks
                 new Turn(47, NodeOperation.Reveal)
             };
             var matrix = new Matrix<Node>(nodes, 8);
+            Span<int> indexes = stackalloc int[nodes.Length];
 
             foreach (var x in turns)
             {
-                Engine.ComputeBoard(matrix, x);
+                Engine.ComputeBoard(matrix, x, indexes);
             }
 
             Debug.Assert(matrix.Nodes.Status() == BoardStatus.Completed);

@@ -8,18 +8,6 @@ namespace MSEngine.Core
     {
         public const byte MaxNodeEdges = 8;
 
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //public static void FillBeginnerBoard(Span<Node> nodes, Span<int> mines, int? safeNodeIndex = null)
-        //    => FillCustomBoard(nodes, mines, 9, safeNodeIndex);
-
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //public static void FillIntermediateBoard(Span<Node> nodes, Span<int> mines, int? safeNodeIndex = null)
-        //    => FillCustomBoard(nodes, mines, 16, safeNodeIndex);
-
-        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
-        //public static void FillExpertBoard(Span<Node> nodes, Span<int> mines, int? safeNodeIndex = null)
-        //    => FillCustomBoard(nodes, mines, 30, safeNodeIndex);
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void FillCustomBoard(in Matrix<Node> matrix, Span<int> mines, int? safeNodeIndex = null)
         {
