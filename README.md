@@ -9,6 +9,7 @@
 ## [Link to Series of Blog Posts](https://bradmarder.github.io/blog/)
 
 ### How Fast?
+##### 100k games on beginner in ~1 second, ~23 seconds for expert (utilizing all cores)
 ##### Measurement represents time to generate a random board and solve until guessing is required
 ``` ini
 
@@ -45,9 +46,10 @@ public static class Engine
 - Anyone creating a Minesweeper probability solver bot
 - Anyone interested in learning how to implement zero allocation c# code
 
-### How do I use this library?
-- See the example `RunSimulations()` inside the console app `src\MSEngine.ConsoleApp\` 
-- This example uses the automated solver, but the selection of a turn may come from any UI/input
+### How do I use this library with a CLI?
+- To run the default app, open a terminal and navigate to `src\MSEngine.ConsoleApp\` and execute `dotnet run -c release 0 100000`
+- As for the CLI arguments, `0` is beginner, `1` is intermediate, and `2` is expert
+- The `100000` represents how many games to simulate
 
 ### Notes
 - With just the initial board and a queue of turns, we can compute the expected state of any minesweeper game
