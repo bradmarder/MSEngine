@@ -70,7 +70,10 @@ namespace MSEngine.Benchmarks
         {
             Span<int> mines = stackalloc int[mineCount];
             Span<int> visitedIndexes = stackalloc int[matrix.Nodes.Length];
-            
+            Span<int> revealedMineCountNodeIndexes = stackalloc int[matrix.Nodes.Length - mineCount];
+            Span<int> adjacentHiddenNodeIndexes = stackalloc int[matrix.Nodes.Length];
+            Span<float> grid = stackalloc float[revealedMineCountNodeIndexes.Length * adjacentHiddenNodeIndexes.Length];
+
             Engine.FillCustomBoard(matrix, mines, firstTurnNodeIndex);
 
             var firstTurn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
@@ -78,10 +81,10 @@ namespace MSEngine.Benchmarks
 
             while (true)
             {
-                var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false);
+                var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false, revealedMineCountNodeIndexes, adjacentHiddenNodeIndexes, grid);
                 if (turnCount == 0)
                 {
-                    turnCount = MatrixSolver.CalculateTurns(matrix, turns, true);
+                    turnCount = MatrixSolver.CalculateTurns(matrix, turns, true, revealedMineCountNodeIndexes, adjacentHiddenNodeIndexes, grid);
                     if (turnCount == 0) { break; }
                 }
                 foreach (var turn in turns.Slice(0, turnCount))
