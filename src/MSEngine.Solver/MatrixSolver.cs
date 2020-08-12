@@ -119,29 +119,21 @@ namespace MSEngine.Solver
             }
         }
 
-        public static int CalculateTurns(
-            in Matrix<Node> nodeMatrix,
-            Span<Turn> turns,
-            bool useAllHiddenNodes,
-            Span<int> revealedAMCNodes,
-            Span<int> adjacentHiddenNodeIndexes,
-            Span<float> grid)
+        public static int CalculateTurns(in Matrix<Node> nodeMatrix, in BufferKeeper buffs, bool useAllHiddenNodes)
         {
             var nodes = nodeMatrix.Nodes;
-
-            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 
             #region Revealed Nodes with AMC > 0
 
             var revealedAMCNodeCount = 0;
             foreach (var node in nodes)
             {
-                if (node.State == NodeState.Revealed && node.MineCount > 0 
-                    
+                if (node.State == NodeState.Revealed && node.MineCount > 0
+
                     // optional, but major perf improvement
-                    && Utilities.HasHiddenAdjacentNodes(nodeMatrix, buffer, node.Index))
+                    && Utilities.HasHiddenAdjacentNodes(nodeMatrix, buffs.EdgeIndexes, node.Index))
                 {
-                    revealedAMCNodes[revealedAMCNodeCount] = node.Index;
+                    buffs.RevealedMineCountNodeIndexes[revealedAMCNodeCount] = node.Index;
                     revealedAMCNodeCount++;
                 }
             }
@@ -151,7 +143,7 @@ namespace MSEngine.Solver
                 return 0;
             }
 
-            revealedAMCNodes = revealedAMCNodes.Slice(0, revealedAMCNodeCount);
+            var revealedAMCNodes = buffs.RevealedMineCountNodeIndexes.Slice(0, revealedAMCNodeCount);
 
             #endregion
 
@@ -166,9 +158,9 @@ namespace MSEngine.Solver
                 var hasAHC = false;
                 if (!useAllHiddenNodes)
                 {
-                    buffer.FillAdjacentNodeIndexes(nodeMatrix, node.Index);
+                    buffs.EdgeIndexes.FillAdjacentNodeIndexes(nodeMatrix, node.Index);
 
-                    foreach (var x in buffer)
+                    foreach (var x in buffs.EdgeIndexes)
                     {
                         if (x == -1) { continue; }
 
@@ -183,12 +175,12 @@ namespace MSEngine.Solver
 
                 if (useAllHiddenNodes || hasAHC)
                 {
-                    adjacentHiddenNodeIndexes[ahcCount] = node.Index;
+                    buffs.AdjacentHiddenNodeIndexes[ahcCount] = node.Index;
                     ahcCount++;
                 }
             }
 
-            adjacentHiddenNodeIndexes = adjacentHiddenNodeIndexes.Slice(0, ahcCount);
+            var adjacentHiddenNodeIndexes = buffs.AdjacentHiddenNodeIndexes.Slice(0, ahcCount);
 
             #endregion
 
@@ -196,7 +188,7 @@ namespace MSEngine.Solver
 
             var rows = revealedAMCNodeCount + (useAllHiddenNodes ? 1 : 0);
             var columns = ahcCount + 1;
-            var grids = grid.Slice(0, rows * columns);
+            var grids = buffs.Grid.Slice(0, rows * columns);
             var matrix = new Matrix<float>(grids, columns);
 
             for (var row = 0; row < rows; row++)
@@ -220,31 +212,24 @@ namespace MSEngine.Solver
                     var isAugmentedColumn = column == columns - 1;
 
                     matrix[row, column] = isAugmentedColumn
-                        ? nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex)
-                        : Utilities.AreNodesAdjacent(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, adjacentHiddenNodeIndexes[column]) ? 1 : 0;
+                        ? nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffs.EdgeIndexes, nodeIndex)
+                        : Utilities.AreNodesAdjacent(buffs.EdgeIndexes, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, adjacentHiddenNodeIndexes[column]) ? 1 : 0;
                 }
             }
 
             #endregion
 
             var turnCount = 0;
-            ReduceMatrix(nodeMatrix, matrix, adjacentHiddenNodeIndexes, revealedAMCNodes, turns, ref turnCount, useAllHiddenNodes);
+            ReduceMatrix(nodeMatrix, matrix, adjacentHiddenNodeIndexes, revealedAMCNodes, buffs.Turns, ref turnCount, useAllHiddenNodes);
 
             matrix.GaussEliminate();
 
             #region Guass Matrix Processing
 
-            var augmentIndex = matrix.ColumnCount - 1;
-            Span<float> vector = stackalloc float[augmentIndex];
-
-            foreach (var row in matrix)
+            for (var row = 0; row < matrix.RowCount; row++)
             {
-                for (var column = 0; column < augmentIndex; column++)
-                {
-                    vector[column] = row[column];
-                }
-
-                var augmentColumn = row[augmentIndex];
+                var vector = matrix.Vector(row);
+                var augmentColumn = matrix.Augment(row);
                 float min = 0;
                 float max = 0;
                 foreach (var x in vector)
@@ -258,7 +243,7 @@ namespace MSEngine.Solver
                     continue;
                 }
 
-                for (var column = 0; column < augmentIndex; column++)
+                for (var column = 0; column < vector.Length; column++)
                 {
                     var val = vector[column];
                     if (val == 0)
@@ -271,7 +256,7 @@ namespace MSEngine.Solver
                         ? new Turn(index, val > 0 ? NodeOperation.Reveal : NodeOperation.Flag)
                         : new Turn(index, val > 0 ? NodeOperation.Flag : NodeOperation.Reveal);
 
-                    TryAddTurn(turns, turn, ref turnCount);
+                    TryAddTurn(buffs.Turns, turn, ref turnCount);
                 }
             }
 

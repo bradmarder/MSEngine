@@ -68,28 +68,31 @@ namespace MSEngine.Benchmarks
 
         public static void Simulation(Matrix<Node> matrix, Span<Turn> turns, int firstTurnNodeIndex, int mineCount)
         {
-            Span<int> mines = stackalloc int[mineCount];
-            Span<int> visitedIndexes = stackalloc int[matrix.Nodes.Length];
-            Span<int> revealedMineCountNodeIndexes = stackalloc int[matrix.Nodes.Length - mineCount];
-            Span<int> adjacentHiddenNodeIndexes = stackalloc int[matrix.Nodes.Length];
-            Span<float> grid = stackalloc float[revealedMineCountNodeIndexes.Length * adjacentHiddenNodeIndexes.Length];
+            var buffs = new BufferKeeper(
+                stackalloc Turn[matrix.Nodes.Length],
+                stackalloc int[Engine.MaxNodeEdges],
+                stackalloc int[mineCount],
+                stackalloc int[matrix.Nodes.Length - mineCount],
+                stackalloc int[matrix.Nodes.Length - mineCount],
+                stackalloc int[matrix.Nodes.Length],
+                stackalloc float[matrix.Nodes.Length * matrix.Nodes.Length]);
 
-            Engine.FillCustomBoard(matrix, mines, firstTurnNodeIndex);
+            Engine.FillCustomBoard(matrix, buffs.Mines, firstTurnNodeIndex);
 
             var firstTurn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
-            Engine.ComputeBoard(matrix, firstTurn, visitedIndexes);
+            Engine.ComputeBoard(matrix, firstTurn, buffs.VisitedIndexes);
 
             while (true)
             {
-                var turnCount = MatrixSolver.CalculateTurns(matrix, turns, false, revealedMineCountNodeIndexes, adjacentHiddenNodeIndexes, grid);
+                var turnCount = MatrixSolver.CalculateTurns(matrix, buffs, false);
                 if (turnCount == 0)
                 {
-                    turnCount = MatrixSolver.CalculateTurns(matrix, turns, true, revealedMineCountNodeIndexes, adjacentHiddenNodeIndexes, grid);
+                    turnCount = MatrixSolver.CalculateTurns(matrix, buffs, true);
                     if (turnCount == 0) { break; }
                 }
                 foreach (var turn in turns.Slice(0, turnCount))
                 {
-                    Engine.ComputeBoard(matrix, turn, visitedIndexes);
+                    Engine.ComputeBoard(matrix, turn, buffs.VisitedIndexes);
                 }
             }
         }

@@ -33,6 +33,22 @@ namespace MSEngine.Core
             }
         }
 
+        public Span<T> Vector(int row)
+        {
+            Debug.Assert(ColumnCount > 1);
+            Debug.Assert(row >= 0 && row < RowCount);
+
+            return Nodes.Slice(row * ColumnCount, ColumnCount - 1);
+        }
+
+        public T Augment(int row)
+        {
+            Debug.Assert(ColumnCount > 1);
+            Debug.Assert(row >= 0 && row < RowCount);
+
+            return Nodes[row * ColumnCount + ColumnCount - 1];
+        }
+
         public Enumerator GetEnumerator() => new Enumerator(this);
 
         public override string ToString()
