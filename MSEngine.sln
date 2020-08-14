@@ -32,6 +32,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSEngine.Benchmarks", "src\
 		{46327F42-4E28-4A0E-A6B2-A73C5C6D105E} = {46327F42-4E28-4A0E-A6B2-A73C5C6D105E}
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MSEngine.Bot", "src\MSBot\MSEngine.Bot.csproj", "{F8A12E33-A19B-4EBE-B06E-C8F1D9E6CC18}"
+	ProjectSection(ProjectDependencies) = postProject
+		{46327F42-4E28-4A0E-A6B2-A73C5C6D105E} = {46327F42-4E28-4A0E-A6B2-A73C5C6D105E}
+		{D8BD4E47-E66C-4C25-B7FA-A77A4A615950} = {D8BD4E47-E66C-4C25-B7FA-A77A4A615950}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,6 +64,10 @@ Global
 		{75E7A550-2217-4823-BBCF-AE67EB04D3FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{75E7A550-2217-4823-BBCF-AE67EB04D3FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{75E7A550-2217-4823-BBCF-AE67EB04D3FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8A12E33-A19B-4EBE-B06E-C8F1D9E6CC18}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8A12E33-A19B-4EBE-B06E-C8F1D9E6CC18}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8A12E33-A19B-4EBE-B06E-C8F1D9E6CC18}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8A12E33-A19B-4EBE-B06E-C8F1D9E6CC18}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

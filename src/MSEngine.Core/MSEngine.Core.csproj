@@ -36,6 +36,9 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>MSEngine.Benchmarks</_Parameter1>
     </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>MSEngine.Bot</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
 
 </Project>
