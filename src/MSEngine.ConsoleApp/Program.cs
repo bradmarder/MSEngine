@@ -60,32 +60,11 @@ namespace MSEngine.ConsoleApp
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void Master(Difficulty difficulty, int count)
         {
-            var nodeCount = difficulty switch
+            var (nodeCount, columnCount, mineCount, firstTurnNodeIndex) = difficulty switch
             {
-                Difficulty.Beginner => 81,
-                Difficulty.Intermediate => 16 * 16,
-                Difficulty.Expert => 30 * 16,
-                _ => throw new NotImplementedException()
-            };
-            byte columnCount = difficulty switch
-            {
-                Difficulty.Beginner => 9,
-                Difficulty.Intermediate => 16,
-                Difficulty.Expert => 30,
-                _ => throw new NotImplementedException()
-            };
-            var firstTurnNodeIndex = difficulty switch
-            {
-                Difficulty.Beginner => 20,
-                Difficulty.Intermediate => 49,
-                Difficulty.Expert => 93,
-                _ => throw new NotImplementedException()
-            };
-            var mineCount = difficulty switch
-            {
-                Difficulty.Beginner => 10,
-                Difficulty.Intermediate => 40,
-                Difficulty.Expert => 99,
+                Difficulty.Beginner => (81, 9, 10, 20),
+                Difficulty.Intermediate => (16 * 16, 16, 40, 49),
+                Difficulty.Expert => (30 * 16, 30, 99, 93),
                 _ => throw new NotImplementedException()
             };
 

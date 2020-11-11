@@ -10,7 +10,7 @@ namespace MSEngine.Core
         public Turn(int nodeIndex, NodeOperation operation)
         {
             Debug.Assert(nodeIndex >= 0);
-            Debug.Assert(Enum.IsDefined(typeof(NodeOperation), operation));
+            Debug.Assert(Enum.IsDefined(operation));
 
             NodeIndex = nodeIndex;
             Operation = operation;

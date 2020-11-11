@@ -18,7 +18,7 @@ namespace MSEngine.Core
             Debug.Assert(index >= 0);
             Debug.Assert(mineCount >= 0);
             Debug.Assert(mineCount <= Engine.MaxNodeEdges);
-            Debug.Assert(Enum.IsDefined(typeof(NodeState), state));
+            Debug.Assert(Enum.IsDefined(state));
 
             Index = index;
             HasMine = hasMine;
