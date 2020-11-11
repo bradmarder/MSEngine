@@ -26,7 +26,7 @@ namespace MSEngine.Solver
             Debug.Assert(turnCount >= 0);
             Debug.Assert(turns.Length > turnCount);
 
-            if (Utilities.Contains(turns.Slice(0, turnCount), turn))
+            if (turns.Slice(0, turnCount).Contains(turn))
             {
                 return false;
             }

@@ -24,7 +24,7 @@ namespace MSEngine.Benchmarks
             byte n = 0;
             foreach (var i in buffer)
             {
-                if (Utilities.Contains(mineIndexes, i))
+                if (mineIndexes.Contains(i))
                 {
                     n++;
                 }
@@ -42,7 +42,7 @@ namespace MSEngine.Benchmarks
             byte n = 0;
             foreach (var i in buffer)
             {
-                if (i != -1 && Utilities.Contains(mineIndexes, i))
+                if (i != -1 && mineIndexes.Contains(i))
                 {
                     n++;
                 }

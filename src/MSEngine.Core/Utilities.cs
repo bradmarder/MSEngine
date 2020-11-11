@@ -208,26 +208,6 @@ namespace MSEngine.Core
             return false;
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Contains<T>(this ReadOnlySpan<T> span, T value) where T : IEquatable<T>
-        {
-#if NETCOREAPP3_1
-            return MemoryExtensions.Contains(span, value);
-#else
-            return span.IndexOf(value) != -1;
-#endif
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Contains<T>(this Span<T> span, T value) where T : IEquatable<T>
-        {
-#if NETCOREAPP3_1
-            return MemoryExtensions.Contains(span, value);
-#else
-            return span.IndexOf(value) != -1;
-#endif
-        }
-
         public static string Log(in Matrix<Node> matrix)
         {
             var sb = new System.Text.StringBuilder();
