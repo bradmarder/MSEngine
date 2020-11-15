@@ -11,7 +11,7 @@ namespace MSEngine.ConsoleApp
 {
     class Program
     {
-        private static readonly object _lock = new object();
+        private static readonly object _lock = new();
         private static readonly Stopwatch _watch = Stopwatch.StartNew();
         private static int _wins = 0;
         private static int _gamesPlayedCount = 0;
@@ -72,14 +72,17 @@ namespace MSEngine.ConsoleApp
 
             var matrix = new Matrix<Node>(nodes, columnCount);
             var firstTurn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
-            var buffs = new BufferKeeper(
-                stackalloc Turn[nodeCount],
-                stackalloc int[Engine.MaxNodeEdges],
-                stackalloc int[mineCount],
-                stackalloc int[nodeCount - mineCount],
-                stackalloc int[nodeCount - mineCount],
-                stackalloc int[nodeCount],
-                stackalloc float[nodeCount * nodeCount]);
+
+            var buffs = new BufferKeeper
+            {
+                Turns = stackalloc Turn[nodeCount],
+                EdgeIndexes = stackalloc int[Engine.MaxNodeEdges],
+                Mines = stackalloc int[mineCount],
+                VisitedIndexes = stackalloc int[nodeCount - mineCount],
+                RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
+                AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
+                Grid = stackalloc float[nodeCount * nodeCount]
+            };
 
             while (count > 0)
             {
