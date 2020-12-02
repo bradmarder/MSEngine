@@ -37,14 +37,16 @@ namespace MSEngine.Bot
 
             LeftClickNode(squares, 93);
 
-            var buffs = new BufferKeeper(
-                stackalloc Turn[nodeCount],
-                stackalloc int[Engine.MaxNodeEdges],
-                stackalloc int[mineCount],
-                stackalloc int[nodeCount - mineCount],
-                stackalloc int[nodeCount - mineCount],
-                stackalloc int[nodeCount],
-                stackalloc float[nodeCount * nodeCount]);
+            var buffs = new BufferKeeper
+            {
+                Turns = stackalloc Turn[nodeCount],
+                EdgeIndexes = stackalloc int[Engine.MaxNodeEdges],
+                Mines = stackalloc int[mineCount],
+                VisitedIndexes = stackalloc int[nodeCount - mineCount],
+                RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
+                AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
+                Grid = stackalloc float[nodeCount * nodeCount]
+            };
 
             while (IsGamePending(driver))
             {

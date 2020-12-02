@@ -12,7 +12,7 @@ namespace MSEngine.Benchmarks
     {
         static void Main(string[] args)
         {
-            BenchmarkRunner.Run<RandomSimulation>();
+            BenchmarkRunner.Run<FillAdjacentNodes>();
         }
     }
 
@@ -68,14 +68,17 @@ namespace MSEngine.Benchmarks
 
         public static void Simulation(Matrix<Node> matrix, Span<Turn> turns, int firstTurnNodeIndex, int mineCount)
         {
-            var buffs = new BufferKeeper(
-                stackalloc Turn[matrix.Nodes.Length],
-                stackalloc int[Engine.MaxNodeEdges],
-                stackalloc int[mineCount],
-                stackalloc int[matrix.Nodes.Length - mineCount],
-                stackalloc int[matrix.Nodes.Length - mineCount],
-                stackalloc int[matrix.Nodes.Length],
-                stackalloc float[matrix.Nodes.Length * matrix.Nodes.Length]);
+            var nodeCount = matrix.Nodes.Length;
+            var buffs = new BufferKeeper
+            {
+                Turns = stackalloc Turn[nodeCount],
+                EdgeIndexes = stackalloc int[Engine.MaxNodeEdges],
+                Mines = stackalloc int[mineCount],
+                VisitedIndexes = stackalloc int[nodeCount - mineCount],
+                RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
+                AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
+                Grid = stackalloc float[nodeCount * nodeCount]
+            };
 
             Engine.FillCustomBoard(matrix, buffs.Mines, firstTurnNodeIndex);
 
