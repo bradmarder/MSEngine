@@ -20,7 +20,7 @@
     <PackageId>MSEngine.Core</PackageId>
     <!--<PackageIconUrl></PackageIconUrl>-->
     <PackageProjectUrl>https://github.com/bradmarder/MSEngine</PackageProjectUrl>
-    <license type="expression">MIT</license>
+    <license>MIT</license>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/bradmarder/MSEngine</RepositoryUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
