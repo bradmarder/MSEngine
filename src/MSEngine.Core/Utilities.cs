@@ -33,7 +33,7 @@ namespace MSEngine.Core
         public static void FillAdjacentNodeIndexes(this Span<int> indexes, int nodeCount, int index, int columnCount)
         {
             // ~10% optimization: help compiler assume it doesn't need to to check out-of-bounds on accessing indexes
-            _ = indexes[7];
+            _ = indexes[Engine.MaxNodeEdges - 1];
 
             Debug.Assert(nodeCount > 0);
             Debug.Assert(index >= 0);
