@@ -27,7 +27,7 @@ namespace MSEngine.Core
                 var hasMine = mines.Contains(i);
                 var mineCount = hasMine ? byte.MinValue : Utilities.GetAdjacentMineCount(mines, i, matrix, buffer);
 
-                matrix.Nodes[i] = new Node(i, hasMine, mineCount);
+                matrix.Nodes[i] = new(i, hasMine, mineCount);
             }
         }
 
@@ -128,7 +128,7 @@ namespace MSEngine.Core
                     }
                     else
                     {
-                        node = new Node(node, NodeState.Revealed);
+                        node = new(node, NodeState.Revealed);
                         if (node.MineCount == 0)
                         {
                             TriggerChainReaction(matrix, turn.NodeIndex, visitedIndexes);
@@ -140,10 +140,10 @@ namespace MSEngine.Core
                     {
                         break;
                     }
-                    node = new Node(node, NodeState.Flagged);
+                    node = new(node, NodeState.Flagged);
                     break;
                 case NodeOperation.RemoveFlag:
-                    node = new Node(node, NodeState.Hidden);
+                    node = new(node, NodeState.Hidden);
                     break;
                 case NodeOperation.Chord:
                     Chord(matrix, turn.NodeIndex, visitedIndexes);
@@ -180,7 +180,7 @@ namespace MSEngine.Core
             {
                 if (node.HasMine && node.State == NodeState.Hidden)
                 {
-                    node = new Node(node, NodeState.Revealed);
+                    node = new(node, NodeState.Revealed);
                 }
             }
         }
@@ -199,6 +199,11 @@ namespace MSEngine.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void VisitNode(in Matrix<Node> matrix, int nodeIndex, ReadOnlySpan<int> visitedIndexes, ref Span<int>.Enumerator enumerator)
         {
+            // help compiler assume it doesn't need to to check out-of-bounds on accessing indexes
+            // this DOES NOT work because the compiler does not know at compile time that matrix.Nodes[i] "i" is not less than 64,
+            // thus, it has to emit the bounds check
+            //_ = matrix.Nodes[63];
+
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeIndex < matrix.Nodes.Length);
 
@@ -219,7 +224,7 @@ namespace MSEngine.Core
 
                 if (node.State == NodeState.Hidden)
                 {
-                    node = new Node(node, NodeState.Revealed);
+                    node = new(node, NodeState.Revealed);
                 }
 
                 if (node.MineCount == 0 && !visitedIndexes.Contains(i))

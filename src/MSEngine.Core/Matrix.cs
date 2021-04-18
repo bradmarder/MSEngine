@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace MSEngine.Core
 {
@@ -29,27 +30,40 @@ namespace MSEngine.Core
                 Debug.Assert(column >= 0 && column < ColumnCount);
                 Debug.Assert(row >= 0 && row < RowCount);
 
-                return ref Nodes[row * ColumnCount + column];
+                // return ref Nodes[row * ColumnCount + column];
+                return ref GetItemByOffset(row * ColumnCount + column);
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private ref T GetItemByOffset(int elementOffset)
+        {
+            ref var data = ref MemoryMarshal.GetReference(Nodes);
+            return ref Unsafe.Add(ref data, elementOffset);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Span<T> Vector(int row)
         {
             Debug.Assert(ColumnCount > 1);
-            Debug.Assert(row >= 0 && row < RowCount);
+            Debug.Assert(row >= 0);
+            Debug.Assert(row < RowCount);
 
             return Nodes.Slice(row * ColumnCount, ColumnCount - 1);
         }
 
-        public T Augment(int row)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly ref T Augment(int row)
         {
             Debug.Assert(ColumnCount > 1);
-            Debug.Assert(row >= 0 && row < RowCount);
+            Debug.Assert(row >= 0);
+            Debug.Assert(row < RowCount);
 
-            return Nodes[row * ColumnCount + ColumnCount - 1];
+            // return Nodes[row * ColumnCount + ColumnCount - 1];
+            return ref GetItemByOffset(row * ColumnCount + ColumnCount - 1);
         }
 
-        public Enumerator GetEnumerator() => new Enumerator(this);
+        public Enumerator GetEnumerator() => new(this);
 
         public override string ToString()
         {

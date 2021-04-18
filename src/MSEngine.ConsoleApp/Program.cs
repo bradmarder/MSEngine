@@ -169,25 +169,16 @@ namespace MSEngine.ConsoleApp
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static char GetNodeChar(in Node node)
-        {
-            switch (node)
+        private static char GetNodeChar(in Node node) =>
+            node switch
             {
-                case var z when z.State == NodeState.Hidden:
-                    return '_';
-                case var z when !z.HasMine && z.State == NodeState.Flagged:
-                    return '!';
-                case var z when z.State == NodeState.Flagged:
-                    return '>';
-                case var z when z.HasMine && z.State == NodeState.Revealed:
-                    return '*';
-                case var z when z.HasMine:
-                    return 'x';
-                case var z when z.State == NodeState.Revealed:
-                    return z.MineCount.ToString().First();
-                default:
-                    throw new NotImplementedException(node.ToString());
-            }
-        }
+                { State: NodeState.Hidden } => '_',
+                { HasMine: false, State: NodeState.Flagged } => '!',
+                { State: NodeState.Flagged } => '>',
+                { HasMine: true, State: NodeState.Revealed } => '*',
+                { HasMine: true } => 'x',
+                { State: NodeState.Revealed } => char.Parse(node.MineCount.ToString()),
+                _ => throw new NotImplementedException(node.ToString())
+            };
     }
 }
