@@ -62,15 +62,15 @@ namespace MSEngine.Tests
             Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
             Span<Node> nodes = stackalloc Node[]
             {
-                new Node(0, false, 0, NodeState.Flagged),
-                new Node(1, false, 0, NodeState.Hidden),
-                new Node(2, false, 0, NodeState.Flagged),
-                new Node(3, false, 0, NodeState.Hidden),
-                new Node(4, false, 0, NodeState.Hidden),
-                new Node(5, false, 0, NodeState.Hidden),
-                new Node(6, false, 0, NodeState.Flagged),
-                new Node(7, false, 0, NodeState.Hidden),
-                new Node(8, false, 0, NodeState.Flagged)
+                new(0, false, 0, NodeState.Flagged),
+                new(1, false, 0, NodeState.Hidden),
+                new(2, false, 0, NodeState.Flagged),
+                new(3, false, 0, NodeState.Hidden),
+                new(4, false, 0, NodeState.Hidden),
+                new(5, false, 0, NodeState.Hidden),
+                new(6, false, 0, NodeState.Flagged),
+                new(7, false, 0, NodeState.Hidden),
+                new(8, false, 0, NodeState.Flagged)
             };
             var matrix = new Matrix<Node>(nodes, 3);
 
@@ -92,15 +92,15 @@ namespace MSEngine.Tests
             Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
             Span<Node> nodes = stackalloc Node[]
             {
-                new Node(0, false, 0, NodeState.Hidden),
-                new Node(1, false, 0, NodeState.Hidden),
-                new Node(2, false, 0, NodeState.Hidden),
-                new Node(3, false, 0, NodeState.Revealed),
-                new Node(4, false, 0, NodeState.Revealed),
-                new Node(5, false, 0, NodeState.Revealed),
-                new Node(6, false, 0, NodeState.Revealed),
-                new Node(7, false, 0, NodeState.Revealed),
-                new Node(8, false, 0, NodeState.Revealed)
+                new(0, false, 0, NodeState.Hidden),
+                new(1, false, 0, NodeState.Hidden),
+                new(2, false, 0, NodeState.Hidden),
+                new(3, false, 0, NodeState.Revealed),
+                new(4, false, 0, NodeState.Revealed),
+                new(5, false, 0, NodeState.Revealed),
+                new(6, false, 0, NodeState.Revealed),
+                new(7, false, 0, NodeState.Revealed),
+                new(8, false, 0, NodeState.Revealed)
             };
             var matrix = new Matrix<Node>(nodes, 3);
 

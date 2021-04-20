@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Text;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using MSEngine.Core;
 using MSEngine.Solver;
+using System.Text.Json;
 
 namespace MSEngine.Benchmarks
 {
@@ -12,7 +14,7 @@ namespace MSEngine.Benchmarks
     {
         static void Main(string[] args)
         {
-            BenchmarkRunner.Run<FillAdjacentNodes>();
+            BenchmarkRunner.Run<IndexReorder>();
         }
     }
 
@@ -22,10 +24,10 @@ namespace MSEngine.Benchmarks
         [Benchmark]
         public void Beginner() => PrepareMatrix(Difficulty.Beginner);
 
-        [Benchmark]
+        //[Benchmark]
         public void Intermediate() => PrepareMatrix(Difficulty.Intermediate);
 
-        [Benchmark]
+        //[Benchmark]
         public void Expert() => PrepareMatrix(Difficulty.Expert);
 
         public static void PrepareMatrix(Difficulty difficulty)

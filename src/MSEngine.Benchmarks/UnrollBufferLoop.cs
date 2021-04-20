@@ -22,15 +22,15 @@ namespace MSEngine.Benchmarks
             Span<int> buffer = stackalloc int[8];
             Span<Node> nodes = stackalloc Node[]
             {
-                new Node(0, true, 0, NodeState.Revealed),
-                new Node(1, true, 0, NodeState.Revealed),
-                new Node(2, true, 0, NodeState.Revealed),
-                new Node(3, true, 0, NodeState.Revealed),
-                new Node(4, true, 0, NodeState.Revealed),
-                new Node(5, true, 0, NodeState.Revealed),
-                new Node(6, true, 0, NodeState.Revealed),
-                new Node(7, true, 0, NodeState.Revealed),
-                new Node(8, true, 0, NodeState.Revealed),
+                new(0, true, 0, NodeState.Revealed),
+                new(1, true, 0, NodeState.Revealed),
+                new(2, true, 0, NodeState.Revealed),
+                new(3, true, 0, NodeState.Revealed),
+                new(4, true, 0, NodeState.Revealed),
+                new(5, true, 0, NodeState.Revealed),
+                new(6, true, 0, NodeState.Revealed),
+                new(7, true, 0, NodeState.Revealed),
+                new(8, true, 0, NodeState.Revealed),
             };
             var matrix = new Matrix<Node>(nodes, 3);
             OldHasHiddenAdjacentNodes(matrix, buffer, 4);
@@ -42,15 +42,15 @@ namespace MSEngine.Benchmarks
             Span<int> buffer = stackalloc int[8];
             Span<Node> nodes = stackalloc Node[]
             {
-                new Node(0, true, 0, NodeState.Revealed),
-                new Node(1, true, 0, NodeState.Revealed),
-                new Node(2, true, 0, NodeState.Revealed),
-                new Node(3, true, 0, NodeState.Revealed),
-                new Node(4, true, 0, NodeState.Revealed),
-                new Node(5, true, 0, NodeState.Revealed),
-                new Node(6, true, 0, NodeState.Revealed),
-                new Node(7, true, 0, NodeState.Revealed),
-                new Node(8, true, 0, NodeState.Revealed),
+                new(0, true, 0, NodeState.Revealed),
+                new(1, true, 0, NodeState.Revealed),
+                new(2, true, 0, NodeState.Revealed),
+                new(3, true, 0, NodeState.Revealed),
+                new(4, true, 0, NodeState.Revealed),
+                new(5, true, 0, NodeState.Revealed),
+                new(6, true, 0, NodeState.Revealed),
+                new(7, true, 0, NodeState.Revealed),
+                new(8, true, 0, NodeState.Revealed),
             };
             var matrix = new Matrix<Node>(nodes, 3);
             NewHasHiddenAdjacentNodes(matrix, buffer, 4);
@@ -62,15 +62,15 @@ namespace MSEngine.Benchmarks
             Span<int> buffer = stackalloc int[8];
             Span<Node> nodes = stackalloc Node[]
             {
-                new Node(0, true, 0, NodeState.Revealed),
-                new Node(1, true, 0, NodeState.Revealed),
-                new Node(2, true, 0, NodeState.Revealed),
-                new Node(3, true, 0, NodeState.Revealed),
-                new Node(4, true, 0, NodeState.Revealed),
-                new Node(5, true, 0, NodeState.Revealed),
-                new Node(6, true, 0, NodeState.Revealed),
-                new Node(7, true, 0, NodeState.Revealed),
-                new Node(8, true, 0, NodeState.Revealed),
+                new(0, true, 0, NodeState.Revealed),
+                new(1, true, 0, NodeState.Revealed),
+                new(2, true, 0, NodeState.Revealed),
+                new(3, true, 0, NodeState.Revealed),
+                new(4, true, 0, NodeState.Revealed),
+                new(5, true, 0, NodeState.Revealed),
+                new(6, true, 0, NodeState.Revealed),
+                new(7, true, 0, NodeState.Revealed),
+                new(8, true, 0, NodeState.Revealed),
             };
             var matrix = new Matrix<Node>(nodes, 3);
             LastChance(matrix, buffer, 4);

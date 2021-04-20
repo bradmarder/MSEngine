@@ -84,24 +84,20 @@ namespace MSEngine.Core
         public ref struct Enumerator
         {
             private int _row;
-            private readonly Span<T> _span;
-            private readonly int _columnCount;
-            private readonly int _rowCount;
+            private readonly Matrix<T> _matrix;
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             internal Enumerator(in Matrix<T> matrix)
             {
                 _row = -1;
-                _span = matrix.Nodes;
-                _columnCount = matrix.ColumnCount;
-                _rowCount = matrix.RowCount;
+                _matrix = matrix;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public bool MoveNext()
             {
                 int row = _row + 1;
-                if (row < _rowCount)
+                if (row < _matrix.RowCount)
                 {
                     _row = row;
                     return true;
@@ -113,7 +109,7 @@ namespace MSEngine.Core
             public readonly Span<T> Current
             {
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-                get => _span.Slice(_row * _columnCount, _columnCount);
+                get => _matrix.Nodes.Slice(_row * _matrix.ColumnCount, _matrix.ColumnCount);
             }
         }
     }

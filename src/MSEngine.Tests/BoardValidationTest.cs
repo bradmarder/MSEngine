@@ -37,7 +37,7 @@ namespace MSEngine.Tests
             Assert.Throws<InvalidGameStateException>(() =>
             {
                 Span<Node> nodes = stackalloc Node[8 * 8];
-                nodes[0] = new Node(0, true, 0, NodeState.Revealed);
+                nodes[0] = new(0, true, 0, NodeState.Revealed);
                 var matrix = new Matrix<Node>(nodes, 8);
                 var turn = new Turn(0, operation);
 
@@ -145,7 +145,7 @@ namespace MSEngine.Tests
             {
                 Span<Node> nodes = stackalloc Node[3 * 3];
                 Span<int> mines = stackalloc int[] { 0 };
-                nodes[0] = new Node(0, true, 0, NodeState.Hidden);
+                nodes[0] = new(0, true, 0, NodeState.Hidden);
                 var matrix = new Matrix<Node>(nodes, 3);
                 var firstTurn = new Turn(8, NodeOperation.Reveal);
                 var secondTurn = new Turn(8, NodeOperation.Chord);

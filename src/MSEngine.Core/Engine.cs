@@ -118,10 +118,6 @@ namespace MSEngine.Core
             switch (turn.Operation)
             {
                 case NodeOperation.Reveal:
-                    if (node.State == NodeState.Revealed)
-                    {
-                        break;
-                    }
                     if (node.HasMine)
                     {
                         RevealHiddenMines(matrix.Nodes);
@@ -136,10 +132,6 @@ namespace MSEngine.Core
                     }
                     break;
                 case NodeOperation.Flag:
-                    if (node.State == NodeState.Flagged)
-                    {
-                        break;
-                    }
                     node = new(node, NodeState.Flagged);
                     break;
                 case NodeOperation.RemoveFlag:
@@ -199,11 +191,6 @@ namespace MSEngine.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void VisitNode(in Matrix<Node> matrix, int nodeIndex, ReadOnlySpan<int> visitedIndexes, ref Span<int>.Enumerator enumerator)
         {
-            // help compiler assume it doesn't need to to check out-of-bounds on accessing indexes
-            // this DOES NOT work because the compiler does not know at compile time that matrix.Nodes[i] "i" is not less than 64,
-            // thus, it has to emit the bounds check
-            //_ = matrix.Nodes[63];
-
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeIndex < matrix.Nodes.Length);
 

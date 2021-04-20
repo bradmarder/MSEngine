@@ -11,8 +11,8 @@ namespace MSEngine.Tests
         {
             Span<Node> nodes = stackalloc Node[]
             {
-                new Node(0, true, 0, NodeState.Flagged),
-                new Node(1, true, 1, NodeState.Hidden)
+                new(0, true, 0, NodeState.Flagged),
+                new(1, true, 1, NodeState.Hidden)
             };
 
             Engine.RevealHiddenMines(nodes);
@@ -28,10 +28,10 @@ namespace MSEngine.Tests
         {
             Span<Node> nodes = stackalloc Node[]
             {
-                new Node(0, true, 0, NodeState.Flagged),
-                new Node(1, false, 1, NodeState.Revealed),
-                new Node(2, false, 1, NodeState.Hidden),
-                new Node(3, false, 1, NodeState.Hidden)
+                new(0, true, 0, NodeState.Flagged),
+                new(1, false, 1, NodeState.Revealed),
+                new(2, false, 1, NodeState.Hidden),
+                new(3, false, 1, NodeState.Hidden)
             };
             var matrix = new Matrix<Node>(nodes, 2);
             var turn = new Turn(1, NodeOperation.Chord);
@@ -65,9 +65,9 @@ namespace MSEngine.Tests
         {
             Span<Node> nodes = stackalloc Node[]
             {
-                new Node(0, false, 0, NodeState.Hidden),
-                new Node(1, false, 0, NodeState.Flagged),
-                new Node(2, false, 0, NodeState.Hidden)
+                new(0, false, 0, NodeState.Hidden),
+                new(1, false, 0, NodeState.Flagged),
+                new(2, false, 0, NodeState.Hidden)
             };
             var matrix = new Matrix<Node>(nodes, 3);
             var turn = new Turn(0, NodeOperation.Reveal);
@@ -85,9 +85,9 @@ namespace MSEngine.Tests
         {
             Span<Node> nodes = stackalloc Node[]
             {
-                new Node(0, false, 0, NodeState.Hidden),
-                new Node(1, false, 0, NodeState.Revealed),
-                new Node(2, false, 0, NodeState.Hidden)
+                new(0, false, 0, NodeState.Hidden),
+                new(1, false, 0, NodeState.Revealed),
+                new(2, false, 0, NodeState.Hidden)
             };
             var matrix = new Matrix<Node>(nodes, 3);
             var turn = new Turn(0, NodeOperation.Reveal);
