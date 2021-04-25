@@ -139,13 +139,26 @@ namespace MSEngine.Core
             // we must fill the buffer with -1 because the default (0) is a valid index
             mines.Fill(-1);
 
+            var n = 0;
+            Span<byte> pool = stackalloc byte[2056];
+            RandomNumberGenerator.Fill(pool);
+            
             int m;
             foreach (ref var x in mines)
             {
                 // we use a loop to prevent duplicate indexes
                 do
                 {
-                    m = RandomNumberGenerator.GetInt32(nodeCount);
+                    var slice = pool.Slice(n, sizeof(int));
+                    n += sizeof(int);
+
+                    // Warning -> do not calculate the Math.Abs of the immediate BitConverter.ToInt32(slice) result
+                    // In the rare case where it equals int.MinValue, this would throw an overflow exception.
+                    // By first modding by the nodeCount, we can guarantee safety of the Math.Abs method
+                    m = Math.Abs(BitConverter.ToInt32(slice) % nodeCount);
+
+                    Debug.Assert(m >= 0);
+                    Debug.Assert(m < nodeCount);
                 } while (mines.Contains(m) || ignore.Contains(m));
 
                 x = m;
