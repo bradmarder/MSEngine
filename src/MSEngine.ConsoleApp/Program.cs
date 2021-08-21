@@ -65,7 +65,7 @@ namespace MSEngine.ConsoleApp
                 Difficulty.Beginner => (81, 9, 10, 20),
                 Difficulty.Intermediate => (16 * 16, 16, 40, 49),
                 Difficulty.Expert => (30 * 16, 30, 99, 93),
-                _ => throw new NotImplementedException()
+                _ => throw new NotImplementedException(),
             };
 
             Span<Node> nodes = stackalloc Node[nodeCount];
@@ -81,7 +81,7 @@ namespace MSEngine.ConsoleApp
                 VisitedIndexes = stackalloc int[nodeCount - mineCount],
                 RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
                 AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
-                Grid = stackalloc float[nodeCount * nodeCount]
+                Grid = stackalloc float[nodeCount * nodeCount],
             };
 
             while (count > 0)
@@ -143,11 +143,11 @@ namespace MSEngine.ConsoleApp
                 var node = nodes[turn.NodeIndex];
                 if (node.HasMine)
                 {
-                    Debug.Assert(turn.Operation == NodeOperation.Flag);
+                    Debug.Assert(turn.Operation == NodeOperation.Flag, "Revealing a mine");
                 }
                 else
                 {
-                    Debug.Assert(turn.Operation == NodeOperation.Reveal && node.State == NodeState.Hidden);
+                    Debug.Assert(turn.Operation == NodeOperation.Reveal && node.State == NodeState.Hidden, "Flagging a node w/out a mine");
                 }
             }
         }
@@ -178,7 +178,7 @@ namespace MSEngine.ConsoleApp
                 { HasMine: true, State: NodeState.Revealed } => '*',
                 { HasMine: true } => 'x',
                 { State: NodeState.Revealed } => char.Parse(node.MineCount.ToString()),
-                _ => throw new NotImplementedException(node.ToString())
+                _ => throw new NotImplementedException(node.ToString()),
             };
     }
 }

@@ -119,6 +119,7 @@ namespace MSEngine.Solver
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int CalculateTurns(in Matrix<Node> nodeMatrix, in BufferKeeper buffs, bool useAllHiddenNodes)
         {
             var nodes = nodeMatrix.Nodes;

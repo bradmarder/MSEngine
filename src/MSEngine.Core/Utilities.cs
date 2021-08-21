@@ -7,7 +7,6 @@ namespace MSEngine.Core
 {
     public static class Utilities
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool AreNodesAdjacent(Span<int> buffer, int nodeCount, int columnCount, int nodeIndexOne, int nodeIndexTwo)
         {
             Debug.Assert(buffer.Length == Engine.MaxNodeEdges);
@@ -156,6 +155,50 @@ namespace MSEngine.Core
                     // In the rare case where it equals int.MinValue, this would throw an overflow exception.
                     // By first modding by the nodeCount, we can guarantee safety of the Math.Abs method
                     m = Math.Abs(BitConverter.ToInt32(slice) % nodeCount);
+
+                    Debug.Assert(m >= 0);
+                    Debug.Assert(m < nodeCount);
+                } while (mines.Contains(m) || ignore.Contains(m));
+
+                x = m;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void VectorScatterMines(Span<int> mines, int nodeCount, ReadOnlySpan<int> ignore)
+        {
+            Debug.Assert(nodeCount > 0);
+            Debug.Assert(nodeCount >= mines.Length);
+
+            // we must fill the buffer with -1 because the default (0) is a valid index
+            mines.Fill(-1);
+
+            var n = 0;
+            var poolN = 0;
+            Span<byte> pool = stackalloc byte[2056];
+            RandomNumberGenerator.Fill(pool);
+            System.Numerics.Vector<byte> bar;
+            System.Numerics.Vector<uint> foo = default;
+            int m;
+            foreach (ref var x in mines)
+            {
+                // we use a loop to prevent duplicate indexes
+                do
+                {
+                    if (n == 0) // vector.count / sizeof(int)
+                    {
+                        bar = new System.Numerics.Vector<byte>(pool.Slice(poolN, 32)); // vector.count instead of 32
+                        foo = System.Numerics.Vector.AsVectorUInt32(bar);
+                        poolN++;
+                    }
+
+                    // Warning -> do not calculate the Math.Abs of the immediate BitConverter.ToInt32(slice) result
+                    // In the rare case where it equals int.MinValue, this would throw an overflow exception.
+                    // By first modding by the nodeCount, we can guarantee safety of the Math.Abs method
+                    m = (int)(foo[n] % nodeCount);
+
+                    n++;
+                    if (n == 8) { n = 0; }
 
                     Debug.Assert(m >= 0);
                     Debug.Assert(m < nodeCount);

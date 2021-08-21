@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -7,6 +9,7 @@ using BenchmarkDotNet.Running;
 using MSEngine.Core;
 using MSEngine.Solver;
 using System.Text.Json;
+using System.IO;
 
 namespace MSEngine.Benchmarks
 {
@@ -14,63 +17,44 @@ namespace MSEngine.Benchmarks
     {
         static void Main(string[] args)
         {
-            BenchmarkRunner.Run<IndexReorder>();
+            BenchmarkRunner.Run<Simulator>();
         }
     }
 
     [MemoryDiagnoser]
-    public class RandomSimulation
+    public class Simulator
     {
-        [Benchmark]
-        public void Beginner() => PrepareMatrix(Difficulty.Beginner);
+        private static readonly List<Node> _nodes = new();
 
-        //[Benchmark]
-        public void Intermediate() => PrepareMatrix(Difficulty.Intermediate);
-
-        //[Benchmark]
-        public void Expert() => PrepareMatrix(Difficulty.Expert);
-
-        public static void PrepareMatrix(Difficulty difficulty)
+        public Simulator()
         {
-            var nodeCount = difficulty switch
-            {
-                Difficulty.Beginner => 81,
-                Difficulty.Intermediate => 16 * 16,
-                Difficulty.Expert => 30 * 16,
-                _ => throw new NotImplementedException()
-            };
-            var columnCount = difficulty switch
-            {
-                Difficulty.Beginner => 9,
-                Difficulty.Intermediate => 16,
-                Difficulty.Expert => 30,
-                _ => throw new NotImplementedException()
-            };
-            var firstTurnNodeIndex = difficulty switch
-            {
-                Difficulty.Beginner => 20,
-                Difficulty.Intermediate => 49,
-                Difficulty.Expert => 93,
-                _ => throw new NotImplementedException()
-            };
-            var mineCount = difficulty switch
-            {
-                Difficulty.Beginner => 10,
-                Difficulty.Intermediate => 40,
-                Difficulty.Expert => 99,
-                _ => throw new NotImplementedException()
-            };
+            // beginner boards should be 162 bytes (2 bytes per node * 81 nodes)
+            const int beginnerBoardByteSize = 162;
 
-            Span<Node> nodes = stackalloc Node[nodeCount];
-            Span<Turn> turns = stackalloc Turn[nodeCount];
-            var matrix = new Matrix<Node>(nodes, columnCount);
+            var name = Path.Combine("C:", "MSEngine", "TestBeginnerGames.bin");
+            using var file = File.Open(name, FileMode.Open);
+            using var serializer = new BinaryReader(file);
+            Debug.Assert(file.Length % beginnerBoardByteSize == 0); 
 
-            Simulation(matrix, turns, firstTurnNodeIndex, mineCount);
+            while (serializer.PeekChar() != -1)
+            {
+                for (var i = 0; i < 81; i++)
+                {
+                    var hasMine = serializer.ReadBoolean();
+                    var mineCount = serializer.ReadByte();
+                    _nodes.Add(new(i, hasMine, mineCount, NodeState.Hidden));
+                }
+            }
         }
 
-        public static void Simulation(Matrix<Node> matrix, Span<Turn> turns, int firstTurnNodeIndex, int mineCount)
+        [Benchmark]
+        public void Execute()
         {
-            var nodeCount = matrix.Nodes.Length;
+            const int mineCount = 10;
+            const int nodeCount = 81;
+            Span<Node> nodes = stackalloc Node[nodeCount];
+            var matrix = new Matrix<Node>(nodes, 9);
+
             var buffs = new BufferKeeper
             {
                 Turns = stackalloc Turn[nodeCount],
@@ -79,25 +63,33 @@ namespace MSEngine.Benchmarks
                 VisitedIndexes = stackalloc int[nodeCount - mineCount],
                 RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
                 AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
-                Grid = stackalloc float[nodeCount * nodeCount]
+                Grid = stackalloc float[nodeCount * nodeCount],
             };
 
-            Engine.FillCustomBoard(matrix, buffs.Mines, firstTurnNodeIndex);
+            var firstTurn = new Turn(20, NodeOperation.Reveal);
+            var gameCount = _nodes.Count / nodeCount;
 
-            var firstTurn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
-            Engine.ComputeBoard(matrix, firstTurn, buffs.VisitedIndexes);
-
-            while (true)
+            for (var n = 0; n < gameCount; n++)
             {
-                var turnCount = MatrixSolver.CalculateTurns(matrix, buffs, false);
-                if (turnCount == 0)
+                for (var i = 0; i < nodeCount; i++)
                 {
-                    turnCount = MatrixSolver.CalculateTurns(matrix, buffs, true);
-                    if (turnCount == 0) { break; }
+                    nodes[i] = _nodes[n * nodeCount + i];
                 }
-                foreach (var turn in turns.Slice(0, turnCount))
+                Engine.ComputeBoard(matrix, firstTurn, buffs.VisitedIndexes);
+
+                while (true)
                 {
-                    Engine.ComputeBoard(matrix, turn, buffs.VisitedIndexes);
+                    var turnCount = MatrixSolver.CalculateTurns(matrix, buffs, false);
+                    if (turnCount == 0)
+                    {
+                        turnCount = MatrixSolver.CalculateTurns(matrix, buffs, true);
+                        if (turnCount == 0) { break; }
+                    }
+
+                    foreach (var turn in buffs.Turns.Slice(0, turnCount))
+                    {
+                        Engine.ComputeBoard(matrix, turn, buffs.VisitedIndexes);
+                    }
                 }
             }
         }

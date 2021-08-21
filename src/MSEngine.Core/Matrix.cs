@@ -30,7 +30,6 @@ namespace MSEngine.Core
                 Debug.Assert(column >= 0 && column < ColumnCount);
                 Debug.Assert(row >= 0 && row < RowCount);
 
-                // return ref Nodes[row * ColumnCount + column];
                 return ref GetItemByOffset(row * ColumnCount + column);
             }
         }
@@ -53,13 +52,12 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly ref T Augment(int row)
+        public ref readonly T Augment(int row)
         {
             Debug.Assert(ColumnCount > 1);
             Debug.Assert(row >= 0);
             Debug.Assert(row < RowCount);
 
-            // return Nodes[row * ColumnCount + ColumnCount - 1];
             return ref GetItemByOffset(row * ColumnCount + ColumnCount - 1);
         }
 

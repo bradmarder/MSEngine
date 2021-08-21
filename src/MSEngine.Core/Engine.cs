@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace MSEngine.Core
 {
@@ -8,7 +7,6 @@ namespace MSEngine.Core
     {
         public const byte MaxNodeEdges = 8;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void FillCustomBoard(in Matrix<Node> matrix, Span<int> mines, int? safeNodeIndex = null)
         {
             if (safeNodeIndex is null)
@@ -48,7 +46,6 @@ namespace MSEngine.Core
         /// -May only chord a node when adjacent mine count equals adjacent node flag count
         /// -May only chord a node that has hidden adjacent nodes
         /// </exception>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void EnsureValidBoardConfiguration(in Matrix<Node> matrix, Turn turn)
         {
             var nodes = matrix.Nodes;
@@ -110,7 +107,6 @@ namespace MSEngine.Core
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void ComputeBoard(in Matrix<Node> matrix, Turn turn, Span<int> visitedIndexes)
         {
             ref var node = ref matrix.Nodes[turn.NodeIndex];
@@ -146,7 +142,6 @@ namespace MSEngine.Core
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void Chord(in Matrix<Node> matrix, int nodeIndex, Span<int> visitedIndexes)
         {
             Debug.Assert(nodeIndex >= 0);
@@ -165,7 +160,6 @@ namespace MSEngine.Core
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void RevealHiddenMines(Span<Node> nodes)
         {
             foreach (ref var node in nodes)
@@ -177,7 +171,6 @@ namespace MSEngine.Core
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void TriggerChainReaction(in Matrix<Node> matrix, int nodeIndex, Span<int> visitedIndexes)
         {
             Debug.Assert(nodeIndex >= 0);
@@ -188,7 +181,6 @@ namespace MSEngine.Core
             VisitNode(matrix, nodeIndex, visitedIndexes, ref enumerator);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void VisitNode(in Matrix<Node> matrix, int nodeIndex, ReadOnlySpan<int> visitedIndexes, ref Span<int>.Enumerator enumerator)
         {
             Debug.Assert(nodeIndex >= 0);
