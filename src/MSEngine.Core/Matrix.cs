@@ -22,6 +22,12 @@ namespace MSEngine.Core
         public int ColumnCount { get; }
         public int RowCount { get; }
 
+        public ref T this[int i]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ref GetItemByOffset(i);
+        }
+
         public ref T this[int row, int column]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -37,6 +43,9 @@ namespace MSEngine.Core
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ref T GetItemByOffset(int elementOffset)
         {
+            Debug.Assert(elementOffset >= 0);
+            Debug.Assert(elementOffset < Nodes.Length);
+
             ref var data = ref MemoryMarshal.GetReference(Nodes);
             return ref Unsafe.Add(ref data, elementOffset);
         }

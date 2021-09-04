@@ -3,24 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using MSEngine.Core;
 using MSEngine.Solver;
-using System.Text.Json;
 using System.IO;
+using MSEngine.Benchmarks;
+
+BenchmarkRunner.Run<Simulator>();
 
 namespace MSEngine.Benchmarks
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            BenchmarkRunner.Run<Simulator>();
-        }
-    }
-
     [MemoryDiagnoser]
     public class Simulator
     {

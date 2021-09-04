@@ -25,7 +25,7 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void FillAdjacentNodeIndexes(this Span<int> indexes, Matrix<Node> matrix, int index)
+        public static void FillAdjacentNodeIndexes(this Span<int> indexes, in Matrix<Node> matrix, int index)
             => indexes.FillAdjacentNodeIndexes(matrix.Nodes.Length, index, matrix.ColumnCount);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -209,7 +209,7 @@ namespace MSEngine.Core
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static byte GetAdjacentMineCount(ReadOnlySpan<int> mines, int nodeIndex, Matrix<Node> matrix, Span<int> buffer)
+        internal static byte GetAdjacentMineCount(ReadOnlySpan<int> mines, int nodeIndex, in Matrix<Node> matrix, Span<int> buffer)
         {
             Debug.Assert(nodeIndex >= 0);
             Debug.Assert(nodeIndex < matrix.Nodes.Length);
@@ -239,7 +239,7 @@ namespace MSEngine.Core
             byte n = 0;
             foreach (var i in buffer)
             {
-                if (i != -1 && matrix.Nodes[i].State == NodeState.Flagged)
+                if (i != -1 && matrix[i].State == NodeState.Flagged)
                 {
                     n++;
                 }
@@ -256,9 +256,9 @@ namespace MSEngine.Core
 
             buffer.FillAdjacentNodeIndexes(matrix, nodeIndex);
 
-            foreach (var x in buffer)
+            foreach (var i in buffer)
             {
-                if (x != -1 && matrix.Nodes[x].State == NodeState.Hidden)
+                if (i != -1 && matrix[i].State == NodeState.Hidden)
                 {
                     return true;
                 }

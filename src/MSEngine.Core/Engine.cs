@@ -25,7 +25,7 @@ namespace MSEngine.Core
                 var hasMine = mines.Contains(i);
                 var mineCount = hasMine ? byte.MinValue : Utilities.GetAdjacentMineCount(mines, i, matrix, buffer);
 
-                matrix.Nodes[i] = new(i, hasMine, mineCount);
+                matrix[i] = new(i, hasMine, mineCount);
             }
         }
 
@@ -109,7 +109,7 @@ namespace MSEngine.Core
 
         public static void ComputeBoard(in Matrix<Node> matrix, Turn turn, Span<int> visitedIndexes)
         {
-            ref var node = ref matrix.Nodes[turn.NodeIndex];
+            ref var node = ref matrix[turn.NodeIndex];
 
             switch (turn.Operation)
             {
@@ -153,7 +153,7 @@ namespace MSEngine.Core
             foreach (var i in buffer)
             {
                 if (i == -1) { continue; }
-                if (matrix.Nodes[i].State != NodeState.Hidden) { continue; }
+                if (matrix[i].State != NodeState.Hidden) { continue; }
 
                 var turn = new Turn(i, NodeOperation.Reveal);
                 ComputeBoard(matrix, turn, visitedIndexes);
@@ -197,7 +197,7 @@ namespace MSEngine.Core
             {
                 if (i == -1) { continue; }
 
-                ref var node = ref matrix.Nodes[i];
+                ref var node = ref matrix[i];
 
                 if (node.State == NodeState.Flagged) { continue; }
 
