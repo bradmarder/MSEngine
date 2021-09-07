@@ -24,8 +24,7 @@ namespace MSEngine.Benchmarks
             // beginner boards should be 162 bytes (2 bytes per node * 81 nodes)
             const int beginnerBoardByteSize = 162;
 
-            var name = Path.Combine("C:", "MSEngine", "TestBeginnerGames.bin");
-            using var file = File.Open(name, FileMode.Open);
+            using var file = File.Open("~/MSEngine/BeginnerTestGames.bin", FileMode.Open);
             using var serializer = new BinaryReader(file);
             Debug.Assert(file.Length % beginnerBoardByteSize == 0); 
 
