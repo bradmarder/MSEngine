@@ -1,9 +1,8 @@
 ﻿using System;
 
-namespace MSEngine.Core
+namespace MSEngine.Core;
+
+public class InvalidGameStateException : Exception
 {
-    public class InvalidGameStateException : Exception
-    {
-        public InvalidGameStateException(string message) : base(message) { }
-    }
+	public InvalidGameStateException(string message) : base(message) { }
 }

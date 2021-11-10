@@ -1,11 +1,8 @@
-﻿using System;
+﻿namespace MSEngine.Core;
 
-namespace MSEngine.Core
+public enum BoardStatus
 {
-    public enum BoardStatus
-    {
-        Pending,
-        Failed,
-        Completed
-    }
+	Pending,
+	Failed,
+	Completed,
 }

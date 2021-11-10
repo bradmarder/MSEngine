@@ -4,200 +4,200 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-namespace MSEngine.Solver
+namespace MSEngine.Solver;
+
+public static class ProbabilitySolver
 {
-    public static class ProbabilitySolver
-    {
-        public static Turn ComputeTurn(Matrix<Node> nodeMatrix)
-        {
-            var nodes = nodeMatrix.Nodes;
-            Debug.Assert(nodes.Length > 0);
+	public static Turn ComputeTurn(Matrix<Node> nodeMatrix)
+	{
+		var nodes = nodeMatrix.Nodes;
+		Debug.Assert(nodes.Length > 0);
 
-            Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
-            Span<int> revealedAMCNodes = stackalloc int[nodes.Length];
-            Span<int> hiddenNodes = stackalloc int[nodes.Length];
+		Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
+		Span<int> revealedAMCNodes = stackalloc int[nodes.Length];
+		Span<int> hiddenNodes = stackalloc int[nodes.Length];
 
-            #region Revealed Nodes with AMC > 0
+		#region Revealed Nodes with AMC > 0
 
-            var revealedAMCNodeCount = 0;
-            foreach (var node in nodes)
-            {
-                if (node.State == NodeState.Revealed && node.MineCount > 0 && Utilities.HasHiddenAdjacentNodes(nodeMatrix, buffer, node.Index))
-                {
-                    revealedAMCNodes[revealedAMCNodeCount] = node.Index;
-                    revealedAMCNodeCount++;
-                }
-            }
+		var revealedAMCNodeCount = 0;
+		foreach (var node in nodes)
+		{
+			if (node.State == NodeState.Revealed && node.MineCount > 0 && Utilities.HasHiddenAdjacentNodes(nodeMatrix, buffer, node.Index))
+			{
+				revealedAMCNodes[revealedAMCNodeCount] = node.Index;
+				revealedAMCNodeCount++;
+			}
+		}
 
-            revealedAMCNodes = revealedAMCNodes.Slice(0, revealedAMCNodeCount);
+		revealedAMCNodes = revealedAMCNodes.Slice(0, revealedAMCNodeCount);
 
-            #endregion
+		#endregion
 
-            #region Hidden Nodes
+		#region Hidden Nodes
 
-            var hiddenNodeCount = 0;
+		var hiddenNodeCount = 0;
 
-            foreach (var node in nodes)
-            {
-                if (node.State != NodeState.Hidden) { continue; }
+		foreach (var node in nodes)
+		{
+			if (node.State != NodeState.Hidden) { continue; }
 
-                var hasAHC = false;
-                buffer.FillAdjacentNodeIndexes(nodeMatrix, node.Index);
+			var hasAHC = false;
+			buffer.FillAdjacentNodeIndexes(nodeMatrix, node.Index);
 
-                foreach (var x in buffer)
-                {
-                    if (x == -1) { continue; }
+			foreach (var x in buffer)
+			{
+				if (x == -1) { continue; }
 
-                    var adjNode = nodes[x];
-                    if (adjNode.State == NodeState.Revealed && adjNode.MineCount > 0)
-                    {
-                        hasAHC = true;
-                        break;
-                    }
-                }
+				var adjNode = nodes[x];
+				if (adjNode.State == NodeState.Revealed && adjNode.MineCount > 0)
+				{
+					hasAHC = true;
+					break;
+				}
+			}
 
-                if (hasAHC)
-                {
-                    hiddenNodes[hiddenNodeCount] = node.Index;
-                    hiddenNodeCount++;
-                }
-            }
+			if (hasAHC)
+			{
+				hiddenNodes[hiddenNodeCount] = node.Index;
+				hiddenNodeCount++;
+			}
+		}
 
-            hiddenNodes = hiddenNodes.Slice(0, hiddenNodeCount);
+		hiddenNodes = hiddenNodes.Slice(0, hiddenNodeCount);
 
-            #endregion
+		#endregion
 
-            #region Matrix Generation
+		#region Matrix Generation
 
-            var rows = revealedAMCNodeCount;
-            var columns = hiddenNodeCount;
+		var rows = revealedAMCNodeCount;
+		var columns = hiddenNodeCount;
 
-            if (columns > 128)
-            {
-                throw new Exception("Must use BigInteger type instead of long = " + columns);
-            }
-            if (columns == 0) { throw new Exception("ZXERO col"); }
-            if (rows == 0) { throw new Exception("zero rows"); }
+		if (columns > 128)
+		{
+			throw new Exception("Must use BigInteger type instead of long = " + columns);
+		}
+		if (columns == 0) { throw new Exception("ZXERO col"); }
+		if (rows == 0) { throw new Exception("zero rows"); }
 
-            Span<ulong> vectors = stackalloc ulong[rows];
-            Span<int> augments = stackalloc int[rows]; // possibly make these bytes?
+		Span<ulong> vectors = stackalloc ulong[rows];
+		Span<int> augments = stackalloc int[rows]; // possibly make these bytes?
 
-            for (var row = 0; row < rows; row++)
-            {
-                var nodeIndex = revealedAMCNodes[row];
+		for (var row = 0; row < rows; row++)
+		{
+			var nodeIndex = revealedAMCNodes[row];
 
-                for (var column = 0; column < columns; column++)
-                {
-                    if (column == columns - 1)
-                    {
-                        augments[row] = nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex);
-                    }
-                    if (Utilities.AreNodesAdjacent(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]))
-                    {
-                        vectors[row] |= (ulong)1 << column;
-                    }
-                }
-            }
+			for (var column = 0; column < columns; column++)
+			{
+				if (column == columns - 1)
+				{
+					augments[row] = nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex);
+				}
+				if (Utilities.AreNodesAdjacent(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]))
+				{
+					vectors[row] |= (ulong)1 << column;
+				}
+			}
+		}
 
-            #endregion
+		#endregion
 
-            #region Testing Vector Visitation
+		#region Testing Vector Visitation
 
-            Span<float> foo = stackalloc float[revealedAMCNodeCount * (hiddenNodeCount + 1)];
-            var matrix = new Matrix<float>(foo, hiddenNodeCount + 1);
-            for (var row = 0; row < rows; row++)
-            {
-                var nodeIndex = revealedAMCNodes[row];
-                for (var column = 0; column < columns + 1; column++)
-                {
-                    var isAugmentedColumn = column == columns;
+		Span<float> foo = stackalloc float[revealedAMCNodeCount * (hiddenNodeCount + 1)];
+		var matrix = new Matrix<float>(foo, hiddenNodeCount + 1);
+		for (var row = 0; row < rows; row++)
+		{
+			var nodeIndex = revealedAMCNodes[row];
+			for (var column = 0; column < columns + 1; column++)
+			{
+				var isAugmentedColumn = column == columns;
 
-                    matrix[row, column] = isAugmentedColumn
-                        ? nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex)
-                        : Utilities.AreNodesAdjacent(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]) ? 1 : 0;
-                }
-            }
+				matrix[row, column] = isAugmentedColumn
+					? nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex)
+					: Utilities.AreNodesAdjacent(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]) ? 1 : 0;
+			}
+		}
 
-            //Console.WriteLine("MATRIX");
-            //Console.WriteLine(matrix.ToString());
-            //Console.WriteLine("GAUSS");
-            //matrix.GaussEliminate();
-            //Console.WriteLine(matrix.ToString());
+		//Console.WriteLine("MATRIX");
+		//Console.WriteLine(matrix.ToString());
+		//Console.WriteLine("GAUSS");
+		//matrix.GaussEliminate();
+		//Console.WriteLine(matrix.ToString());
 
-            // REMOVE ROWS OF ALL ZEROS
-            // REMOVE ROW IF SUM of values equals augment column
-            var maxColumns = 5;
-            var bar = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(3, maxColumns)!;
-            bar[0, 0] = 1;
-            bar[0, 1] = 0;
-            bar[0, 2] = 0;
-            bar[0, 3] = 1;
-            bar[0, 4] = 1;
+		// REMOVE ROWS OF ALL ZEROS
+		// REMOVE ROW IF SUM of values equals augment column
+		var maxColumns = 5;
+		var bar = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(3, maxColumns)!;
+		bar[0, 0] = 1;
+		bar[0, 1] = 0;
+		bar[0, 2] = 0;
+		bar[0, 3] = 1;
+		bar[0, 4] = 1;
 
-            bar[1, 0] = 0;
-            bar[1, 1] = 1;
-            bar[1, 2] = 0;
-            bar[1, 3] = 1;
-            bar[1, 4] = 1;
+		bar[1, 0] = 0;
+		bar[1, 1] = 1;
+		bar[1, 2] = 0;
+		bar[1, 3] = 1;
+		bar[1, 4] = 1;
 
-            bar[2, 0] = 0;
-            bar[2, 1] = 0;
-            bar[2, 2] = 1;
-            bar[2, 3] = 1;
-            bar[2, 4] = 1;
+		bar[2, 0] = 0;
+		bar[2, 1] = 0;
+		bar[2, 2] = 1;
+		bar[2, 3] = 1;
+		bar[2, 4] = 1;
 
-            Span<ulong> vecs = stackalloc ulong[3];
-            vecs[0] = 0b1001;
-            vecs[1] = 0b0101;
-            vecs[2] = 0b0011;
+		Span<ulong> vecs = stackalloc ulong[3];
+		vecs[0] = 0b1001;
+		vecs[1] = 0b0101;
+		vecs[2] = 0b0011;
 
-            Span<int> augs = stackalloc int[3];
-            augments[0] = 1;
-            augments[1] = 1;
-            augments[2] = 1;
+		Span<int> augs = stackalloc int[3];
+		augments[0] = 1;
+		augments[1] = 1;
+		augments[2] = 1;
 
-            Span<ulong> solutions = stackalloc ulong[999];
-            Span<ulong> partials = stackalloc ulong[vecs.Length]; // used to keep track of selecting leftmost nth bits
-            var solutionCount = 0;
-            ulong solution = 0;
-            ulong ignoreBits = 0; // bit set implies it is NOT a mine
+		Span<ulong> solutions = stackalloc ulong[999];
+		Span<ulong> partials = stackalloc ulong[vecs.Length]; // used to keep track of selecting leftmost nth bits
+		var solutionCount = 0;
+		ulong solution = 0;
+		ulong ignoreBits = 0; // bit set implies it is NOT a mine
 
-            VisitVector(vecs, augs, 0, ref solution, ref ignoreBits, solutions, ref solutionCount);
+		VisitVector(vecs, augs, 0, ref solution, ref ignoreBits, solutions, ref solutionCount);
 
-            #endregion
+		#endregion
 
-            #region Grouping
+		#region Grouping
 
-            // remove duplicate groups???
-            Span<ulong> groups = stackalloc ulong[vectors.Length];
+		// remove duplicate groups???
+		Span<ulong> groups = stackalloc ulong[vectors.Length];
 
-            for (var row = 0; row < rows; row++)
-            {
-                var vector = vectors[row];
-                ref var group = ref groups[row];
-                group = (ulong)1 << row;
+		for (var row = 0; row < rows; row++)
+		{
+			var vector = vectors[row];
+			ref var group = ref groups[row];
+			group = (ulong)1 << row;
 
-                for (var ir = 0; ir < rows; ir++)
-                {
-                    if (row == ir) { continue; }
+			for (var ir = 0; ir < rows; ir++)
+			{
+				if (row == ir) { continue; }
 
-                    var vector2 = vectors[ir];
+				var vector2 = vectors[ir];
 
-                    // if 2 vectors share any bit, they become grouped
-                    if ((vector & vector2) != 0)
-                    {
-                        group |= (ulong)1 << ir;
-                        vector |= vector2;
+				// if 2 vectors share any bit, they become grouped
+				if ((vector & vector2) != 0)
+				{
+					group |= (ulong)1 << ir;
+					vector |= vector2;
 
-                        // every time we find a vector that shares a bit, we must restart our loop
-                        ir = -1;
-                    }
-                }
-            }
+					// every time we find a vector that shares a bit, we must restart our loop
+					ir = -1;
+				}
+			}
+		}
 
-            #endregion
+		#endregion
 
-            #region Fail Group Processing
+		#region Fail Group Processing
 
 #if NETCOREAPP3_1
             foreach (var group in groups)
@@ -229,14 +229,14 @@ namespace MSEngine.Solver
             }
 #endif
 
-            // for each group, the # of bits set represents the # of vectors we must consider probabilities for
-            // generate matrix of all possible solutions (HOW?)
-            // calculate probabably of 1 appears in a column out of N rows
+		// for each group, the # of bits set represents the # of vectors we must consider probabilities for
+		// generate matrix of all possible solutions (HOW?)
+		// calculate probabably of 1 appears in a column out of N rows
 
-            #endregion
+		#endregion
 
-            return new Turn(0, NodeOperation.Chord);
-        }
+		return new Turn(0, NodeOperation.Chord);
+	}
 #if NETCOREAPP3_1
         internal static void VisitVector(ReadOnlySpan<ulong> vecs, ReadOnlySpan<int> augments, int row, ref ulong solution, ref ulong ignoreBits, Span<ulong> solutions, ref int solutionCount)
         {
@@ -293,42 +293,42 @@ namespace MSEngine.Solver
             }
         }
 #else
-        internal static void VisitVector(ReadOnlySpan<ulong> _vecs, ReadOnlySpan<int> _augments, int _row, ref ulong _solution, ref ulong _ignoreBits, Span<ulong> _solutions, ref int _solutionCount)
-        {
+	internal static void VisitVector(ReadOnlySpan<ulong> _vecs, ReadOnlySpan<int> _augments, int _row, ref ulong _solution, ref ulong _ignoreBits, Span<ulong> _solutions, ref int _solutionCount)
+	{
 
-        }
+	}
 #endif
 
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static bool IsBitSet(ulong b, int pos)
-            => (b & ((ulong)1 << pos)) != 0;
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static bool IsBitSet(ulong b, int pos)
+		=> (b & ((ulong)1 << pos)) != 0;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static ulong GetVectorSolution(ulong vector, int bits, int augment)
-        {
-            var maxVectorSolutions = MathNet.Numerics.Combinatorics.Combinations(bits, augment);
-            Span<ulong> solutionSums = stackalloc ulong[(int)maxVectorSolutions];
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	internal static ulong GetVectorSolution(ulong vector, int bits, int augment)
+	{
+		var maxVectorSolutions = MathNet.Numerics.Combinatorics.Combinations(bits, augment);
+		Span<ulong> solutionSums = stackalloc ulong[(int)maxVectorSolutions];
 
-            for (var c = 0; c < maxVectorSolutions; c++)
-            {
-                var bitsAvailable = bits;
-                ulong sum = 0;
+		for (var c = 0; c < maxVectorSolutions; c++)
+		{
+			var bitsAvailable = bits;
+			ulong sum = 0;
 
-                for (var i = 0; i < sizeof(ulong) * 8; i++)
-                {
-                    // WE MUST USE C TO GET UNIQUE SETS OF BITS....HOW?
-                    if (IsBitSet(vector, i))
-                    {
-                        sum += (ulong)1 << i;
-                        bitsAvailable--;
-                    }
-                    if (bitsAvailable == 0) { break; }
-                }
-                solutionSums[c] = sum; // take SUM of N bit combinations
-            }
+			for (var i = 0; i < sizeof(ulong) * 8; i++)
+			{
+				// WE MUST USE C TO GET UNIQUE SETS OF BITS....HOW?
+				if (IsBitSet(vector, i))
+				{
+					sum += (ulong)1 << i;
+					bitsAvailable--;
+				}
+				if (bitsAvailable == 0) { break; }
+			}
+			solutionSums[c] = sum; // take SUM of N bit combinations
+		}
 
-            return solutionSums[0]; // TODO
-        }
-    }
+		return solutionSums[0]; // TODO
+	}
 }
+

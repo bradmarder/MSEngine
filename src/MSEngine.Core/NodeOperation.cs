@@ -1,12 +1,9 @@
-﻿using System;
+﻿namespace MSEngine.Core;
 
-namespace MSEngine.Core
+public enum NodeOperation
 {
-    public enum NodeOperation
-    {
-        Reveal,
-        Flag,
-        RemoveFlag,
-        Chord
-    }
+	Reveal,
+	Flag,
+	RemoveFlag,
+	Chord,
 }

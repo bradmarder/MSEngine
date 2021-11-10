@@ -1,9 +1,8 @@
-﻿namespace MSEngine.Core
+﻿namespace MSEngine.Core;
+
+public enum Difficulty
 {
-    public enum Difficulty
-    {
-        Beginner,
-        Intermediate,
-        Expert
-    }
+	Beginner,
+	Intermediate,
+	Expert,
 }

@@ -1,11 +1,8 @@
-﻿using System;
+﻿namespace MSEngine.Core;
 
-namespace MSEngine.Core
+public enum NodeState
 {
-    public enum NodeState
-    {
-        Hidden,
-        Revealed,
-        Flagged
-    }
+	Hidden,
+	Revealed,
+	Flagged,
 }
