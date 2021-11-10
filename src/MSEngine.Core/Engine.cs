@@ -120,7 +120,7 @@ namespace MSEngine.Core
                     }
                     else
                     {
-                        node = new(node, NodeState.Revealed);
+                        node = node with { State = NodeState.Revealed };
                         if (node.MineCount == 0)
                         {
                             TriggerChainReaction(matrix, turn.NodeIndex, visitedIndexes);
@@ -128,10 +128,10 @@ namespace MSEngine.Core
                     }
                     break;
                 case NodeOperation.Flag:
-                    node = new(node, NodeState.Flagged);
+                    node = node with { State = NodeState.Flagged };
                     break;
                 case NodeOperation.RemoveFlag:
-                    node = new(node, NodeState.Hidden);
+                    node = node with { State = NodeState.Hidden };
                     break;
                 case NodeOperation.Chord:
                     Chord(matrix, turn.NodeIndex, visitedIndexes);
@@ -166,7 +166,7 @@ namespace MSEngine.Core
             {
                 if (node.HasMine && node.State == NodeState.Hidden)
                 {
-                    node = new(node, NodeState.Revealed);
+                    node = node with { State = NodeState.Revealed };
                 }
             }
         }
@@ -203,7 +203,7 @@ namespace MSEngine.Core
 
                 if (node.State == NodeState.Hidden)
                 {
-                    node = new(node, NodeState.Revealed);
+                     node = node with { State = NodeState.Revealed };
                 }
 
                 if (node.MineCount == 0 && !visitedIndexes.Contains(i))

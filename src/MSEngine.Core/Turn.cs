@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace MSEngine.Core
 {
-    public readonly struct Turn : IEquatable<Turn>
+    public readonly record struct Turn
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Turn(int nodeIndex, NodeOperation operation)
@@ -16,15 +16,8 @@ namespace MSEngine.Core
             Operation = operation;
         }
 
-        public int NodeIndex { get; }
-        public NodeOperation Operation { get; }
-
-        public override string ToString() => $"{nameof(NodeIndex)}: {NodeIndex}, {nameof(Operation)}: {Operation}";
-        public override int GetHashCode() => HashCode.Combine(NodeIndex, Operation);
-        public override bool Equals(object? obj) => obj is Turn x && Equals(x);
-        public bool Equals(Turn other) => NodeIndex == other.NodeIndex && Operation == other.Operation;
-        public static bool operator ==(Turn c1, Turn c2) => c1.Equals(c2);
-        public static bool operator !=(Turn c1, Turn c2) => !(c1 == c2);
+        public int NodeIndex { get; init; }
+        public NodeOperation Operation { get; init; }
 
         public string NewTurnCtor() => $"new {nameof(Turn)}({NodeIndex}, {nameof(NodeOperation)}.{Operation}),";
     }
