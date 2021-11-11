@@ -9,8 +9,8 @@
   <PropertyGroup>
     <Title>MSEngine ZA Ultra</Title>
     <Version>$(appveyor_build_version)</Version>
-    <Summary>A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# and .NET Standard 2.1</Summary>
-    <Description>A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# and .NET Standard 2.1</Description>
+    <Summary>A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# 10 and .NET 6</Summary>
+    <Description>A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# 10 and .NET 6</Description>
     <Authors>Brad Marder</Authors>
     <Owners>Brad Marder</Owners>
     <!--<GenerateDocumentationFile>true</GenerateDocumentationFile>-->

@@ -25,7 +25,7 @@ public static class Engine
 			var hasMine = mines.Contains(i);
 			var mineCount = hasMine ? byte.MinValue : Utilities.GetAdjacentMineCount(mines, i, matrix, buffer);
 
-			matrix[i] = new(i, hasMine, mineCount);
+			matrix[i] = new(i, hasMine, mineCount, NodeState.Hidden);
 		}
 	}
 
