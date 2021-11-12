@@ -1,9 +1,4 @@
-﻿using System;
-using System.Linq;
-using Xunit;
-using MSEngine.Core;
-
-namespace MSEngine.Tests;
+﻿namespace MSEngine.Tests;
 
 public class BoardGenerationTest
 {

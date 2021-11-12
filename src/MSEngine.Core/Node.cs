@@ -1,8 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-
-namespace MSEngine.Core;
+﻿namespace MSEngine.Core;
 
 public readonly record struct Node
 {
@@ -27,4 +23,3 @@ public readonly record struct Node
 
 	public string NewNodeCtor() => $"new {nameof(Node)}({Index}, {HasMine.ToString().ToLower()}, {MineCount}, {nameof(NodeState)}.{State}),";
 }
-

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-
-namespace MSEngine.Core;
+﻿namespace MSEngine.Core;
 
 public static class Engine
 {

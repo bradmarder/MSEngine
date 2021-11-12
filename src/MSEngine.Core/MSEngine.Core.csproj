@@ -1,44 +1,50 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <Import Project="..\..\build\common.props" />
+	<Import Project="..\..\build\common.props" />
 
-  <PropertyGroup>
-    <TargetFrameworks>net6.0</TargetFrameworks>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>net6.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <Title>MSEngine ZA Ultra</Title>
-    <Version>$(appveyor_build_version)</Version>
-    <Summary>A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# 10 and .NET 6</Summary>
-    <Description>A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# 10 and .NET 6</Description>
-    <Authors>Brad Marder</Authors>
-    <Owners>Brad Marder</Owners>
-    <!--<GenerateDocumentationFile>true</GenerateDocumentationFile>-->
-    <AssemblyName>MSEngine.Core</AssemblyName>
-    <!--<AssemblyOriginatorKeyFile>..\..\.snk</AssemblyOriginatorKeyFile>-->
-    <!--<SignAssembly>true</SignAssembly>-->
-    <PackageId>MSEngine.Core</PackageId>
-    <!--<PackageIconUrl></PackageIconUrl>-->
-    <PackageProjectUrl>https://github.com/bradmarder/MSEngine</PackageProjectUrl>
-    <license>MIT</license>
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>git://github.com/bradmarder/MSEngine</RepositoryUrl>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <IncludeSource>true</IncludeSource>
-    <IncludeSymbols>false</IncludeSymbols>
-    <PackageTags>c# minesweeper zero-allocations performance</PackageTags>
-  </PropertyGroup>
+	<ItemGroup>
+		<Using Include="System.Diagnostics" />
+		<Using Include="System.Runtime.CompilerServices" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-      <_Parameter1>MSEngine.Tests</_Parameter1>
-    </AssemblyAttribute>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-      <_Parameter1>MSEngine.Benchmarks</_Parameter1>
-    </AssemblyAttribute>
-    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-      <_Parameter1>MSEngine.Bot</_Parameter1>
-    </AssemblyAttribute>
-  </ItemGroup>
+	<PropertyGroup>
+		<Title>MSEngine ZA Ultra</Title>
+		<Version>$(appveyor_build_version)</Version>
+		<Summary>A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# 10 and .NET 6</Summary>
+		<Description>A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# 10 and .NET 6</Description>
+		<Authors>Brad Marder</Authors>
+		<Owners>Brad Marder</Owners>
+		<!--<GenerateDocumentationFile>true</GenerateDocumentationFile>-->
+		<AssemblyName>MSEngine.Core</AssemblyName>
+		<!--<AssemblyOriginatorKeyFile>..\..\.snk</AssemblyOriginatorKeyFile>-->
+		<!--<SignAssembly>true</SignAssembly>-->
+		<PackageId>MSEngine.Core</PackageId>
+		<!--<PackageIconUrl></PackageIconUrl>-->
+		<PackageProjectUrl>https://github.com/bradmarder/MSEngine</PackageProjectUrl>
+		<license>MIT</license>
+		<RepositoryType>git</RepositoryType>
+		<RepositoryUrl>git://github.com/bradmarder/MSEngine</RepositoryUrl>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<IncludeSource>true</IncludeSource>
+		<IncludeSymbols>false</IncludeSymbols>
+		<PackageTags>c# minesweeper zero-allocations performance</PackageTags>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+			<_Parameter1>MSEngine.Tests</_Parameter1>
+		</AssemblyAttribute>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+			<_Parameter1>MSEngine.Benchmarks</_Parameter1>
+		</AssemblyAttribute>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+			<_Parameter1>MSEngine.Bot</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
 
 </Project>

@@ -1,7 +1,4 @@
-﻿using System;
-using MSEngine.Core;
-using MSEngine.Solver;
-using Xunit;
+﻿using MSEngine.Solver;
 
 namespace MSEngine.Tests;
 

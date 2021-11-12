@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace MSEngine.Core;
+﻿namespace MSEngine.Core;
 
 public static class BoardExtensions
 {

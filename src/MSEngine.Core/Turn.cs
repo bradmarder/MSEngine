@@ -1,8 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-
-namespace MSEngine.Core;
+﻿namespace MSEngine.Core;
 
 public readonly record struct Turn
 {
@@ -21,4 +17,3 @@ public readonly record struct Turn
 
 	public string NewTurnCtor() => $"new {nameof(Turn)}({NodeIndex}, {nameof(NodeOperation)}.{Operation}),";
 }
-
