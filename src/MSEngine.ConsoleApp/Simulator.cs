@@ -4,10 +4,10 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using MSEngine.Core;
 using MSEngine.Solver;
 
-var _lock = new object();
 var _watch = Stopwatch.StartNew();
 var _wins = 0;
 var _gamesPlayedCount = 0;
@@ -15,12 +15,40 @@ var _gamesPlayedCount = 0;
 args = args.Length == 0 ? new[] { "0", "100000" } : args;
 var difficulty = Enum.Parse<Difficulty>(args[0]);
 var count = int.Parse(args[1]);
+using var _source = new CancellationTokenSource();
 
+_ = LoopScoreLogic();
 RunSimulations(difficulty, count);
-DisplayScore();
+_source.Cancel();
 
 // temp placeholder
 _ = GetBoardAsciiArt(default);
+ValidateTurns(default, default);
+
+async Task LoopScoreLogic()
+{
+	while (!_source.Token.IsCancellationRequested)
+	{
+		await DisplayScore();
+		try
+		{
+			await Task.Delay(250, _source.Token);
+		}
+		catch (TaskCanceledException)
+		{
+			await DisplayScore();
+			break;
+		}
+	}
+}
+async Task DisplayScore()
+{
+	var x = _gamesPlayedCount;
+	var y = _wins;
+	var winRatio = x == 0 ? 0 : (decimal)y / x * 100;
+	Console.SetCursorPosition(0, Console.CursorTop);
+	await Console.Out.WriteAsync($"{y} of {x} | {winRatio:.0000}%  {_watch.ElapsedMilliseconds}ms");
+}
 
 void RunSimulations(Difficulty difficulty, int count)
 {
@@ -32,25 +60,6 @@ void RunSimulations(Difficulty difficulty, int count)
 		.WithDegreeOfParallelism(1)
 #endif
 		.ForAll(_ => Master(difficulty, count / Environment.ProcessorCount));
-}
-
-[MethodImpl(MethodImplOptions.AggressiveInlining)]
-void DisplayScore()
-{
-	var x = _gamesPlayedCount;
-	var y = _wins;
-
-	// we only update the score every 10000 games(because doing so within a lock is expensive, and so are console commands)
-	if (x % 10000 == 0)
-	{
-		var winRatio = ((decimal)y / x) * 100;
-
-		lock (_lock)
-		{
-			Console.SetCursorPosition(0, Console.CursorTop);
-			Console.Write($"{y} of {x} | {winRatio:.0000}%  {_watch.ElapsedMilliseconds}ms");
-		}
-	}
 }
 
 [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -85,7 +94,6 @@ void Master(Difficulty difficulty, int count)
 		Engine.FillCustomBoard(matrix, buffs.Mines, firstTurnNodeIndex);
 		Engine.ComputeBoard(matrix, firstTurn, buffs.VisitedIndexes);
 		ExecuteGame(matrix, buffs);
-		DisplayScore();
 		count--;
 	}
 }
@@ -132,7 +140,7 @@ void ExecuteGame(in Matrix<Node> matrix, in BufferKeeper buffs)
 }
 
 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-void ValidateTurns(ReadOnlySpan<Node> nodes, ReadOnlySpan<Turn> turns)
+static void ValidateTurns(ReadOnlySpan<Node> nodes, ReadOnlySpan<Turn> turns)
 {
 	foreach (var turn in turns)
 	{
