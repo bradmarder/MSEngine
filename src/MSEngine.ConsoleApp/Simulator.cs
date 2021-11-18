@@ -21,10 +21,6 @@ _ = LoopScoreLogic();
 RunSimulations(difficulty, count);
 _source.Cancel();
 
-// temp placeholder
-_ = GetBoardAsciiArt(default);
-ValidateTurns(default, default);
-
 async Task LoopScoreLogic()
 {
 	while (!_source.Token.IsCancellationRequested)
@@ -140,7 +136,9 @@ void ExecuteGame(in Matrix<Node> matrix, in BufferKeeper buffs)
 }
 
 [MethodImpl(MethodImplOptions.AggressiveInlining)]
+#pragma warning disable CS8321 // Local function is declared but never used
 static void ValidateTurns(ReadOnlySpan<Node> nodes, ReadOnlySpan<Turn> turns)
+#pragma warning restore CS8321 // Local function is declared but never used
 {
 	foreach (var turn in turns)
 	{
@@ -156,7 +154,9 @@ static void ValidateTurns(ReadOnlySpan<Node> nodes, ReadOnlySpan<Turn> turns)
 	}
 }
 
+#pragma warning disable CS8321 // Local function is declared but never used
 static string GetBoardAsciiArt(Matrix<Node> matrix)
+#pragma warning restore CS8321 // Local function is declared but never used
 {
 	var sb = new StringBuilder(matrix.Nodes.Length);
 
