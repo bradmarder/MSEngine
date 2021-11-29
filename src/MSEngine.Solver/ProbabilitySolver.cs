@@ -126,25 +126,25 @@ public static class ProbabilitySolver
 
 		// REMOVE ROWS OF ALL ZEROS
 		// REMOVE ROW IF SUM of values equals augment column
-		var maxColumns = 5;
-		var bar = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(3, maxColumns)!;
-		bar[0, 0] = 1;
-		bar[0, 1] = 0;
-		bar[0, 2] = 0;
-		bar[0, 3] = 1;
-		bar[0, 4] = 1;
+		//var maxColumns = 5;
+		//var bar = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(3, maxColumns)!;
+		//bar[0, 0] = 1;
+		//bar[0, 1] = 0;
+		//bar[0, 2] = 0;
+		//bar[0, 3] = 1;
+		//bar[0, 4] = 1;
 
-		bar[1, 0] = 0;
-		bar[1, 1] = 1;
-		bar[1, 2] = 0;
-		bar[1, 3] = 1;
-		bar[1, 4] = 1;
+		//bar[1, 0] = 0;
+		//bar[1, 1] = 1;
+		//bar[1, 2] = 0;
+		//bar[1, 3] = 1;
+		//bar[1, 4] = 1;
 
-		bar[2, 0] = 0;
-		bar[2, 1] = 0;
-		bar[2, 2] = 1;
-		bar[2, 3] = 1;
-		bar[2, 4] = 1;
+		//bar[2, 0] = 0;
+		//bar[2, 1] = 0;
+		//bar[2, 2] = 1;
+		//bar[2, 3] = 1;
+		//bar[2, 4] = 1;
 
 		Span<ulong> vecs = stackalloc ulong[3];
 		vecs[0] = 0b1001;
@@ -307,7 +307,7 @@ public static class ProbabilitySolver
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static ulong GetVectorSolution(ulong vector, int bits, int augment)
 	{
-		var maxVectorSolutions = MathNet.Numerics.Combinatorics.Combinations(bits, augment);
+		var maxVectorSolutions = 1;// MathNet.Numerics.Combinatorics.Combinations(bits, augment);
 		Span<ulong> solutionSums = stackalloc ulong[(int)maxVectorSolutions];
 
 		for (var c = 0; c < maxVectorSolutions; c++)

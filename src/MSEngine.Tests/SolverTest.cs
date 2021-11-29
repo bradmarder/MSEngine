@@ -47,7 +47,7 @@ public class SolverTest
 			new(21, false, 0, NodeState.Hidden),
 			new(22, false, 0, NodeState.Hidden),
 			new(23, false, 0, NodeState.Hidden),
-			new(24, false, 0, NodeState.Hidden)
+			new(24, false, 0, NodeState.Hidden),
 		};
 
 		var buffs = new BufferKeeper
@@ -58,7 +58,7 @@ public class SolverTest
 			VisitedIndexes = stackalloc int[nodeCount - mineCount],
 			RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
 			AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
-			Grid = stackalloc float[nodeCount * nodeCount]
+			Grid = stackalloc float[nodeCount * nodeCount],
 		};
 
 		var matrix = new Matrix<Node>(nodes, 5);
@@ -159,7 +159,7 @@ public class SolverTest
 			new(60, false, 0, NodeState.Hidden),
 			new(61, false, 0, NodeState.Hidden),
 			new(62, false, 0, NodeState.Hidden),
-			new(63, false, 0, NodeState.Hidden)
+			new(63, false, 0, NodeState.Hidden),
 		};
 
 		var buffs = new BufferKeeper
@@ -170,7 +170,7 @@ public class SolverTest
 			VisitedIndexes = stackalloc int[nodeCount - mineCount],
 			RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
 			AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
-			Grid = stackalloc float[nodeCount * nodeCount]
+			Grid = stackalloc float[nodeCount * nodeCount],
 		};
 		var matrix = new Matrix<Node>(nodes, 8);
 
@@ -262,7 +262,7 @@ public class SolverTest
 			new(60, false, 1, NodeState.Revealed),
 			new(61, false, 2, NodeState.Hidden),
 			new(62, false, 2, NodeState.Hidden),
-			new(63, false, 1, NodeState.Hidden)
+			new(63, false, 1, NodeState.Hidden),
 		};
 
 		var buffs = new BufferKeeper
@@ -273,7 +273,7 @@ public class SolverTest
 			VisitedIndexes = stackalloc int[nodeCount - mineCount],
 			RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
 			AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
-			Grid = stackalloc float[nodeCount * nodeCount]
+			Grid = stackalloc float[nodeCount * nodeCount],
 		};
 
 		var matrix = new Matrix<Node>(nodes, 8);
@@ -381,7 +381,7 @@ public class SolverTest
 			VisitedIndexes = stackalloc int[nodeCount - mineCount],
 			RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
 			AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
-			Grid = stackalloc float[nodeCount * nodeCount]
+			Grid = stackalloc float[nodeCount * nodeCount],
 		};
 
 		var matrix = new Matrix<Node>(nodes, 8);

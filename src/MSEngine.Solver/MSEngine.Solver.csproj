@@ -12,9 +12,7 @@
     </AssemblyAttribute>
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MathNet.Numerics" Version="4.15.0" />
-  </ItemGroup>
+
 
   <ItemGroup>
     <ProjectReference Include="..\MSEngine.Core\MSEngine.Core.csproj" />

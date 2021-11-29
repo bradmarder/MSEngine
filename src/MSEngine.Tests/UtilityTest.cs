@@ -67,7 +67,7 @@ public class UtilityTest
 			new(5, false, 0, NodeState.Hidden),
 			new(6, false, 0, NodeState.Flagged),
 			new(7, false, 0, NodeState.Hidden),
-			new(8, false, 0, NodeState.Flagged)
+			new(8, false, 0, NodeState.Flagged),
 		};
 		var matrix = new Matrix<Node>(nodes, 3);
 
@@ -97,7 +97,7 @@ public class UtilityTest
 			new(5, false, 0, NodeState.Revealed),
 			new(6, false, 0, NodeState.Revealed),
 			new(7, false, 0, NodeState.Revealed),
-			new(8, false, 0, NodeState.Revealed)
+			new(8, false, 0, NodeState.Revealed),
 		};
 		var matrix = new Matrix<Node>(nodes, 3);
 
