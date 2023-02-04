@@ -1,9 +1,11 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 namespace MSEngine.Core;
 
 public readonly ref struct Matrix<T> where T : struct
 {
+	[SetsRequiredMembers]
 	public Matrix(Span<T> nodes, int columnCount)
 	{
 		Debug.Assert(nodes.Length > 0);
@@ -15,9 +17,9 @@ public readonly ref struct Matrix<T> where T : struct
 		RowCount = nodes.Length / columnCount;
 	}
 
-	public Span<T> Nodes { get; }
-	public int ColumnCount { get; }
-	public int RowCount { get; }
+	public required Span<T> Nodes { get; init; }
+	public required int ColumnCount { get; init; }
+	public required int RowCount { get; init; }
 
 	public ref T this[int i]
 	{

@@ -1,7 +1,10 @@
-﻿namespace MSEngine.Core;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace MSEngine.Core;
 
 public readonly record struct Node
 {
+	[SetsRequiredMembers]
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal Node(int index, bool hasMine, byte mineCount, NodeState state)
 	{
@@ -16,10 +19,10 @@ public readonly record struct Node
 		State = state;
 	}
 
-	public int Index { get; init; }
-	public bool HasMine { get; init; }
-	public byte MineCount { get; init; }
-	public NodeState State { get; init; }
+	public required int Index { get; init; }
+	public required bool HasMine { get; init; }
+	public required byte MineCount { get; init; }
+	public required NodeState State { get; init; }
 
 	public string NewNodeCtor() => $"new {nameof(Node)}({Index}, {HasMine.ToString().ToLower()}, {MineCount}, {nameof(NodeState)}.{State}),";
 }
