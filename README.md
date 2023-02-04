@@ -1,5 +1,5 @@
 # MSEngine ZA Ultra
-#### A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# and .NET Standard 2.1
+#### A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# and .NET 7
 
 ---
 [![Build status](https://ci.appveyor.com/api/projects/status/github/bradmarder/MSEngine?branch=master&svg=true)](https://ci.appveyor.com/project/bradmarder/msengine)
