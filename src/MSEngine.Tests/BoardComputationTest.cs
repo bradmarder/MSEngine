@@ -32,7 +32,7 @@ public class BoardComputationTest
 		var matrix = new Matrix<Node>(nodes, 2);
 		var turn = new Turn(1, NodeOperation.Chord);
 
-		Engine.ComputeBoard(matrix, turn, Span<int>.Empty);
+		Engine.ComputeBoard(matrix, turn);
 
 		Assert.Equal(NodeState.Revealed, nodes[2].State);
 		Assert.Equal(NodeState.Revealed, nodes[3].State);
@@ -47,7 +47,7 @@ public class BoardComputationTest
 		Engine.FillCustomBoard(matrix, stackalloc int[9]);
 		var turn = new Turn(4, NodeOperation.Reveal);
 
-		Engine.ComputeBoard(matrix, turn, Span<int>.Empty);
+		Engine.ComputeBoard(matrix, turn);
 
 		foreach (var node in nodes)
 		{
@@ -68,7 +68,7 @@ public class BoardComputationTest
 		var matrix = new Matrix<Node>(nodes, 3);
 		var turn = new Turn(0, NodeOperation.Reveal);
 
-		Engine.ComputeBoard(matrix, turn, stackalloc int[3]);
+		Engine.ComputeBoard(matrix, turn);
 
 		Assert.Equal(NodeState.Revealed, nodes[0].State);
 		Assert.Equal(NodeState.Flagged, nodes[1].State);
@@ -88,7 +88,7 @@ public class BoardComputationTest
 		var matrix = new Matrix<Node>(nodes, 3);
 		var turn = new Turn(0, NodeOperation.Reveal);
 
-		Engine.ComputeBoard(matrix, turn, stackalloc int[9]);
+		Engine.ComputeBoard(matrix, turn);
 
 		foreach (var node in nodes)
 		{

@@ -19,7 +19,6 @@ using var _source = new CancellationTokenSource();
 
 _ = LoopScoreLogic();
 RunSimulations(difficulty, count);
-_source.Cancel();
 
 async Task LoopScoreLogic()
 {
@@ -79,7 +78,6 @@ void Master(Difficulty difficulty, int count)
 		Turns = stackalloc Turn[nodeCount],
 		EdgeIndexes = stackalloc int[Engine.MaxNodeEdges],
 		Mines = stackalloc int[mineCount],
-		VisitedIndexes = stackalloc int[nodeCount - mineCount],
 		RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
 		AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
 		Grid = stackalloc float[nodeCount * nodeCount],
@@ -88,7 +86,7 @@ void Master(Difficulty difficulty, int count)
 	while (count > 0)
 	{
 		Engine.FillCustomBoard(matrix, buffs.Mines, firstTurnNodeIndex);
-		Engine.ComputeBoard(matrix, firstTurn, buffs.VisitedIndexes);
+		Engine.ComputeBoard(matrix, firstTurn);
 		ExecuteGame(matrix, buffs);
 		count--;
 	}
@@ -120,7 +118,7 @@ void ExecuteGame(in Matrix<Node> matrix, in BufferKeeper buffs)
 
 		foreach (var turn in slicedTurns)
 		{
-			Engine.ComputeBoard(matrix, turn, buffs.VisitedIndexes);
+			Engine.ComputeBoard(matrix, turn);
 		}
 
 		if (!matrix.Nodes.IsComplete())

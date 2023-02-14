@@ -16,7 +16,7 @@ public class BoardValidationTest
 			Engine.FillCustomBoard(matrix, Span<int>.Empty);
 			var firstTurn = new Turn(0, NodeOperation.Reveal);
 			var secondTurn = new Turn(1, operation);
-			Engine.ComputeBoard(matrix, firstTurn, stackalloc int[64]);
+			Engine.ComputeBoard(matrix, firstTurn);
 
 			Assert.Equal(BoardStatus.Completed, nodes.Status());
 			Engine.EnsureValidBoardConfiguration(matrix, secondTurn);
@@ -54,7 +54,7 @@ public class BoardValidationTest
 			var matrix = new Matrix<Node>(nodes, 2);
 			Engine.FillCustomBoard(matrix, mines);
 			var firstTurn = new Turn(3, NodeOperation.Reveal);
-			Engine.ComputeBoard(matrix, firstTurn, Span<int>.Empty);
+			Engine.ComputeBoard(matrix, firstTurn);
 			var secondTurn = new Turn(3, operation);
 			Engine.EnsureValidBoardConfiguration(matrix, secondTurn);
 		});
@@ -98,7 +98,7 @@ public class BoardValidationTest
 			var matrix = new Matrix<Node>(nodes, 1);
 			Engine.FillCustomBoard(matrix, mines);
 			var turn = new Turn(0, NodeOperation.Flag);
-			Engine.ComputeBoard(matrix, turn, Span<int>.Empty);
+			Engine.ComputeBoard(matrix, turn);
 
 			Assert.Equal(BoardStatus.Pending, nodes.Status());
 			Engine.EnsureValidBoardConfiguration(matrix, turn);
@@ -145,7 +145,7 @@ public class BoardValidationTest
 			var matrix = new Matrix<Node>(nodes, 3);
 			var firstTurn = new Turn(8, NodeOperation.Reveal);
 			var secondTurn = new Turn(8, NodeOperation.Chord);
-			Engine.ComputeBoard(matrix, firstTurn, stackalloc int[9]);
+			Engine.ComputeBoard(matrix, firstTurn);
 
 			var node = nodes[8];
 			Assert.Equal(NodeState.Revealed, node.State);
@@ -168,8 +168,8 @@ public class BoardValidationTest
 			var secondTurn = new Turn(3, NodeOperation.Reveal);
 			var thirdTurn = new Turn(3, NodeOperation.Chord);
 
-			Engine.ComputeBoard(matrix, firstTurn, Span<int>.Empty);
-			Engine.ComputeBoard(matrix, secondTurn, Span<int>.Empty);
+			Engine.ComputeBoard(matrix, firstTurn);
+			Engine.ComputeBoard(matrix, secondTurn);
 			Engine.EnsureValidBoardConfiguration(matrix, thirdTurn);
 		});
 	}

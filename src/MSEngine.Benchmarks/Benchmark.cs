@@ -51,7 +51,6 @@ public class Simulator
 			Turns = stackalloc Turn[nodeCount],
 			EdgeIndexes = stackalloc int[Engine.MaxNodeEdges],
 			Mines = stackalloc int[mineCount],
-			VisitedIndexes = stackalloc int[nodeCount - mineCount],
 			RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
 			AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
 			Grid = stackalloc float[nodeCount * nodeCount],
@@ -66,7 +65,7 @@ public class Simulator
 			{
 				nodes[i] = _nodes[n * nodeCount + i];
 			}
-			Engine.ComputeBoard(matrix, firstTurn, buffs.VisitedIndexes);
+			Engine.ComputeBoard(matrix, firstTurn);
 
 			while (true)
 			{
@@ -79,7 +78,7 @@ public class Simulator
 
 				foreach (var turn in buffs.Turns.Slice(0, turnCount))
 				{
-					Engine.ComputeBoard(matrix, turn, buffs.VisitedIndexes);
+					Engine.ComputeBoard(matrix, turn);
 				}
 			}
 		}

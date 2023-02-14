@@ -5,7 +5,6 @@ public readonly ref struct BufferKeeper
 	public required Span<Turn> Turns { get; init; }
 	public required Span<int> EdgeIndexes { get; init; }
 	public required Span<int> Mines { get; init; }
-	public required Span<int> VisitedIndexes { get; init; }
 	public required Span<int> RevealedMineCountNodeIndexes { get; init; }
 	public required Span<int> AdjacentHiddenNodeIndexes { get; init; }
 	public required Span<float> Grid { get; init; }

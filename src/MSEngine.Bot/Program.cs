@@ -28,7 +28,7 @@ namespace MSEngine.Bot
             driver.Navigate().GoToUrl("");
 
             var squares = driver
-                .FindElementById("game")
+                .FindElement(By.Id("game"))
                 .FindElements(By.ClassName("square"))
                 .Where(x => x.Displayed)
                 .ToList();
@@ -42,7 +42,6 @@ namespace MSEngine.Bot
                 Turns = stackalloc Turn[nodeCount],
                 EdgeIndexes = stackalloc int[Engine.MaxNodeEdges],
                 Mines = stackalloc int[mineCount],
-                VisitedIndexes = stackalloc int[nodeCount - mineCount],
                 RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
                 AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
                 Grid = stackalloc float[nodeCount * nodeCount]
@@ -80,9 +79,9 @@ namespace MSEngine.Bot
             Console.ReadLine();
         }
 
-        public static bool IsGamePending(RemoteWebDriver driver)
+        public static bool IsGamePending(IWebDriver driver)
             => !IsAlertPresent(driver)
-                && driver.FindElementsByClassName("facesmile").Count == 1;
+                && driver.FindElements(By.ClassName("facesmile")).Count == 1;
 
         public static byte GetMineCount(string foo)
             => (byte)(foo.Contains("open0") ? 0

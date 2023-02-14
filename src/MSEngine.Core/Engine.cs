@@ -104,7 +104,7 @@ public static class Engine
 		}
 	}
 
-	public static void ComputeBoard(in Matrix<Node> matrix, Turn turn, Span<int> visitedIndexes)
+	public static void ComputeBoard(in Matrix<Node> matrix, Turn turn)
 	{
 		ref var node = ref matrix[turn.NodeIndex];
 
@@ -120,7 +120,7 @@ public static class Engine
 					node = node with { State = NodeState.Revealed };
 					if (node.MineCount == 0)
 					{
-						TriggerChainReaction(matrix, turn.NodeIndex, visitedIndexes);
+						TriggerChainReaction(matrix, turn.NodeIndex);
 					}
 				}
 				break;
@@ -131,7 +131,7 @@ public static class Engine
 				node = node with { State = NodeState.Hidden };
 				break;
 			case NodeOperation.Chord:
-				Chord(matrix, turn.NodeIndex, visitedIndexes);
+				Chord(matrix, turn.NodeIndex);
 				break;
 			default:
 				Debug.Fail(turn.Operation.ToString());
@@ -139,7 +139,7 @@ public static class Engine
 		}
 	}
 
-	internal static void Chord(in Matrix<Node> matrix, int nodeIndex, Span<int> visitedIndexes)
+	internal static void Chord(in Matrix<Node> matrix, int nodeIndex)
 	{
 		Debug.Assert(nodeIndex >= 0);
 		Debug.Assert(nodeIndex < matrix.Nodes.Length);
@@ -153,7 +153,7 @@ public static class Engine
 			if (matrix[i].State != NodeState.Hidden) { continue; }
 
 			var turn = new Turn(i, NodeOperation.Reveal);
-			ComputeBoard(matrix, turn, visitedIndexes);
+			ComputeBoard(matrix, turn);
 		}
 	}
 
@@ -168,44 +168,59 @@ public static class Engine
 		}
 	}
 
-	internal static void TriggerChainReaction(in Matrix<Node> matrix, int nodeIndex, Span<int> visitedIndexes)
+	internal static void TriggerChainReaction(in Matrix<Node> matrix, int nodeIndex)
 	{
+		var nodeCount = matrix.Nodes.Length;
 		Debug.Assert(nodeIndex >= 0);
+		Debug.Assert(nodeIndex < nodeCount);
 
-		visitedIndexes.Fill(-1);
-		var enumerator = visitedIndexes.GetEnumerator();
+		Span<int> visitors = nodeCount < 4_096 ? stackalloc int[nodeCount] : new int[nodeCount];
+		ReadOnlySpan<int> readOnlyVisitors = visitors;
+		visitors.Fill(-1);
+		var queueVisitorEnumerator = visitors.GetEnumerator();
+		var currentVisitorEnumerator = readOnlyVisitors.GetEnumerator();
+		queueVisitorEnumerator.MoveNext();
+		currentVisitorEnumerator.MoveNext();
 
-		VisitNode(matrix, nodeIndex, visitedIndexes, ref enumerator);
-	}
-
-	internal static void VisitNode(in Matrix<Node> matrix, int nodeIndex, ReadOnlySpan<int> visitedIndexes, ref Span<int>.Enumerator enumerator)
-	{
-		Debug.Assert(nodeIndex >= 0);
-		Debug.Assert(nodeIndex < matrix.Nodes.Length);
-
-		var pass = enumerator.MoveNext();
-		Debug.Assert(pass);
-		enumerator.Current = nodeIndex;
+		// set the first node to visit
+		queueVisitorEnumerator.Current = nodeIndex;
 
 		Span<int> buffer = stackalloc int[MaxNodeEdges];
-		buffer.FillAdjacentNodeIndexes(matrix, nodeIndex);
+		var queueVisitIndexCount = 1;
 
-		foreach (var i in buffer)
+		while (true)
 		{
-			if (i == -1) { continue; }
+			var index = currentVisitorEnumerator.Current;
+			var pass = currentVisitorEnumerator.MoveNext();
 
-			ref var node = ref matrix[i];
+			if (index == -1 || !pass) { break; }
 
-			if (node.State == NodeState.Flagged) { continue; }
+			// we technically do not need to slice since the span is filled with -1
+			// is the perf/complexity tradeoff worthwhile?
+			var queueVisitIndexes = readOnlyVisitors.Slice(0, queueVisitIndexCount);
 
-			if (node.State == NodeState.Hidden)
+			buffer.FillAdjacentNodeIndexes(matrix, index);
+
+			foreach (var i in buffer)
 			{
-				node = node with { State = NodeState.Revealed };
-			}
+				if (i == -1) { continue; }
 
-			if (node.MineCount == 0 && !visitedIndexes.Contains(i))
-			{
-				VisitNode(matrix, i, visitedIndexes, ref enumerator);
+				ref var node = ref matrix[i];
+
+				if (node.State == NodeState.Flagged) { continue; }
+
+				if (node.State == NodeState.Hidden)
+				{
+					node = node with { State = NodeState.Revealed };
+				}
+
+				if (node.MineCount == 0 && !queueVisitIndexes.Contains(i))
+				{
+					var more = queueVisitorEnumerator.MoveNext();
+					Debug.Assert(more);
+					queueVisitorEnumerator.Current = i;
+					queueVisitIndexCount++;
+				}
 			}
 		}
 	}
