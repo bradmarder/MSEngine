@@ -12,7 +12,7 @@ var _watch = Stopwatch.StartNew();
 var _wins = 0;
 var _gamesPlayedCount = 0;
 
-args = args.Length == 0 ? new[] { "0", "100000" } : args;
+args = args.Length == 0 ? ["0", 1_000_000.ToString()] : args;
 var difficulty = Enum.Parse<Difficulty>(args[0]);
 var count = int.Parse(args[1]);
 using var _source = new CancellationTokenSource();

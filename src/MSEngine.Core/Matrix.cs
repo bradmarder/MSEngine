@@ -93,7 +93,7 @@ public readonly ref struct Matrix<T> where T : struct
 		private readonly Matrix<T> _matrix;
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal Enumerator(in Matrix<T> matrix)
+		internal Enumerator(Matrix<T> matrix)
 		{
 			_row = -1;
 			_matrix = matrix;

@@ -3,8 +3,9 @@
 	<Import Project="..\..\build\common.props" />
 
 	<PropertyGroup>
-		<TargetFrameworks>net7.0</TargetFrameworks>
+		<TargetFrameworks>net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<IsAotCompatible>true</IsAotCompatible>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -15,8 +16,8 @@
 	<PropertyGroup>
 		<Title>MSEngine ZA Ultra</Title>
 		<Version>$(appveyor_build_version)</Version>
-		<Summary>A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# 11 and .NET 7</Summary>
-		<Description>A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# 11 and .NET 7</Description>
+		<Summary>A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# 12 and .NET 8</Summary>
+		<Description>A High Performance Zero Allocation Minesweeper Engine/Solver Built with c# 12 and .NET 8</Description>
 		<Authors>Brad Marder</Authors>
 		<Owners>Brad Marder</Owners>
 		<!--<GenerateDocumentationFile>true</GenerateDocumentationFile>-->
