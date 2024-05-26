@@ -28,7 +28,7 @@ public class BoardGenerationTest
 	{
 		Span<int> mines = stackalloc int[mineCount];
 
-		Utilities.ScatterMines(mines, 25, safeNodeIndex, 5);
+		Utilities.ScatterMines(mines, 25, safeNodeIndex);
 
 		Assert.True(mines.IndexOfAny(safeNodeIndexes) == -1);
 	}

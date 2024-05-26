@@ -11,14 +11,11 @@ using MSEngine.Solver;
 var _watch = Stopwatch.StartNew();
 var _wins = 0;
 var _gamesPlayedCount = 0;
-
-args = args.Length == 0 ? ["0", 1_000_000.ToString()] : args;
-var difficulty = Enum.Parse<Difficulty>(args[0]);
-var count = int.Parse(args[1]);
+var count = args.Length == 0 ? 1_000_000 : int.Parse(args[0]);
 using var _source = new CancellationTokenSource();
 
 _ = LoopScoreLogic();
-RunSimulations(difficulty, count);
+RunSimulations(count);
 
 async Task LoopScoreLogic()
 {
@@ -45,7 +42,7 @@ async Task DisplayScore()
 	await Console.Out.WriteAsync($"{y} of {x} | {winRatio:.0000}%  {_watch.ElapsedMilliseconds}ms");
 }
 
-void RunSimulations(Difficulty difficulty, int count)
+void RunSimulations(int count)
 {
 	if (count < 1) { throw new ArgumentOutOfRangeException(nameof(count)); }
 
@@ -54,46 +51,33 @@ void RunSimulations(Difficulty difficulty, int count)
 #if DEBUG
 		.WithDegreeOfParallelism(1)
 #endif
-		.ForAll(_ => Master(difficulty, count / Environment.ProcessorCount));
+		.ForAll(_ => Master(count / Environment.ProcessorCount));
 }
 
 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-void Master(Difficulty difficulty, int count)
+void Master(int count)
 {
-	var (nodeCount, columnCount, mineCount, firstTurnNodeIndex) = difficulty switch
-	{
-		Difficulty.Beginner => (81, 9, 10, 20),
-		Difficulty.Intermediate => (16 * 16, 16, 40, 49),
-		Difficulty.Expert => (30 * 16, 30, 99, 93),
-		_ => throw new NotImplementedException(),
-	};
-
-	Span<Node> nodes = stackalloc Node[nodeCount];
-
-	var matrix = new Matrix<Node>(nodes, columnCount);
-	var firstTurn = new Turn(firstTurnNodeIndex, NodeOperation.Reveal);
-
+	var firstTurn = new Turn(NodeMatrix.SafeNodeIndex, NodeOperation.Reveal);
 	var buffs = new BufferKeeper
 	{
-		Turns = stackalloc Turn[nodeCount],
-		EdgeIndexes = stackalloc int[Engine.MaxNodeEdges],
-		Mines = stackalloc int[mineCount],
-		RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
-		AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
-		Grid = stackalloc float[nodeCount * nodeCount],
+		Turns = stackalloc Turn[NodeMatrix.Length],
+		RevealedMineCountNodeIndexes = stackalloc int[NodeMatrix.Length - Minefield.Length],
+		AdjacentHiddenNodeIndexes = stackalloc int[NodeMatrix.Length],
+		Grid = stackalloc float[NodeMatrix.Length * NodeMatrix.Length],
 	};
 
+	Span<Node> nodes = stackalloc Node[NodeMatrix.Length];
 	while (count > 0)
 	{
-		Engine.FillCustomBoard(matrix, buffs.Mines, firstTurnNodeIndex);
-		Engine.ComputeBoard(matrix, firstTurn);
-		ExecuteGame(matrix, buffs);
+		Engine.FillCustomBoard(nodes);
+        Engine.ComputeBoard(nodes, firstTurn);
+		ExecuteGame(nodes, buffs);
 		count--;
 	}
 }
 
 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-void ExecuteGame(in Matrix<Node> matrix, in BufferKeeper buffs)
+void ExecuteGame(Span<Node> matrix, in BufferKeeper buffs)
 {
 	var turnCount = 0;
 	while (true)
@@ -113,7 +97,7 @@ void ExecuteGame(in Matrix<Node> matrix, in BufferKeeper buffs)
 		var slicedTurns = buffs.Turns.Slice(0, turnCount);
 
 #if DEBUG
-		ValidateTurns(matrix.Nodes, slicedTurns);
+		ValidateTurns(matrix, slicedTurns);
 #endif
 
 		foreach (var turn in slicedTurns)
@@ -121,7 +105,7 @@ void ExecuteGame(in Matrix<Node> matrix, in BufferKeeper buffs)
 			Engine.ComputeBoard(matrix, turn);
 		}
 
-		if (!matrix.Nodes.IsComplete())
+		if (!matrix.IsComplete())
 		{
 			continue;
 		}
@@ -135,7 +119,7 @@ void ExecuteGame(in Matrix<Node> matrix, in BufferKeeper buffs)
 
 [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #pragma warning disable CS8321 // Local function is declared but never used
-static void ValidateTurns(ReadOnlySpan<Node> nodes, ReadOnlySpan<Turn> turns)
+static void ValidateTurns(NodeMatrix nodes, ReadOnlySpan<Turn> turns)
 #pragma warning restore CS8321 // Local function is declared but never used
 {
 	foreach (var turn in turns)
@@ -153,18 +137,21 @@ static void ValidateTurns(ReadOnlySpan<Node> nodes, ReadOnlySpan<Turn> turns)
 }
 
 #pragma warning disable CS8321 // Local function is declared but never used
-static string GetBoardAsciiArt(Matrix<Node> matrix)
+static string GetBoardAsciiArt(NodeMatrix matrix)
 #pragma warning restore CS8321 // Local function is declared but never used
 {
-	var sb = new StringBuilder(matrix.Nodes.Length);
+	var sb = new StringBuilder(NodeMatrix.Length);
+	int i = 1;
 
-	foreach (var row in matrix)
+	foreach (var node in matrix)
 	{
-		foreach (var node in row)
+		sb.Append(GetNodeChar(node));
+
+		if (i % NodeMatrix.ColumnCount == 0)
 		{
-			sb.Append(GetNodeChar(node));
+			sb.AppendLine();
 		}
-		sb.AppendLine();
+		i++;
 	}
 
 	return sb.ToString();

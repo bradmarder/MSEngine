@@ -38,7 +38,7 @@ public static class MatrixSolver
 	}
 
 	internal static void ReduceMatrix(
-		in Matrix<Node> nodeMatrix,
+		ReadOnlySpan<Node> nodeMatrix,
 		in Matrix<float> matrix,
 		ReadOnlySpan<int> adjacentHiddenNodeIndexes,
 		ReadOnlySpan<int> revealedAMCNodes,
@@ -48,7 +48,6 @@ public static class MatrixSolver
 	{
 		var hasReduced = false;
 		var maxColumnIndex = matrix.ColumnCount - 1;
-		Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 
 		foreach (var row in matrix)
 		{
@@ -92,11 +91,8 @@ public static class MatrixSolver
 							ZeroifyColumn(matrix, c);
 							hasReduced = true;
 
-							buffer.FillAdjacentNodeIndexes(nodeMatrix, index);
-
-							foreach (var i in buffer)
+							foreach (var i in Utilities.GetAdjacentNodeIndexes(index))
 							{
-								if (i == -1) { continue; }
 								var rowIndex = revealedAMCNodes.IndexOf(i);
 								if (rowIndex == -1) { continue; }
 
@@ -120,19 +116,17 @@ public static class MatrixSolver
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int CalculateTurns(in Matrix<Node> nodeMatrix, in BufferKeeper buffs, bool useAllHiddenNodes)
+	public static int CalculateTurns(ReadOnlySpan<Node> nodeMatrix, in BufferKeeper buffs, bool useAllHiddenNodes)
 	{
-		var nodes = nodeMatrix.Nodes;
-
 		#region Revealed Nodes with AMC > 0
 
 		var revealedAMCNodeCount = 0;
-		foreach (var node in nodes)
+		foreach (var node in nodeMatrix)
 		{
 			if (node.State == NodeState.Revealed && node.MineCount > 0
 
 				// optional, but major perf improvement
-				&& Utilities.HasHiddenAdjacentNodes(nodeMatrix, buffs.EdgeIndexes, node.Index))
+				&& Utilities.HasHiddenAdjacentNodes(nodeMatrix, node.Index))
 			{
 				buffs.RevealedMineCountNodeIndexes[revealedAMCNodeCount] = node.Index;
 				revealedAMCNodeCount++;
@@ -152,21 +146,16 @@ public static class MatrixSolver
 
 		var ahcCount = 0;
 
-		foreach (var node in nodes)
+		foreach (var node in nodeMatrix)
 		{
 			if (node.State != NodeState.Hidden) { continue; }
 
 			var hasAHC = false;
 			if (!useAllHiddenNodes)
 			{
-				buffs.EdgeIndexes.FillAdjacentNodeIndexes(nodeMatrix, node.Index);
-
-				foreach (var x in buffs.EdgeIndexes)
+				foreach (var x in Utilities.GetAdjacentNodeIndexes(node.Index))
 				{
-					if (x == -1) { continue; }
-
-					var adjNode = nodes[x];
-					if (adjNode.State == NodeState.Revealed && adjNode.MineCount > 0)
+					if (nodeMatrix[x] is { State: NodeState.Revealed, MineCount :> 0 })
 					{
 						hasAHC = true;
 						break;
@@ -202,7 +191,7 @@ public static class MatrixSolver
 				for (var i = 0; i < matrix.ColumnCount; i++)
 				{
 					var isAugmentedColumn = i == matrix.ColumnCount - 1;
-					matrix[matrix.RowCount - 1, i] = isAugmentedColumn ? nodes.FlagsAvailable() : 1;
+					matrix[matrix.RowCount - 1, i] = isAugmentedColumn ? nodeMatrix.FlagsAvailable() : 1;
 				}
 				break;
 			}
@@ -213,8 +202,8 @@ public static class MatrixSolver
 				var isAugmentedColumn = column == columns - 1;
 
 				matrix[row, column] = isAugmentedColumn
-					? nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffs.EdgeIndexes, nodeIndex)
-					: Utilities.AreNodesAdjacent(buffs.EdgeIndexes, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, adjacentHiddenNodeIndexes[column]) ? 1 : 0;
+					? nodeMatrix[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, nodeIndex)
+					: Utilities.AreNodesAdjacent(nodeIndex, adjacentHiddenNodeIndexes[column]) ? 1 : 0;
 			}
 		}
 

@@ -10,7 +10,7 @@ public readonly record struct Node
 	{
 		Debug.Assert(index >= 0);
 		Debug.Assert(mineCount >= 0);
-		Debug.Assert(mineCount <= Engine.MaxNodeEdges);
+		Debug.Assert(mineCount <= 8);
 		Debug.Assert(Enum.IsDefined(state));
 
 		Index = index;

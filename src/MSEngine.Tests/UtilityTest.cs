@@ -20,13 +20,9 @@ public class UtilityTest
 	[InlineData(8, new int[] { 4, 5, -1, 7, -1, -1, -1, -1 })]
 	public void AdjacentNodeIndexesFilledCorrectly(int index, int[] expectedIndexes)
 	{
-		const int columnCount = 3;
-		const int nodeCount = 9;
-		Span<int> actualIndexes = stackalloc int[nodeCount - 1];
+		var actualIndexes = Utilities.GetAdjacentNodeIndexes(index).ToArray();
 
-		actualIndexes.FillAdjacentNodeIndexes(nodeCount, index, columnCount);
-
-		Assert.Equal(expectedIndexes, actualIndexes.ToArray());
+		Assert.Equal(expectedIndexes, actualIndexes);
 	}
 
 	// 3x3 grid, all corners have a mine
@@ -39,10 +35,9 @@ public class UtilityTest
 	public void GetAdjacentMineCounts(int nodeIndex, int expectedMineCount)
 	{
 		Span<int> mines = stackalloc int[] { 0, 2, 6, 8 };
-		Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 		var matrix = new Matrix<Node>(stackalloc Node[9], 3);
 
-		var actualMineCount = Utilities.GetAdjacentMineCount(mines, nodeIndex, matrix, buffer);
+		var actualMineCount = Utilities.GetAdjacentMineCount(mines, nodeIndex);
 
 		Assert.Equal(expectedMineCount, actualMineCount);
 	}
@@ -56,7 +51,6 @@ public class UtilityTest
 	[InlineData(7, 2)]
 	public void GetAdjacentFlaggedNodes(int nodeIndex, int expectedFlagCount)
 	{
-		Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 		Span<Node> nodes = stackalloc Node[]
 		{
 			new(0, false, 0, NodeState.Flagged),
@@ -71,7 +65,7 @@ public class UtilityTest
 		};
 		var matrix = new Matrix<Node>(nodes, 3);
 
-		var actualFlagCount = Utilities.GetAdjacentFlaggedNodeCount(matrix, buffer, nodeIndex);
+		var actualFlagCount = Utilities.GetAdjacentFlaggedNodeCount(matrix, nodeIndex);
 
 		Assert.Equal(expectedFlagCount, actualFlagCount);
 	}
@@ -86,7 +80,6 @@ public class UtilityTest
 	[InlineData(8, false)]
 	public void HasHiddenAdjacentNodes(int nodeIndex, bool expectedHasNodes)
 	{
-		Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 		Span<Node> nodes = stackalloc Node[]
 		{
 			new(0, false, 0, NodeState.Hidden),
@@ -101,7 +94,7 @@ public class UtilityTest
 		};
 		var matrix = new Matrix<Node>(nodes, 3);
 
-		var actualHasNodes = Utilities.HasHiddenAdjacentNodes(matrix, buffer, nodeIndex);
+		var actualHasNodes = Utilities.HasHiddenAdjacentNodes(matrix, nodeIndex);
 
 		Assert.Equal(expectedHasNodes, actualHasNodes);
 	}
@@ -124,12 +117,12 @@ public class UtilityTest
 	[InlineData(6, 8, false)]
 	public void AreNodesAdjacent(int nodeIndexOne, int nodeIndexTwo, bool expected)
 	{
-		Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
 		Span<Node> nodes = stackalloc Node[9];
 		var matrix = new Matrix<Node>(stackalloc Node[9], 3);
 		Engine.FillCustomBoard(matrix, Span<int>.Empty);
 
-		var actual = Utilities.AreNodesAdjacent(buffer, 9, 3, nodeIndexOne, nodeIndexTwo);
+		//var actual = Utilities.AreNodesAdjacent(9, 3, nodeIndexOne, nodeIndexTwo);
+		var actual = Utilities.AreNodesAdjacent(nodeIndexOne, nodeIndexTwo);
 
 		Assert.Equal(expected, actual);
 	}

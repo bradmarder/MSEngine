@@ -8,21 +8,19 @@ namespace MSEngine.Solver;
 
 public static class ProbabilitySolver
 {
-	public static Turn ComputeTurn(Matrix<Node> nodeMatrix)
+	public static Turn ComputeTurn(NodeMatrix nodeMatrix)
 	{
-		var nodes = nodeMatrix.Nodes;
-		Debug.Assert(nodes.Length > 0);
+		Debug.Assert(NodeMatrix.Length > 0);
 
-		Span<int> buffer = stackalloc int[Engine.MaxNodeEdges];
-		Span<int> revealedAMCNodes = stackalloc int[nodes.Length];
-		Span<int> hiddenNodes = stackalloc int[nodes.Length];
+		Span<int> revealedAMCNodes = stackalloc int[NodeMatrix.Length];
+		Span<int> hiddenNodes = stackalloc int[NodeMatrix.Length];
 
 		#region Revealed Nodes with AMC > 0
 
 		var revealedAMCNodeCount = 0;
-		foreach (var node in nodes)
+		foreach (var node in nodeMatrix)
 		{
-			if (node.State == NodeState.Revealed && node.MineCount > 0 && Utilities.HasHiddenAdjacentNodes(nodeMatrix, buffer, node.Index))
+			if (node.State == NodeState.Revealed && node.MineCount > 0 && Utilities.HasHiddenAdjacentNodes(nodeMatrix, node.Index))
 			{
 				revealedAMCNodes[revealedAMCNodeCount] = node.Index;
 				revealedAMCNodeCount++;
@@ -37,18 +35,15 @@ public static class ProbabilitySolver
 
 		var hiddenNodeCount = 0;
 
-		foreach (var node in nodes)
+		foreach (var node in nodeMatrix)
 		{
 			if (node.State != NodeState.Hidden) { continue; }
 
 			var hasAHC = false;
-			buffer.FillAdjacentNodeIndexes(nodeMatrix, node.Index);
 
-			foreach (var x in buffer)
+			foreach (var x in Utilities.GetAdjacentNodeIndexes(node.Index))
 			{
-				if (x == -1) { continue; }
-
-				var adjNode = nodes[x];
+				var adjNode = nodeMatrix[x];
 				if (adjNode.State == NodeState.Revealed && adjNode.MineCount > 0)
 				{
 					hasAHC = true;
@@ -90,9 +85,9 @@ public static class ProbabilitySolver
 			{
 				if (column == columns - 1)
 				{
-					augments[row] = nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex);
+					augments[row] = nodeMatrix[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, nodeIndex);
 				}
-				if (Utilities.AreNodesAdjacent(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]))
+				if (Utilities.AreNodesAdjacent(nodeIndex, hiddenNodes[column]))
 				{
 					vectors[row] |= (ulong)1 << column;
 				}
@@ -113,8 +108,8 @@ public static class ProbabilitySolver
 				var isAugmentedColumn = column == columns;
 
 				matrix[row, column] = isAugmentedColumn
-					? nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, buffer, nodeIndex)
-					: Utilities.AreNodesAdjacent(buffer, nodes.Length, nodeMatrix.ColumnCount, nodeIndex, hiddenNodes[column]) ? 1 : 0;
+					? nodeMatrix[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, nodeIndex)
+					: Utilities.AreNodesAdjacent(nodeIndex, hiddenNodes[column]) ? 1 : 0;
 			}
 		}
 

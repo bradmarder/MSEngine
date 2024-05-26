@@ -2,22 +2,16 @@
 
 public static class BoardExtensions
 {
-	public static BoardStatus Status(this Span<Node> nodes) => Status((ReadOnlySpan<Node>)nodes);
-	public static int FlagsAvailable(this Span<Node> nodes) => FlagsAvailable((ReadOnlySpan<Node>)nodes);
-	public static int MineCount(this Span<Node> nodes) => MineCount((ReadOnlySpan<Node>)nodes);
-	public static int FlaggedNodesCount(this Span<Node> nodes) => FlaggedNodesCount((ReadOnlySpan<Node>)nodes);
-	public static bool AllMinesFlagged(this Span<Node> nodes) => AllMinesFlagged((ReadOnlySpan<Node>)nodes);
-
 	public static BoardStatus Status(this ReadOnlySpan<Node> nodes)
 	{
 		var complete = true;
 		foreach (var node in nodes)
 		{
-			if (node.HasMine && node.State == NodeState.Revealed)
+			if (node is { HasMine: true, State: NodeState.Revealed })
 			{
 				return BoardStatus.Failed;
 			}
-			if (!node.HasMine && node.State != NodeState.Revealed)
+			if (node is { HasMine: false, State: not NodeState.Revealed })
 			{
 				complete = false;
 			}
@@ -28,7 +22,7 @@ public static class BoardExtensions
 	{
 		foreach (var node in nodes)
 		{
-			if (!node.HasMine && node.State != NodeState.Revealed)
+			if (node is { HasMine: false, State: not NodeState.Revealed })
 			{
 				return false;
 			}
@@ -64,7 +58,7 @@ public static class BoardExtensions
 	{
 		foreach (var node in nodes)
 		{
-			if (node.HasMine && node.State != NodeState.Flagged)
+			if (node is { HasMine: true, State: not NodeState.Flagged })
 			{
 				return false;
 			}
@@ -72,4 +66,3 @@ public static class BoardExtensions
 		return true;
 	}
 }
-

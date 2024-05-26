@@ -2,27 +2,16 @@
 
 public static class Engine
 {
-	public const byte MaxNodeEdges = 8;
-
-	public static void FillCustomBoard(in Matrix<Node> matrix, Span<int> mines, int? safeNodeIndex = null)
+	public static void FillCustomBoard(Span<Node> nodes)
 	{
-		if (safeNodeIndex is null)
-		{
-			Utilities.ScatterMines(mines, matrix.Nodes.Length);
-		}
-		else
-		{
-			Utilities.ScatterMines(mines, matrix.Nodes.Length, (int)safeNodeIndex, matrix.ColumnCount);
-		}
+		Span<int> mines = stackalloc int[Minefield.Length];
+		Utilities.ScatterMines(mines);
 
-		Span<int> buffer = stackalloc int[MaxNodeEdges];
-
-		for (var i = 0; i < matrix.Nodes.Length; i++)
+		for (var i = 0; i < NodeMatrix.Length; i++)
 		{
 			var hasMine = mines.Contains(i);
-			var mineCount = hasMine ? byte.MinValue : Utilities.GetAdjacentMineCount(mines, i, matrix, buffer);
-
-			matrix[i] = new(i, hasMine, mineCount, NodeState.Hidden);
+			var mineCount = hasMine ? byte.MinValue : Utilities.GetAdjacentMineCount(mines, i);
+			nodes[i] = new(i, hasMine, mineCount, NodeState.Hidden);
 		}
 	}
 
@@ -43,23 +32,22 @@ public static class Engine
 	/// -May only chord a node when adjacent mine count equals adjacent node flag count
 	/// -May only chord a node that has hidden adjacent nodes
 	/// </exception>
-	public static void EnsureValidBoardConfiguration(in Matrix<Node> matrix, Turn turn)
+	public static void EnsureValidBoardConfiguration(ReadOnlySpan<Node> matrix, Turn turn)
 	{
-		var nodes = matrix.Nodes;
-		if (nodes.Status() == BoardStatus.Completed || nodes.Status() == BoardStatus.Failed)
+		if (matrix.Status() == BoardStatus.Completed || matrix.Status() == BoardStatus.Failed)
 		{
 			throw new InvalidGameStateException("Turns are not allowed if board status is completed/failed");
 		}
-		if (turn.NodeIndex >= nodes.Length)
+		if (turn.NodeIndex >= NodeMatrix.Length)
 		{
 			throw new InvalidGameStateException("Turn has index outside the matrix");
 		}
-		if (turn.Operation == NodeOperation.Flag && nodes.FlagsAvailable() == 0)
+		if (turn.Operation == NodeOperation.Flag && matrix.FlagsAvailable() == 0)
 		{
 			throw new InvalidGameStateException("No more flags available");
 		}
 
-		var node = nodes[turn.NodeIndex];
+		var node = matrix[turn.NodeIndex];
 		if (node.State == NodeState.Revealed && turn.Operation != NodeOperation.Chord && turn.Operation != NodeOperation.Reveal)
 		{
 			throw new InvalidGameStateException("Only chord/reveal operations are allowed on revealed nodes");
@@ -81,14 +69,10 @@ public static class Engine
 
 			var nodeAdjacentFlagCount = 0;
 			var nodeAdjacentHiddenCount = 0;
-			Span<int> adjacentIndexes = stackalloc int[MaxNodeEdges];
-			adjacentIndexes.FillAdjacentNodeIndexes(matrix, turn.NodeIndex);
 
-			foreach (var i in adjacentIndexes)
+			foreach (var i in Utilities.GetAdjacentNodeIndexes(turn.NodeIndex))
 			{
-				if (i == -1) { continue; }
-
-				var adjacentNode = nodes[i];
+				var adjacentNode = matrix[i];
 				if (adjacentNode.State == NodeState.Flagged) { nodeAdjacentFlagCount++; }
 				if (adjacentNode.State == NodeState.Hidden) { nodeAdjacentHiddenCount++; }
 			}
@@ -104,23 +88,23 @@ public static class Engine
 		}
 	}
 
-	public static void ComputeBoard(in Matrix<Node> matrix, Turn turn)
+	public static void ComputeBoard(Span<Node> nodes, Turn turn)
 	{
-		ref var node = ref matrix[turn.NodeIndex];
+		ref var node = ref nodes[turn.NodeIndex];
 
 		switch (turn.Operation)
 		{
 			case NodeOperation.Reveal:
 				if (node.HasMine)
 				{
-					RevealHiddenMines(matrix.Nodes);
+					RevealHiddenMines(nodes);
 				}
 				else
 				{
 					node = node with { State = NodeState.Revealed };
 					if (node.MineCount == 0)
 					{
-						TriggerChainReaction(matrix, turn.NodeIndex);
+						TriggerChainReaction(nodes, turn.NodeIndex);
 					}
 				}
 				break;
@@ -131,7 +115,7 @@ public static class Engine
 				node = node with { State = NodeState.Hidden };
 				break;
 			case NodeOperation.Chord:
-				Chord(matrix, turn.NodeIndex);
+				Chord(nodes, turn.NodeIndex);
 				break;
 			default:
 				Debug.Fail(turn.Operation.ToString());
@@ -139,21 +123,17 @@ public static class Engine
 		}
 	}
 
-	internal static void Chord(in Matrix<Node> matrix, int nodeIndex)
+	internal static void Chord(Span<Node> nodes, int nodeIndex)
 	{
 		Debug.Assert(nodeIndex >= 0);
-		Debug.Assert(nodeIndex < matrix.Nodes.Length);
+		Debug.Assert(nodeIndex < NodeMatrix.Length);
 
-		Span<int> buffer = stackalloc int[MaxNodeEdges];
-		buffer.FillAdjacentNodeIndexes(matrix, nodeIndex);
-
-		foreach (var i in buffer)
+		foreach (var i in Utilities.GetAdjacentNodeIndexes(nodeIndex))
 		{
-			if (i == -1) { continue; }
-			if (matrix[i].State != NodeState.Hidden) { continue; }
+			if (nodes[i].State != NodeState.Hidden) { continue; }
 
 			var turn = new Turn(i, NodeOperation.Reveal);
-			ComputeBoard(matrix, turn);
+			ComputeBoard(nodes, turn);
 		}
 	}
 
@@ -161,20 +141,19 @@ public static class Engine
 	{
 		foreach (ref var node in nodes)
 		{
-			if (node.HasMine && node.State == NodeState.Hidden)
+			if (node is { HasMine: true, State: NodeState.Hidden })
 			{
 				node = node with { State = NodeState.Revealed };
 			}
 		}
 	}
 
-	internal static void TriggerChainReaction(in Matrix<Node> matrix, int nodeIndex)
+	internal static void TriggerChainReaction(Span<Node> nodes, int nodeIndex)
 	{
-		var nodeCount = matrix.Nodes.Length;
 		Debug.Assert(nodeIndex >= 0);
-		Debug.Assert(nodeIndex < nodeCount);
+		Debug.Assert(nodeIndex < NodeMatrix.Length);
 
-		Span<int> visitors = nodeCount < 4_096 ? stackalloc int[nodeCount] : new int[nodeCount];
+		Span<int> visitors = stackalloc int[NodeMatrix.Length];
 		ReadOnlySpan<int> readOnlyVisitors = visitors;
 		visitors.Fill(-1);
 		var queueVisitorEnumerator = visitors.GetEnumerator();
@@ -185,7 +164,6 @@ public static class Engine
 		// set the first node to visit
 		queueVisitorEnumerator.Current = nodeIndex;
 
-		Span<int> buffer = stackalloc int[MaxNodeEdges];
 		var queueVisitIndexCount = 1;
 
 		while (true)
@@ -199,13 +177,9 @@ public static class Engine
 			// is the perf/complexity tradeoff worthwhile?
 			var queueVisitIndexes = readOnlyVisitors.Slice(0, queueVisitIndexCount);
 
-			buffer.FillAdjacentNodeIndexes(matrix, index);
-
-			foreach (var i in buffer)
+			foreach (var i in Utilities.GetAdjacentNodeIndexes(index))
 			{
-				if (i == -1) { continue; }
-
-				ref var node = ref matrix[i];
+				ref var node = ref nodes[i];
 
 				if (node.State == NodeState.Flagged) { continue; }
 

@@ -40,7 +40,6 @@ namespace MSEngine.Bot
             var buffs = new BufferKeeper
             {
                 Turns = stackalloc Turn[nodeCount],
-                EdgeIndexes = stackalloc int[Engine.MaxNodeEdges],
                 Mines = stackalloc int[mineCount],
                 RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
                 AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
