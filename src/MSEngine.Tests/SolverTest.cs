@@ -5,16 +5,19 @@ namespace MSEngine.Tests;
 public class SolverTest
 {
 	/// <summary>
-	/// 01>__
-	/// 011__
-	/// 111__
-	/// __3__
-	/// _____
+	/// 01>_____
+	/// 011_____
+	/// 111_____
+	/// __3_____
+	/// ________
+	/// ________
+	/// ________
+	/// ________
 	/// </summary>
 	[Fact]
 	public void CalculatesTurnsForZeroAugmentColumnPriorToGaussianElimination()
 	{
-		const int nodeCount = 25;
+		const int nodeCount = 64;
 		const int mineCount = 1;
 
 		Span<Node> nodes = stackalloc Node[]
@@ -24,49 +27,87 @@ public class SolverTest
 			new(2, true, 0, NodeState.Flagged),
 			new(3, false, 0, NodeState.Hidden),
 			new(4, false, 0, NodeState.Hidden),
+			new(5, false, 0, NodeState.Hidden),
+			new(6, false, 0, NodeState.Hidden),
+			new(7, false, 0, NodeState.Hidden),
 
-			new(5, false, 0, NodeState.Revealed),
-			new(6, false, 1, NodeState.Revealed),
-			new(7, false, 1, NodeState.Revealed),
-			new(8, false, 0, NodeState.Hidden),
-			new(9, false, 0, NodeState.Hidden),
-
+			new(8, false, 0, NodeState.Revealed),
+			new(9, false, 1, NodeState.Revealed),
 			new(10, false, 1, NodeState.Revealed),
-			new(11, false, 1, NodeState.Revealed),
-			new(12, false, 1, NodeState.Revealed),
+			new(11, false, 0, NodeState.Hidden),
+			new(12, false, 0, NodeState.Hidden),
 			new(13, false, 0, NodeState.Hidden),
 			new(14, false, 0, NodeState.Hidden),
-
 			new(15, false, 0, NodeState.Hidden),
-			new(16, false, 0, NodeState.Hidden),
-			new(17, false, 3, NodeState.Revealed),
-			new(18, false, 0, NodeState.Hidden),
-			new(19, false, 0, NodeState.Hidden),
 
+			new(16, false, 1, NodeState.Revealed),
+			new(17, false, 1, NodeState.Revealed),
+			new(18, false, 1, NodeState.Revealed),
+			new(19, false, 0, NodeState.Hidden),
 			new(20, false, 0, NodeState.Hidden),
 			new(21, false, 0, NodeState.Hidden),
 			new(22, false, 0, NodeState.Hidden),
 			new(23, false, 0, NodeState.Hidden),
+
 			new(24, false, 0, NodeState.Hidden),
+			new(25, false, 0, NodeState.Hidden),
+			new(26, false, 3, NodeState.Revealed),
+			new(27, false, 0, NodeState.Hidden),
+			new(28, false, 0, NodeState.Hidden),
+			new(29, false, 0, NodeState.Hidden),
+			new(30, false, 0, NodeState.Hidden),
+			new(31, false, 0, NodeState.Hidden),
+
+			new(32, false, 0, NodeState.Hidden),
+			new(33, false, 0, NodeState.Hidden),
+			new(34, false, 0, NodeState.Hidden),
+			new(35, false, 0, NodeState.Hidden),
+			new(36, false, 0, NodeState.Hidden),
+			new(37, false, 0, NodeState.Hidden),
+			new(38, false, 0, NodeState.Hidden),
+			new(39, false, 0, NodeState.Hidden),
+
+			new(40, false, 0, NodeState.Hidden),
+			new(41, false, 0, NodeState.Hidden),
+			new(42, false, 0, NodeState.Hidden),
+			new(43, false, 0, NodeState.Hidden),
+			new(44, false, 0, NodeState.Hidden),
+			new(45, false, 0, NodeState.Hidden),
+			new(46, false, 0, NodeState.Hidden),
+			new(47, false, 0, NodeState.Hidden),
+
+			new(48, false, 0, NodeState.Hidden),
+			new(49, false, 0, NodeState.Hidden),
+			new(50, false, 0, NodeState.Hidden),
+			new(51, false, 0, NodeState.Hidden),
+			new(52, false, 0, NodeState.Hidden),
+			new(53, false, 0, NodeState.Hidden),
+			new(54, false, 0, NodeState.Hidden),
+			new(55, false, 0, NodeState.Hidden),
+
+			new(56, false, 0, NodeState.Hidden),
+			new(57, false, 0, NodeState.Hidden),
+			new(58, false, 0, NodeState.Hidden),
+			new(59, false, 0, NodeState.Hidden),
+			new(60, false, 0, NodeState.Hidden),
+			new(61, false, 0, NodeState.Hidden),
+			new(62, false, 0, NodeState.Hidden),
+			new(63, false, 0, NodeState.Hidden),
 		};
 
 		var buffs = new BufferKeeper
 		{
 			Turns = stackalloc Turn[nodeCount],
-			Mines = stackalloc int[mineCount],
 			RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
 			AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
-			Grid = stackalloc float[nodeCount * nodeCount],
 		};
 
-		var matrix = new Matrix<Node>(nodes, 5);
-
-		var turnCount = MatrixSolver.CalculateTurns(matrix, buffs, false);
+		var turnCount = MatrixSolver.CalculateTurns(nodes, buffs, false);
 
 		Assert.Equal(3, turnCount);
 		Assert.Equal(new Turn(3, NodeOperation.Reveal), buffs.Turns[0]);
-		Assert.Equal(new Turn(8, NodeOperation.Reveal), buffs.Turns[1]);
-		Assert.Equal(new Turn(13, NodeOperation.Reveal), buffs.Turns[2]);
+		Assert.Equal(new Turn(11, NodeOperation.Reveal), buffs.Turns[1]);
+		Assert.Equal(new Turn(19, NodeOperation.Reveal), buffs.Turns[2]);
 	}
 
 	/// <summary>
@@ -163,14 +204,11 @@ public class SolverTest
 		var buffs = new BufferKeeper
 		{
 			Turns = stackalloc Turn[nodeCount],
-			Mines = stackalloc int[mineCount],
 			RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
 			AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
-			Grid = stackalloc float[nodeCount * nodeCount],
 		};
-		var matrix = new Matrix<Node>(nodes, 8);
 
-		var turnCount = MatrixSolver.CalculateTurns(matrix, buffs, false);
+		var turnCount = MatrixSolver.CalculateTurns(nodes, buffs, false);
 
 		Assert.Equal(2, turnCount);
 		Assert.Equal(new Turn(46, NodeOperation.Flag), buffs.Turns[0]);
@@ -264,14 +302,11 @@ public class SolverTest
 		var buffs = new BufferKeeper
 		{
 			Turns = stackalloc Turn[nodeCount],
-			Mines = stackalloc int[mineCount],
 			RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
 			AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
-			Grid = stackalloc float[nodeCount * nodeCount],
 		};
 
-		var matrix = new Matrix<Node>(nodes, 8);
-		var turnCount = MatrixSolver.CalculateTurns(matrix, buffs, false);
+		var turnCount = MatrixSolver.CalculateTurns(nodes, buffs, false);
 
 		Assert.Equal(2, turnCount);
 
@@ -370,16 +405,12 @@ public class SolverTest
 		var buffs = new BufferKeeper
 		{
 			Turns = stackalloc Turn[nodeCount],
-			Mines = stackalloc int[mineCount],
 			RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
 			AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
-			Grid = stackalloc float[nodeCount * nodeCount],
 		};
 
-		var matrix = new Matrix<Node>(nodes, 8);
-
-		var partialHiddenNodeTurnCount = MatrixSolver.CalculateTurns(matrix, buffs, false);
-		var fullHiddenNodeTurnCount = MatrixSolver.CalculateTurns(matrix, buffs, true);
+		var partialHiddenNodeTurnCount = MatrixSolver.CalculateTurns(nodes, buffs, false);
+		var fullHiddenNodeTurnCount = MatrixSolver.CalculateTurns(nodes, buffs, true);
 
 		Assert.Equal(0, partialHiddenNodeTurnCount);
 		Assert.Equal(2, fullHiddenNodeTurnCount);

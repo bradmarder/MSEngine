@@ -48,17 +48,17 @@ public static class Engine
 		}
 
 		var node = matrix[turn.NodeIndex];
-		if (node.State == NodeState.Revealed && turn.Operation != NodeOperation.Chord && turn.Operation != NodeOperation.Reveal)
+		if (node.State is NodeState.Revealed && turn.Operation != NodeOperation.Chord && turn.Operation != NodeOperation.Reveal)
 		{
 			throw new InvalidGameStateException("Only chord/reveal operations are allowed on revealed nodes");
 		}
-		if (turn.Operation == NodeOperation.RemoveFlag && node.State != NodeState.Flagged)
+		if (turn.Operation is NodeOperation.RemoveFlag && node.State != NodeState.Flagged)
 		{
 			throw new InvalidGameStateException("Impossible to remove flag from un-flagged node");
 		}
-		if (turn.Operation == NodeOperation.Chord)
+		if (turn.Operation is NodeOperation.Chord)
 		{
-			if (node.State != NodeState.Revealed)
+			if (node.State is not NodeState.Revealed)
 			{
 				throw new InvalidGameStateException("May only chord a revealed node");
 			}
@@ -73,8 +73,8 @@ public static class Engine
 			foreach (var i in Utilities.GetAdjacentNodeIndexes(turn.NodeIndex))
 			{
 				var adjacentNode = matrix[i];
-				if (adjacentNode.State == NodeState.Flagged) { nodeAdjacentFlagCount++; }
-				if (adjacentNode.State == NodeState.Hidden) { nodeAdjacentHiddenCount++; }
+				if (adjacentNode.State is NodeState.Flagged) { nodeAdjacentFlagCount++; }
+				if (adjacentNode.State is NodeState.Hidden) { nodeAdjacentHiddenCount++; }
 			}
 
 			if (node.MineCount != nodeAdjacentFlagCount)
@@ -130,14 +130,14 @@ public static class Engine
 
 		foreach (var i in Utilities.GetAdjacentNodeIndexes(nodeIndex))
 		{
-			if (nodes[i].State != NodeState.Hidden) { continue; }
+			if (nodes[i].State is not NodeState.Hidden) { continue; }
 
 			var turn = new Turn(i, NodeOperation.Reveal);
 			ComputeBoard(nodes, turn);
 		}
 	}
 
-	internal static void RevealHiddenMines(Span<Node> nodes)
+	public static void RevealHiddenMines(Span<Node> nodes)
 	{
 		foreach (ref var node in nodes)
 		{
@@ -171,7 +171,7 @@ public static class Engine
 			var index = currentVisitorEnumerator.Current;
 			var pass = currentVisitorEnumerator.MoveNext();
 
-			if (index == -1 || !pass) { break; }
+			if (index < 0 || !pass) { break; }
 
 			// we technically do not need to slice since the span is filled with -1
 			// is the perf/complexity tradeoff worthwhile?
@@ -181,9 +181,9 @@ public static class Engine
 			{
 				ref var node = ref nodes[i];
 
-				if (node.State == NodeState.Flagged) { continue; }
+				if (node.State is NodeState.Flagged) { continue; }
 
-				if (node.State == NodeState.Hidden)
+				if (node.State is NodeState.Hidden)
 				{
 					node = node with { State = NodeState.Revealed };
 				}

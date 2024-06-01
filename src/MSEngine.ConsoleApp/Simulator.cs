@@ -58,35 +58,28 @@ void RunSimulations(int count)
 void Master(int count)
 {
 	var firstTurn = new Turn(NodeMatrix.SafeNodeIndex, NodeOperation.Reveal);
-	var buffs = new BufferKeeper
-	{
-		Turns = stackalloc Turn[NodeMatrix.Length],
-		RevealedMineCountNodeIndexes = stackalloc int[NodeMatrix.Length - Minefield.Length],
-		AdjacentHiddenNodeIndexes = stackalloc int[NodeMatrix.Length],
-		Grid = stackalloc float[NodeMatrix.Length * NodeMatrix.Length],
-	};
 
 	Span<Node> nodes = stackalloc Node[NodeMatrix.Length];
+	Span<Turn> turns = stackalloc Turn[NodeMatrix.Length];
+	Span<int> buffer = stackalloc int[NodeMatrix.Length * 2];
+
 	while (count > 0)
 	{
 		Engine.FillCustomBoard(nodes);
-        Engine.ComputeBoard(nodes, firstTurn);
-		ExecuteGame(nodes, buffs);
+		Engine.ComputeBoard(nodes, firstTurn);
+		ExecuteGame(nodes, buffer, turns);
 		count--;
 	}
 }
 
 [MethodImpl(MethodImplOptions.AggressiveInlining)]
-void ExecuteGame(Span<Node> matrix, in BufferKeeper buffs)
+void ExecuteGame(Span<Node> nodes, Span<int> buffer, Span<Turn> turns)
 {
-	var turnCount = 0;
 	while (true)
 	{
-		turnCount = MatrixSolver.CalculateTurns(matrix, buffs, false);
-		if (turnCount == 0)
-		{
-			turnCount = MatrixSolver.CalculateTurns(matrix, buffs, true);
-		}
+		var turnCount = MatrixSolver.CalculateTurns(nodes, buffer, turns, false) is { } count && count > 0
+			? count
+			: MatrixSolver.CalculateTurns(nodes, buffer, turns, true);
 
 		if (turnCount == 0)
 		{
@@ -94,18 +87,18 @@ void ExecuteGame(Span<Node> matrix, in BufferKeeper buffs)
 			break;
 		}
 
-		var slicedTurns = buffs.Turns.Slice(0, turnCount);
+		var slicedTurns = turns.Slice(0, turnCount);
 
 #if DEBUG
-		ValidateTurns(matrix, slicedTurns);
+		ValidateTurns(nodes, slicedTurns);
 #endif
 
 		foreach (var turn in slicedTurns)
 		{
-			Engine.ComputeBoard(matrix, turn);
+			Engine.ComputeBoard(nodes, turn);
 		}
 
-		if (!matrix.IsComplete())
+		if (!nodes.IsComplete())
 		{
 			continue;
 		}
@@ -119,7 +112,7 @@ void ExecuteGame(Span<Node> matrix, in BufferKeeper buffs)
 
 [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #pragma warning disable CS8321 // Local function is declared but never used
-static void ValidateTurns(NodeMatrix nodes, ReadOnlySpan<Turn> turns)
+static void ValidateTurns(ReadOnlySpan<Node> nodes, ReadOnlySpan<Turn> turns)
 #pragma warning restore CS8321 // Local function is declared but never used
 {
 	foreach (var turn in turns)
@@ -127,23 +120,23 @@ static void ValidateTurns(NodeMatrix nodes, ReadOnlySpan<Turn> turns)
 		var node = nodes[turn.NodeIndex];
 		if (node.HasMine)
 		{
-			Debug.Assert(turn.Operation == NodeOperation.Flag, "Revealing a mine");
+			Debug.Assert(turn.Operation is NodeOperation.Flag, "Revealing a mine");
 		}
 		else
 		{
-			Debug.Assert(turn.Operation == NodeOperation.Reveal && node.State == NodeState.Hidden, "Flagging a node w/out a mine");
+			Debug.Assert(turn.Operation is NodeOperation.Reveal && node.State is NodeState.Hidden, "Flagging a node w/out a mine");
 		}
 	}
 }
 
 #pragma warning disable CS8321 // Local function is declared but never used
-static string GetBoardAsciiArt(NodeMatrix matrix)
+static string GetBoardAsciiArt(ReadOnlySpan<Node> nodes)
 #pragma warning restore CS8321 // Local function is declared but never used
 {
 	var sb = new StringBuilder(NodeMatrix.Length);
 	int i = 1;
 
-	foreach (var node in matrix)
+	foreach (var node in nodes)
 	{
 		sb.Append(GetNodeChar(node));
 
@@ -161,7 +154,7 @@ static string GetBoardAsciiArt(NodeMatrix matrix)
 static char GetNodeChar(in Node node) =>
 	node switch
 	{
-		{ State: NodeState.Hidden } => '_',
+		{ State: NodeState.Hidden } => '□',
 		{ HasMine: false, State: NodeState.Flagged } => '!',
 		{ State: NodeState.Flagged } => '>',
 		{ HasMine: true, State: NodeState.Revealed } => '*',

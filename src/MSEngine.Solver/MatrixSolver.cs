@@ -1,5 +1,7 @@
-﻿using MSEngine.Core;
+﻿using CommunityToolkit.HighPerformance;
+using MSEngine.Core;
 using System;
+using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -7,19 +9,6 @@ namespace MSEngine.Solver;
 
 public static class MatrixSolver
 {
-	// zero'ify this column from all rows in the matrix
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	internal static void ZeroifyColumn(in Matrix<float> matrix, int column)
-	{
-		Debug.Assert(column >= 0);
-		Debug.Assert(column < matrix.ColumnCount);
-
-		foreach (var row in matrix)
-		{
-			row[column] = 0;
-		}
-	}
-
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	internal static bool TryAddTurn(Span<Turn> turns, Turn turn, ref int turnCount)
 	{
@@ -38,8 +27,7 @@ public static class MatrixSolver
 	}
 
 	internal static void ReduceMatrix(
-		ReadOnlySpan<Node> nodeMatrix,
-		in Matrix<float> matrix,
+		Span2D<float> matrix,
 		ReadOnlySpan<int> adjacentHiddenNodeIndexes,
 		ReadOnlySpan<int> revealedAMCNodes,
 		Span<Turn> turns,
@@ -47,10 +35,11 @@ public static class MatrixSolver
 		bool useAllHiddenNodes)
 	{
 		var hasReduced = false;
-		var maxColumnIndex = matrix.ColumnCount - 1;
+		var maxColumnIndex = matrix.Width - 1;
 
-		foreach (var row in matrix)
+		for (var rowIndex = 0; rowIndex < matrix.Height; rowIndex++)
 		{
+			var row = matrix.GetRowSpan(rowIndex);
 			var val = row[maxColumnIndex];
 
 			// if the augment column is zero, then all the 1's in the row are not mines
@@ -64,7 +53,7 @@ public static class MatrixSolver
 						var turn = new Turn(index, NodeOperation.Reveal);
 
 						TryAddTurn(turns, turn, ref turnCount);
-						ZeroifyColumn(matrix, c);
+						matrix.GetColumn(c).Clear();
 						hasReduced = true;
 					}
 				}
@@ -88,20 +77,20 @@ public static class MatrixSolver
 							var turn = new Turn(index, NodeOperation.Flag);
 
 							TryAddTurn(turns, turn, ref turnCount);
-							ZeroifyColumn(matrix, c);
+							matrix.GetColumn(c).Clear();
 							hasReduced = true;
 
 							foreach (var i in Utilities.GetAdjacentNodeIndexes(index))
 							{
-								var rowIndex = revealedAMCNodes.IndexOf(i);
-								if (rowIndex == -1) { continue; }
+								var adjRevealIndex = revealedAMCNodes.IndexOf(i);
+								if (adjRevealIndex < 0) { continue; }
 
-								matrix[rowIndex, maxColumnIndex]--;
+								matrix[adjRevealIndex, maxColumnIndex]--;
 							}
 
 							if (useAllHiddenNodes)
 							{
-								matrix[matrix.RowCount - 1, maxColumnIndex]--;
+								matrix[matrix.Height - 1, maxColumnIndex]--;
 							}
 						}
 					}
@@ -111,24 +100,24 @@ public static class MatrixSolver
 
 		if (hasReduced)
 		{
-			ReduceMatrix(nodeMatrix, matrix, adjacentHiddenNodeIndexes, revealedAMCNodes, turns, ref turnCount, useAllHiddenNodes);
+			ReduceMatrix(matrix, adjacentHiddenNodeIndexes, revealedAMCNodes, turns, ref turnCount, useAllHiddenNodes);
 		}
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static int CalculateTurns(ReadOnlySpan<Node> nodeMatrix, in BufferKeeper buffs, bool useAllHiddenNodes)
+	public static int CalculateTurns(ReadOnlySpan<Node> nodes, Span<int> buffer, Span<Turn> turns, bool useAllHiddenNodes)
 	{
 		#region Revealed Nodes with AMC > 0
 
 		var revealedAMCNodeCount = 0;
-		foreach (var node in nodeMatrix)
+		foreach (var node in nodes)
 		{
-			if (node.State == NodeState.Revealed && node.MineCount > 0
+			if (node is { State: NodeState.Revealed, MineCount :> 0 }
 
 				// optional, but major perf improvement
-				&& Utilities.HasHiddenAdjacentNodes(nodeMatrix, node.Index))
+				&& Utilities.HasHiddenAdjacentNodes(nodes, node.Index))
 			{
-				buffs.RevealedMineCountNodeIndexes[revealedAMCNodeCount] = node.Index;
+				buffer[revealedAMCNodeCount] = node.Index;
 				revealedAMCNodeCount++;
 			}
 		}
@@ -138,7 +127,7 @@ public static class MatrixSolver
 			return 0;
 		}
 
-		var revealedAMCNodes = buffs.RevealedMineCountNodeIndexes.Slice(0, revealedAMCNodeCount);
+		var revealedAMCNodes = buffer.Slice(0, revealedAMCNodeCount);
 
 		#endregion
 
@@ -146,16 +135,16 @@ public static class MatrixSolver
 
 		var ahcCount = 0;
 
-		foreach (var node in nodeMatrix)
+		foreach (var node in nodes)
 		{
-			if (node.State != NodeState.Hidden) { continue; }
+			if (node.State is not NodeState.Hidden) { continue; }
 
 			var hasAHC = false;
 			if (!useAllHiddenNodes)
 			{
 				foreach (var x in Utilities.GetAdjacentNodeIndexes(node.Index))
 				{
-					if (nodeMatrix[x] is { State: NodeState.Revealed, MineCount :> 0 })
+					if (nodes[x] is { State: NodeState.Revealed, MineCount :> 0 })
 					{
 						hasAHC = true;
 						break;
@@ -165,12 +154,12 @@ public static class MatrixSolver
 
 			if (useAllHiddenNodes || hasAHC)
 			{
-				buffs.AdjacentHiddenNodeIndexes[ahcCount] = node.Index;
+				buffer[revealedAMCNodeCount + ahcCount] = node.Index;
 				ahcCount++;
 			}
 		}
 
-		var adjacentHiddenNodeIndexes = buffs.AdjacentHiddenNodeIndexes.Slice(0, ahcCount);
+		var adjacentHiddenNodeIndexes = buffer.Slice(revealedAMCNodeCount, ahcCount);
 
 		#endregion
 
@@ -178,8 +167,8 @@ public static class MatrixSolver
 
 		var rows = revealedAMCNodeCount + (useAllHiddenNodes ? 1 : 0);
 		var columns = ahcCount + 1;
-		var grids = buffs.Grid.Slice(0, rows * columns);
-		var matrix = new Matrix<float>(grids, columns);
+		var rented = ArrayPool<float>.Shared.Rent(rows * columns);
+		var matrix = new Span2D<float>(rented, rows, columns);
 
 		for (var row = 0; row < rows; row++)
 		{
@@ -188,10 +177,10 @@ public static class MatrixSolver
 			var isLastRow = row == rows - 1;
 			if (useAllHiddenNodes && isLastRow)
 			{
-				for (var i = 0; i < matrix.ColumnCount; i++)
+				for (var i = 0; i < columns; i++)
 				{
-					var isAugmentedColumn = i == matrix.ColumnCount - 1;
-					matrix[matrix.RowCount - 1, i] = isAugmentedColumn ? nodeMatrix.FlagsAvailable() : 1;
+					var isAugmentedColumn = i == columns - 1;
+					matrix[rows - 1, i] = isAugmentedColumn ? nodes.FlagsAvailable() : 1;
 				}
 				break;
 			}
@@ -202,7 +191,7 @@ public static class MatrixSolver
 				var isAugmentedColumn = column == columns - 1;
 
 				matrix[row, column] = isAugmentedColumn
-					? nodeMatrix[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodeMatrix, nodeIndex)
+					? nodes[nodeIndex].MineCount - Utilities.GetAdjacentFlaggedNodeCount(nodes, nodeIndex)
 					: Utilities.AreNodesAdjacent(nodeIndex, adjacentHiddenNodeIndexes[column]) ? 1 : 0;
 			}
 		}
@@ -210,16 +199,17 @@ public static class MatrixSolver
 		#endregion
 
 		var turnCount = 0;
-		ReduceMatrix(nodeMatrix, matrix, adjacentHiddenNodeIndexes, revealedAMCNodes, buffs.Turns, ref turnCount, useAllHiddenNodes);
+		ReduceMatrix(matrix, adjacentHiddenNodeIndexes, revealedAMCNodes, turns, ref turnCount, useAllHiddenNodes);
 
 		matrix.GaussEliminate();
 
 		#region Guass Matrix Processing
 
-		for (var row = 0; row < matrix.RowCount; row++)
+		for (var rowIndex = 0; rowIndex < matrix.Height; rowIndex++)
 		{
-			var vector = matrix.Vector(row);
-			var augmentColumn = matrix.Augment(row);
+			var row = matrix.GetRowSpan(rowIndex);
+			var vector = row[..^1];
+			var augment = row[^1];
 			float min = 0;
 			float max = 0;
 			foreach (var x in vector)
@@ -228,7 +218,7 @@ public static class MatrixSolver
 				min += x < 0 ? x : 0;
 			}
 
-			if (augmentColumn != min && augmentColumn != max)
+			if (augment != min && augment != max)
 			{
 				continue;
 			}
@@ -236,21 +226,20 @@ public static class MatrixSolver
 			for (var column = 0; column < vector.Length; column++)
 			{
 				var val = vector[column];
-				if (val == 0)
-				{
-					continue;
-				}
+				if (val == 0) { continue; }
 
 				var index = adjacentHiddenNodeIndexes[column];
-				var turn = augmentColumn == min
+				var turn = augment == min
 					? new Turn(index, val > 0 ? NodeOperation.Reveal : NodeOperation.Flag)
 					: new Turn(index, val > 0 ? NodeOperation.Flag : NodeOperation.Reveal);
 
-				TryAddTurn(buffs.Turns, turn, ref turnCount);
+				TryAddTurn(turns, turn, ref turnCount);
 			}
 		}
 
 		#endregion
+
+		ArrayPool<float>.Shared.Return(rented);
 
 		// we must return the turncount so the caller knows how much to slice from turns
 		return turnCount;

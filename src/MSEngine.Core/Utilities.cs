@@ -858,6 +858,78 @@ public static class Utilities
 			479 => [448, 449, 478],
 			_ => []
 		};
+
+#elif TEST
+		Debug.Assert(index < 64);
+
+		return index switch
+		{
+			0 => [1, 8, 9],
+			1 => [0, 2, 8, 9, 10],
+			2 => [1, 3, 9, 10, 11],
+			3 => [2, 4, 10, 11, 12],
+			4 => [3, 5, 11, 12, 13],
+			5 => [4, 6, 12, 13, 14],
+			6 => [5, 7, 13, 14, 15],
+			7 => [6, 14, 15],
+			8 => [0, 1, 9, 16, 17],
+			9 => [0, 1, 2, 8, 10, 16, 17, 18],
+			10 => [1, 2, 3, 9, 11, 17, 18, 19],
+			11 => [2, 3, 4, 10, 12, 18, 19, 20],
+			12 => [3, 4, 5, 11, 13, 19, 20, 21],
+			13 => [4, 5, 6, 12, 14, 20, 21, 22],
+			14 => [5, 6, 7, 13, 15, 21, 22, 23],
+			15 => [6, 7, 14, 22, 23],
+			16 => [8, 9, 17, 24, 25],
+			17 => [8, 9, 10, 16, 18, 24, 25, 26],
+			18 => [9, 10, 11, 17, 19, 25, 26, 27],
+			19 => [10, 11, 12, 18, 20, 26, 27, 28],
+			20 => [11, 12, 13, 19, 21, 27, 28, 29],
+			21 => [12, 13, 14, 20, 22, 28, 29, 30],
+			22 => [13, 14, 15, 21, 23, 29, 30, 31],
+			23 => [14, 15, 22, 30, 31],
+			24 => [16, 17, 25, 32, 33],
+			25 => [16, 17, 18, 24, 26, 32, 33, 34],
+			26 => [17, 18, 19, 25, 27, 33, 34, 35],
+			27 => [18, 19, 20, 26, 28, 34, 35, 36],
+			28 => [19, 20, 21, 27, 29, 35, 36, 37],
+			29 => [20, 21, 22, 28, 30, 36, 37, 38],
+			30 => [21, 22, 23, 29, 31, 37, 38, 39],
+			31 => [22, 23, 30, 38, 39],
+			32 => [24, 25, 33, 40, 41],
+			33 => [24, 25, 26, 32, 34, 40, 41, 42],
+			34 => [25, 26, 27, 33, 35, 41, 42, 43],
+			35 => [26, 27, 28, 34, 36, 42, 43, 44],
+			36 => [27, 28, 29, 35, 37, 43, 44, 45],
+			37 => [28, 29, 30, 36, 38, 44, 45, 46],
+			38 => [29, 30, 31, 37, 39, 45, 46, 47],
+			39 => [30, 31, 38, 46, 47],
+			40 => [32, 33, 41, 48, 49],
+			41 => [32, 33, 34, 40, 42, 48, 49, 50],
+			42 => [33, 34, 35, 41, 43, 49, 50, 51],
+			43 => [34, 35, 36, 42, 44, 50, 51, 52],
+			44 => [35, 36, 37, 43, 45, 51, 52, 53],
+			45 => [36, 37, 38, 44, 46, 52, 53, 54],
+			46 => [37, 38, 39, 45, 47, 53, 54, 55],
+			47 => [38, 39, 46, 54, 55],
+			48 => [40, 41, 49, 56, 57],
+			49 => [40, 41, 42, 48, 50, 56, 57, 58],
+			50 => [41, 42, 43, 49, 51, 57, 58, 59],
+			51 => [42, 43, 44, 50, 52, 58, 59, 60],
+			52 => [43, 44, 45, 51, 53, 59, 60, 61],
+			53 => [44, 45, 46, 52, 54, 60, 61, 62],
+			54 => [45, 46, 47, 53, 55, 61, 62, 63],
+			55 => [46, 47, 54, 62, 63],
+			56 => [48, 49, 57],
+			57 => [48, 49, 50, 56, 58],
+			58 => [49, 50, 51, 57, 59],
+			59 => [50, 51, 52, 58, 60],
+			60 => [51, 52, 53, 59, 61],
+			61 => [52, 53, 54, 60, 62],
+			62 => [53, 54, 55, 61, 63],
+			63 => [54, 55, 62],
+			_ => []
+		};
 #endif
 	}
 
@@ -870,6 +942,8 @@ public static class Utilities
 		ReadOnlySpan<int> ignore = [32, 33, 34, 48, 50, 64, 65, 66];
 #elif EXPERT
 		ReadOnlySpan<int> ignore = [62, 63, 64, 92, 94, 122, 123, 124];
+#elif TEST
+		ReadOnlySpan<int> ignore = [];
 #endif
 
 		// we must fill the buffer with -1 because the default (0) is a valid index
@@ -902,12 +976,10 @@ public static class Utilities
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static Minefield VectorScatterMines(ReadOnlySpan<int> ignore, int safeNodeIndex)
+	public static void VectorScatterMines(Span<int> mines, ReadOnlySpan<int> ignore, int safeNodeIndex)
 	{
-		var mines = new Minefield();
-
 		// we must fill the buffer with -1 because the default (0) is a valid index
-		((Span<int>)mines).Fill(-1);
+		mines.Fill(-1);
 
 		var n = 0;
 		var poolN = 0;
@@ -938,12 +1010,10 @@ public static class Utilities
 
 				Debug.Assert(m >= 0);
 				Debug.Assert(m < NodeMatrix.Length);
-			} while (m == safeNodeIndex || ((ReadOnlySpan<int>)mines).Contains(m) || ignore.Contains(m));
+			} while (m == safeNodeIndex || mines.Contains(m) || ignore.Contains(m));
 
 			x = m;
 		}
-
-		return mines;
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -963,15 +1033,15 @@ public static class Utilities
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static byte GetAdjacentFlaggedNodeCount(ReadOnlySpan<Node> matrix, int nodeIndex)
+	public static byte GetAdjacentFlaggedNodeCount(ReadOnlySpan<Node> nodes, int nodeIndex)
 	{
-		Debug.Assert(NodeMatrix.Length > nodeIndex);
 		Debug.Assert(nodeIndex >= 0);
+		Debug.Assert(nodeIndex < NodeMatrix.Length);
 
 		byte n = 0;
 		foreach (var i in GetAdjacentNodeIndexes(nodeIndex))
 		{
-			if (matrix[i].State == NodeState.Flagged)
+			if (nodes[i].State is NodeState.Flagged)
 			{
 				n++;
 			}
@@ -980,14 +1050,14 @@ public static class Utilities
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public static bool HasHiddenAdjacentNodes(ReadOnlySpan<Node> matrix, int nodeIndex)
+	public static bool HasHiddenAdjacentNodes(ReadOnlySpan<Node> nodes, int nodeIndex)
 	{
-		Debug.Assert(NodeMatrix.Length > nodeIndex);
 		Debug.Assert(nodeIndex >= 0);
+		Debug.Assert(nodeIndex < NodeMatrix.Length);
 
 		foreach (var i in GetAdjacentNodeIndexes(nodeIndex))
 		{
-			if (matrix[i].State == NodeState.Hidden)
+			if (nodes[i].State is NodeState.Hidden)
 			{
 				return true;
 			}
@@ -996,10 +1066,10 @@ public static class Utilities
 		return false;
 	}
 
-	public static string Log(ReadOnlySpan<Node> matrix)
+	public static string Log(ReadOnlySpan<Node> nodes)
 	{
 		var sb = new System.Text.StringBuilder();
-		foreach (var node in matrix)
+		foreach (var node in nodes)
 		{
 			sb.AppendLine(node.NewNodeCtor());
 		}

@@ -63,9 +63,8 @@ public class UtilityTest
 			new(7, false, 0, NodeState.Hidden),
 			new(8, false, 0, NodeState.Flagged),
 		};
-		var matrix = new Matrix<Node>(nodes, 3);
 
-		var actualFlagCount = Utilities.GetAdjacentFlaggedNodeCount(matrix, nodeIndex);
+		var actualFlagCount = Utilities.GetAdjacentFlaggedNodeCount(nodes, nodeIndex);
 
 		Assert.Equal(expectedFlagCount, actualFlagCount);
 	}
@@ -92,9 +91,8 @@ public class UtilityTest
 			new(7, false, 0, NodeState.Revealed),
 			new(8, false, 0, NodeState.Revealed),
 		};
-		var matrix = new Matrix<Node>(nodes, 3);
 
-		var actualHasNodes = Utilities.HasHiddenAdjacentNodes(matrix, nodeIndex);
+		var actualHasNodes = Utilities.HasHiddenAdjacentNodes(nodes, nodeIndex);
 
 		Assert.Equal(expectedHasNodes, actualHasNodes);
 	}
@@ -118,8 +116,7 @@ public class UtilityTest
 	public void AreNodesAdjacent(int nodeIndexOne, int nodeIndexTwo, bool expected)
 	{
 		Span<Node> nodes = stackalloc Node[9];
-		var matrix = new Matrix<Node>(stackalloc Node[9], 3);
-		Engine.FillCustomBoard(matrix, Span<int>.Empty);
+		Engine.FillCustomBoard(nodes);
 
 		//var actual = Utilities.AreNodesAdjacent(9, 3, nodeIndexOne, nodeIndexTwo);
 		var actual = Utilities.AreNodesAdjacent(nodeIndexOne, nodeIndexTwo);
@@ -128,24 +125,24 @@ public class UtilityTest
 	}
 
 	// 3x3 matrix, all 1's, then we zero'ify the middle column
-	[Theory]
-	[InlineData(0, 1)]
-	[InlineData(1, 0)]
-	[InlineData(2, 1)]
-	[InlineData(3, 1)]
-	[InlineData(4, 0)]
-	[InlineData(5, 1)]
-	[InlineData(6, 1)]
-	[InlineData(7, 0)]
-	[InlineData(8, 1)]
-	public void MatrixColumnZeroification(int index, int expected)
-	{
-		Span<float> data = stackalloc float[9];
-		data.Fill(1);
-		var matrix = new Matrix<float>(data, 3);
+	//[Theory]
+	//[InlineData(0, 1)]
+	//[InlineData(1, 0)]
+	//[InlineData(2, 1)]
+	//[InlineData(3, 1)]
+	//[InlineData(4, 0)]
+	//[InlineData(5, 1)]
+	//[InlineData(6, 1)]
+	//[InlineData(7, 0)]
+	//[InlineData(8, 1)]
+	//public void MatrixColumnZeroification(int index, int expected)
+	//{
+	//	Span<float> data = stackalloc float[9];
+	//	data.Fill(1);
+	//	var matrix = new Matrix<float>(data, 3);
 
-		MatrixSolver.ZeroifyColumn(matrix, 1);
+	//	MatrixSolver.ZeroifyColumn(matrix, 1);
 
-		Assert.Equal(expected, data[index]);
-	}
+	//	Assert.Equal(expected, data[index]);
+	//}
 }

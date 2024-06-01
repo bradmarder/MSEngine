@@ -6,13 +6,18 @@ using BenchmarkDotNet.Running;
 using MSEngine.Core;
 using MSEngine.Solver;
 using System.IO;
+using System.Threading;
+
+//var sim = new Simulator();
+//sim.Execute();
+
 
 BenchmarkRunner.Run<Simulator>();
 
-//foreach (var x in Enumerable.Range(0, 16 * 16))
+//foreach (var x in Enumerable.Range(0, 64))
 //{
 //	var val = new int[8];
-//	OldUtils.FillAdjacentNodeIndexes(val, 16 * 16, x, 16);
+//	OldUtils.FillAdjacentNodeIndexes(val, 64, x, 8);
 //	var arr = string.Join(", ", val.Where(x => x != -1));
 
 //	Console.WriteLine($"{x} => [{arr}],");
@@ -94,22 +99,22 @@ public class OldUtils
 [MemoryDiagnoser]
 public class Simulator
 {
-	private static readonly List<Node> _nodes = new();
+	private static readonly List<Node> _nodes = new(); 
 
 	public Simulator()
 	{
 		// beginner boards should be 162 bytes (2 bytes per node * 81 nodes)
-		const int beginnerBoardByteSize = 162;
+		const int nodeTotalBytes = 480 * 2;
 
 		//var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-		var name = Path.Combine("C:\\repos\\MSEngine\\BeginnerTestGames.bin");
-		using var file = File.Open(name, FileMode.Open);
+		//var name = Path.Combine("C:\\repos\\MSEngine\\BeginnerTestGames.bin");
+		using var file = File.Open("C:\\Users\\Brad\\Documents\\ExpertGames_1000.bin", FileMode.Open);
 		using var serializer = new BinaryReader(file);
-		Debug.Assert(file.Length % beginnerBoardByteSize == 0);
+		Debug.Assert(file.Length % nodeTotalBytes == 0);
 
 		while (serializer.PeekChar() != -1)
 		{
-			for (var i = 0; i < 81; i++)
+			for (var i = 0; i < NodeMatrix.Length; i++)
 			{
 				var hasMine = serializer.ReadBoolean();
 				var mineCount = serializer.ReadByte();
@@ -121,37 +126,32 @@ public class Simulator
 	[Benchmark]
 	public void Execute()
 	{
-		var matrix = new NodeMatrix();
-		var buffs = new BufferKeeper
-		{
-			Turns = stackalloc Turn[NodeMatrix.Length],
-			RevealedMineCountNodeIndexes = stackalloc int[NodeMatrix.Length - Minefield.Length],
-			AdjacentHiddenNodeIndexes = stackalloc int[NodeMatrix.Length],
-			Grid = stackalloc float[NodeMatrix.Length * NodeMatrix.Length],
-		};
-		var firstTurn = new Turn(20, NodeOperation.Reveal);
+		Span<Node> nodes = stackalloc Node[NodeMatrix.Length];
+		Span<Turn> turns = stackalloc Turn[NodeMatrix.Length];
+		Span<int> buffer = stackalloc int[NodeMatrix.Length * 2];
+
+		var firstTurn = new Turn(NodeMatrix.SafeNodeIndex, NodeOperation.Reveal);
 		var gameCount = _nodes.Count / NodeMatrix.Length;
 
 		for (var n = 0; n < gameCount; n++)
 		{
-			for (var i = 0; i < NodeMatrix.Length; i++)
-			{
-				matrix[i] = _nodes[n * NodeMatrix.Length + i];
-			}
-			Engine.ComputeBoard(ref matrix, firstTurn);
+			_nodes
+				.Slice(n * NodeMatrix.Length, NodeMatrix.Length)
+				.CopyTo(nodes);
+
+			Engine.ComputeBoard(nodes, firstTurn);
 
 			while (true)
 			{
-				var turnCount = MatrixSolver.CalculateTurns(matrix, buffs, false);
-				if (turnCount == 0)
-				{
-					turnCount = MatrixSolver.CalculateTurns(matrix, buffs, true);
-					if (turnCount == 0) { break; }
-				}
+				var turnCount = MatrixSolver.CalculateTurns(nodes, buffer, turns, false) is { } count && count > 0
+					? count
+					: MatrixSolver.CalculateTurns(nodes, buffer, turns, true);
 
-				foreach (var turn in buffs.Turns.Slice(0, turnCount))
+				if (turnCount == 0) { break; }
+
+				foreach (var turn in turns.Slice(0, turnCount))
 				{
-					Engine.ComputeBoard(ref matrix, turn);
+					Engine.ComputeBoard(nodes, turn);
 				}
 			}
 		}

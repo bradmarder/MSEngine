@@ -6,6 +6,8 @@
 [InlineArray(256)]
 #elif EXPERT
 [InlineArray(480)]
+#elif TEST
+[InlineArray(64)]
 #endif
 public struct NodeMatrix
 {
@@ -26,6 +28,11 @@ public struct NodeMatrix
 	public const int ColumnCount = 30;
 	public const int RowCount = 16;
 	public const int SafeNodeIndex = 93;
+#elif TEST
+	public const int Length = 64;
+	public const int ColumnCount = 8;
+	public const int RowCount = 8;
+	public const int SafeNodeIndex = 4;
 #endif
 }
 
@@ -35,6 +42,8 @@ public struct NodeMatrix
 [InlineArray(40)]
 #elif EXPERT
 [InlineArray(99)]
+#elif TEST
+[InlineArray(8)]
 #endif
 public struct Minefield
 {
@@ -46,5 +55,7 @@ public struct Minefield
 	public const int Length = 40;
 #elif EXPERT
 	public const int Length = 99;
+#elif TEST
+	public const int Length = 4;
 #endif
 }

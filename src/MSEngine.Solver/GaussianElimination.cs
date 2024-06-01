@@ -1,14 +1,14 @@
-using MSEngine.Core;
+using CommunityToolkit.HighPerformance;
 
 namespace MSEngine.Solver;
 
 public static class GaussianElimination
 {
-	public static void GaussEliminate(this Matrix<float> matrix)
+	public static void GaussEliminate(this Span2D<float> matrix)
 	{
 		var lead = 0;
-		var rowCount = matrix.RowCount;
-		var columnCount = matrix.ColumnCount;
+		var rowCount = matrix.Height;
+		var columnCount = matrix.Width;
 
 		for (var r = 0; r < rowCount; r++)
 		{

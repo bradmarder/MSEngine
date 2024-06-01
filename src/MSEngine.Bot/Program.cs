@@ -40,10 +40,8 @@ namespace MSEngine.Bot
             var buffs = new BufferKeeper
             {
                 Turns = stackalloc Turn[nodeCount],
-                Mines = stackalloc int[mineCount],
                 RevealedMineCountNodeIndexes = stackalloc int[nodeCount - mineCount],
                 AdjacentHiddenNodeIndexes = stackalloc int[nodeCount],
-                Grid = stackalloc float[nodeCount * nodeCount]
             };
 
             while (IsGamePending(driver))
@@ -54,8 +52,7 @@ namespace MSEngine.Bot
                     .ToArray()
                     .AsSpan();
 
-                var matrix = new Matrix<Node>(nodes, columns);
-                var turnCount = MatrixSolver.CalculateTurns(matrix, buffs, true);
+                var turnCount = MatrixSolver.CalculateTurns(nodes, buffs, true);
 
                 if (turnCount == 0) { break; }
 

@@ -47,7 +47,7 @@ public static class BoardExtensions
 		var n = 0;
 		foreach (var node in nodes)
 		{
-			if (node.State == NodeState.Flagged)
+			if (node.State is NodeState.Flagged)
 			{
 				n++;
 			}
