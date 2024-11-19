@@ -3,7 +3,7 @@
 	<Import Project="..\..\build\common.props" />
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0</TargetFrameworks>
+		<TargetFrameworks>net9.0</TargetFrameworks>
 		<IsAotCompatible>true</IsAotCompatible>
 	</PropertyGroup>
 
